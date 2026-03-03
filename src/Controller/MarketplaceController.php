@@ -27,18 +27,15 @@ class MarketplaceController extends AbstractController
 
         $criteria = [];
         if ($categoryId) {
-            // First try to find by ID if numeric
             if (is_numeric($categoryId)) {
                 $category = $categoryRepository->find($categoryId);
             } else {
-                // Otherwise try to find by slug
                 $category = $categoryRepository->findOneBy(['slug' => $categoryId]);
             }
 
             if ($category) {
                 $criteria['category'] = $category;
             } else {
-                // If category not found, return empty results early
                 return $this->json([]);
             }
         }
@@ -46,7 +43,6 @@ class MarketplaceController extends AbstractController
             $criteria['isRecommended'] = true;
         }
 
-        // Simpler filtering for now, could be improved with QueryBuilder
         if ($search) {
             $products = $productRepository->createQueryBuilder('p')
                 ->where('p.name LIKE :search OR p.description LIKE :search')
@@ -94,13 +90,20 @@ class MarketplaceController extends AbstractController
         $product->setIsRecommended($data['isRecommended'] ?? false);
         $product->setUser($user);
 
+        if (isset($data['unit']) && !empty($data['unit'])) {
+            $unit = trim($data['unit']);
+            if (!preg_match('/^[a-zA-Z0-9 ]{1,20}$/', $unit)) {
+                return $this->json(['message' => 'Invalid unit format. Use max 20 alphanumeric characters.'], Response::HTTP_BAD_REQUEST);
+            }
+            $product->setUnit($unit);
+        }
+
         $category = $categoryRepository->find($data['category_id'] ?? 0);
         if (!$category) {
             return $this->json(['message' => 'Invalid category'], Response::HTTP_BAD_REQUEST);
         }
         $product->setCategory($category);
 
-        // Handle images (URLs for now as requested)
         if (isset($data['images']) && is_array($data['images'])) {
             foreach ($data['images'] as $url) {
                 $image = new ProductImage();

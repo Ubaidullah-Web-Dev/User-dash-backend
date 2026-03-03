@@ -20,6 +20,7 @@ class ProductDTO
     public array $category;
     public array $seller;
     public array $images;
+    public ?string $unit;
 
     public static function fromEntity(Product $product): self
     {
@@ -45,6 +46,7 @@ class ProductDTO
         $dto->images = array_map(function (ProductImage $img) {
             return $img->getUrl();
         }, $product->getImages()->toArray());
+        $dto->unit = $product->getUnit();
 
         return $dto;
     }
