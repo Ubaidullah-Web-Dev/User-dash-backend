@@ -1,0 +1,23 @@
+roles:
+    ROLE_USER:
+        permissions:
+            - POST_VIEW
+            - POST_CREATE
+            - POST_EDIT_OWN
+    
+    ROLE_ADMIN:
+        permissions:
+            - POST_VIEW
+            - POST_CREATE
+            - POST_EDIT_ALL
+            - USER_VIEW
+    
+    ROLE_SUPER_ADMIN:
+        permissions:
+            - POST_VIEW
+            - POST_CREATE
+            - POST_EDIT_ALL
+            - POST_DELETE
+            - USER_VIEW
+            - USER_EDIT_ROLE
+            - USER_DELETE

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\DTO\RegisterDTO;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -10,6 +11,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class AuthController extends AbstractController
 {
@@ -17,21 +20,37 @@ class AuthController extends AbstractController
     public function register(
         Request $request,
         UserPasswordHasherInterface $passwordHasher,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        ValidatorInterface $validator,
+        SerializerInterface $serializer
     ): JsonResponse {
-        $data = json_decode($request->getContent(), true);
+        try {
+            /** @var RegisterDTO $registerDto */
+            $registerDto = $serializer->deserialize($request->getContent(), RegisterDTO::class, 'json');
+        } catch (\Exception $e) {
+            return $this->json(['message' => 'Invalid JSON input'], Response::HTTP_BAD_REQUEST);
+        }
 
-        if (!isset($data['email']) || !isset($data['password']) || !isset($data['name'])) {
-            return $this->json(['message' => 'Missing required fields'], Response::HTTP_BAD_REQUEST);
+        if (!$registerDto) {
+            return $this->json(['message' => 'Invalid JSON input'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $errors = $validator->validate($registerDto);
+        if (count($errors) > 0) {
+            return $this->json(['message' => $errors[0]->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($registerDto->password !== $registerDto->confirmPassword) {
+            return $this->json(['message' => 'Passwords do not match'], Response::HTTP_BAD_REQUEST);
         }
 
         $user = new User();
-        $user->setEmail($data['email']);
-        $user->setName($data['name']);
-        
-        $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
-        $user->setPassword($hashedPassword);
+        $user->setEmail($registerDto->email);
+        $user->setName($registerDto->name);
         $user->setRoles(['ROLE_USER']);
+        
+        $hashedPassword = $passwordHasher->hashPassword($user, $registerDto->password);
+        $user->setPassword($hashedPassword);
 
         $entityManager->persist($user);
         $entityManager->flush();
