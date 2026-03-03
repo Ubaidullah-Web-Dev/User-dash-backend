@@ -15,6 +15,7 @@ class ProductDTO
     public int $stock;
     public bool $isRecommended;
     public bool $isActive;
+    public bool $isOutOfStock;
     public string $createdAt;
     public array $category;
     public array $seller;
@@ -31,6 +32,7 @@ class ProductDTO
         $dto->stock = $product->getStock();
         $dto->isRecommended = $product->isRecommended();
         $dto->isActive = $product->isActive();
+        $dto->isOutOfStock = $product->getStock() <= 0;
         $dto->createdAt = $product->getCreatedAt()->format('Y-m-d H:i:s');
         $dto->category = [
             'id' => $product->getCategory()?->getId(),

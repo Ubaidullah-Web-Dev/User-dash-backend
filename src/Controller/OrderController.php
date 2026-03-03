@@ -59,6 +59,14 @@ class OrderController extends AbstractController
         $total = 0;
         foreach ($cartItems as $cartItem) {
             $product = $cartItem->getProduct();
+            
+            // Final Stock Check
+            if ($product->getStock() < $cartItem->getQuantity()) {
+                return $this->json([
+                    'message' => sprintf('Insufficient stock for %s. Only %d left.', $product->getName(), $product->getStock())
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
             $itemTotal = $product->getPrice() * $cartItem->getQuantity();
             $total += $itemTotal;
 
@@ -67,6 +75,9 @@ class OrderController extends AbstractController
             $orderItem->setQuantity($cartItem->getQuantity());
             $orderItem->setPrice($product->getPrice());
             $order->addItem($orderItem);
+
+            // Deduct Stock
+            $product->setStock($product->getStock() - $cartItem->getQuantity());
 
             $entityManager->remove($cartItem);
         }

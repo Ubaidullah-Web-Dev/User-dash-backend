@@ -71,8 +71,17 @@ class CartController extends AbstractController
             'isSavedForLater' => $addItemDto->is_saved_for_later
         ]);
 
+        $currentQuantity = $cartItem ? $cartItem->getQuantity() : 0;
+        $newTotalQuantity = $currentQuantity + $addItemDto->quantity;
+
+        if ($newTotalQuantity > $product->getStock()) {
+            return $this->json([
+                'message' => sprintf('Insufficient stock. Only %d units available.', $product->getStock())
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
         if ($cartItem) {
-            $cartItem->setQuantity($cartItem->getQuantity() + $addItemDto->quantity);
+            $cartItem->setQuantity($newTotalQuantity);
         } else {
             $cartItem = new CartItem();
             $cartItem->setUser($user);

@@ -1,0 +1,175 @@
+<?php
+
+namespace App\Controller\Admin;
+
+use App\Entity\Vendor;
+use App\Entity\VendorOrder;
+use App\Entity\Product;
+use App\Entity\Category;
+use App\Repository\VendorRepository;
+use App\Repository\VendorOrderRepository;
+use App\Repository\ProductRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+#[Route('/api/admin')]
+#[IsGranted('ROLE_ADMIN')]
+class VendorController extends AbstractController
+{
+    #[Route('/vendors', name: 'admin_vendors_list', methods: ['GET'])]
+    public function listVendors(Request $request, VendorRepository $vendorRepository): JsonResponse
+    {
+        $categoryId = $request->query->get('category');
+        if ($categoryId) {
+            $vendors = $vendorRepository->findBy(['category' => $categoryId]);
+        } else {
+            $vendors = $vendorRepository->findAll();
+        }
+
+        $data = [];
+        foreach ($vendors as $vendor) {
+            $data[] = [
+                'id' => $vendor->getId(),
+                'name' => $vendor->getName(),
+                'email' => $vendor->getEmail(),
+                'phone' => $vendor->getPhone(),
+                'companyName' => $vendor->getCompanyName(),
+                'status' => $vendor->getStatus(),
+                'category' => [
+                    'id' => $vendor->getCategory()->getId(),
+                    'name' => $vendor->getCategory()->getName()
+                ]
+            ];
+        }
+
+        return $this->json($data);
+    }
+
+    #[Route('/vendors/{id}', name: 'admin_vendors_show', methods: ['GET'])]
+    public function showVendor(Vendor $vendor): JsonResponse
+    {
+        return $this->json([
+            'id' => $vendor->getId(),
+            'name' => $vendor->getName(),
+            'email' => $vendor->getEmail(),
+            'phone' => $vendor->getPhone(),
+            'companyName' => $vendor->getCompanyName(),
+            'address' => $vendor->getAddress(),
+            'status' => $vendor->getStatus(),
+            'category' => [
+                'id' => $vendor->getCategory()->getId(),
+                'name' => $vendor->getCategory()->getName()
+            ]
+        ]);
+    }
+
+    #[Route('/vendor-orders', name: 'admin_vendor_orders_list', methods: ['GET'])]
+    public function listVendorOrders(Request $request, VendorOrderRepository $repository): JsonResponse
+    {
+        $status = $request->query->get('status');
+        if ($status) {
+            $orders = $repository->findBy(['status' => $status], ['createdAt' => 'DESC']);
+        } else {
+            $orders = $repository->findBy([], ['createdAt' => 'DESC']);
+        }
+
+        $data = [];
+        foreach ($orders as $order) {
+            $data[] = [
+                'id' => $order->getId(),
+                'vendorName' => $order->getVendor()->getName(),
+                'productName' => $order->getProduct()->getName(),
+                'quantity' => $order->getQuantity(),
+                'status' => $order->getStatus(),
+                'createdAt' => $order->getCreatedAt()->format('c'),
+                'receivedAt' => $order->getReceivedAt() ? $order->getReceivedAt()->format('c') : null
+            ];
+        }
+
+        return $this->json($data);
+    }
+
+    #[Route('/vendor-orders', name: 'admin_vendor_orders_create', methods: ['POST'])]
+    public function createVendorOrder(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        ProductRepository $productRepository
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+        
+        if (!isset($data['vendorId']) || !isset($data['productId']) || !isset($data['quantity'])) {
+            return $this->json(['message' => 'Missing required fields'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $vendor = $entityManager->getRepository(Vendor::class)->find($data['vendorId']);
+        $product = $productRepository->find($data['productId']);
+
+        if (!$vendor || !$product) {
+            return $this->json(['message' => 'Vendor or Product not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Validate product belongs to vendor category
+        if ($product->getCategory()->getId() !== $vendor->getCategory()->getId()) {
+            return $this->json(['message' => 'Product must belong to the same category as the vendor'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $order = new VendorOrder();
+        $order->setVendor($vendor);
+        $order->setProduct($product);
+        $order->setQuantity((int)$data['quantity']);
+        $order->setComment($data['comment'] ?? null);
+        $order->setStatus('pending');
+
+        $entityManager->persist($order);
+        $entityManager->flush();
+
+        return $this->json([
+            'message' => 'Vendor order created successfully',
+            'id' => $order->getId()
+        ], Response::HTTP_CREATED);
+    }
+
+    #[Route('/vendor-orders/{id}/status', name: 'admin_vendor_orders_update_status', methods: ['PATCH'])]
+    public function updateOrderStatus(
+        VendorOrder $order,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+        if (!isset($data['status'])) {
+            return $this->json(['message' => 'Status is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $allowedStatuses = ['pending', 'approved', 'received', 'cancelled'];
+        if (!in_array($data['status'], $allowedStatuses)) {
+            return $this->json(['message' => 'Invalid status'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Prevent updating if already received (optional, but good for stability)
+        if ($order->getStatus() === 'received' && $data['status'] !== 'received') {
+             // Maybe allow changing if needed, but the user said "Automatic stock update logic... when changes to received"
+             // If we change FROM received, we might need to decrement stock, but user didn't ask for that.
+             // For now, allow it but stock logic only increases.
+        }
+
+        $order->setStatus($data['status']);
+
+        // Handle stock increment when status changes to 'received'
+        if ($data['status'] === 'received' && $order->getReceivedAt() === null) {
+            $product = $order->getProduct();
+            if ($product) {
+                $product->setStock($product->getStock() + $order->getQuantity());
+                $order->setReceivedAt(new \DateTimeImmutable());
+            }
+        }
+
+        $entityManager->flush();
+
+        return $this->json(['message' => 'Order status updated successfully']);
+    }
+}

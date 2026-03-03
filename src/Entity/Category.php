@@ -27,9 +27,13 @@ class Category
     #[ORM\OneToMany(mappedBy: 'category', targetEntity: Product::class)]
     private Collection $products;
 
+    #[ORM\OneToMany(mappedBy: 'category', targetEntity: Vendor::class)]
+    private Collection $vendors;
+
     public function __construct()
     {
         $this->products = new ArrayCollection();
+        $this->vendors = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -97,6 +101,36 @@ class Category
             // set the owning side to null (unless already changed)
             if ($product->getCategory() === $this) {
                 $product->setCategory(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Vendor>
+     */
+    public function getVendors(): Collection
+    {
+        return $this->vendors;
+    }
+
+    public function addVendor(Vendor $vendor): static
+    {
+        if (!$this->vendors->contains($vendor)) {
+            $this->vendors->add($vendor);
+            $vendor->setCategory($this);
+        }
+
+        return $this;
+    }
+
+    public function removeVendor(Vendor $vendor): static
+    {
+        if ($this->vendors->removeElement($vendor)) {
+            // set the owning side to null (unless already changed)
+            if ($vendor->getCategory() === $this) {
+                $vendor->setCategory(null);
             }
         }
 
