@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ poNumber }}</title>
+
+    <style>
+        body {
+            font-family: DejaVu Sans, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 30px;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .divider {
+            height: 2px;
+            background: #0056b3;
+            margin: 20px 0;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 26px;
+            letter-spacing: 3px;
+        }
+
+        h2 {
+            margin: 0 0 5px 0;
+            color: #0056b3;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .header-table td {
+            vertical-align: top;
+        }
+
+        .logo-box {
+            text-align: right;
+        }
+
+        .logo-styled {
+            display: inline-block;
+            padding: 8px 20px;
+            border: 2px solid #0056b3;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 18px;
+            letter-spacing: 2px;
+        }
+
+        .box {
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .box-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: #777;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .info-table td {
+            padding: 6px 0;
+        }
+
+        .items-table th {
+            background: #0056b3;
+            color: #fff;
+            padding: 10px;
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .items-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .items-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .totals-table {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .totals-table td {
+            padding: 8px;
+        }
+
+        .totals-table tr td:first-child {
+            text-align: right;
+            color: #555;
+        }
+
+        .totals-table tr td:last-child {
+            text-align: right;
+            width: 150px;
+        }
+
+        .total-row {
+            color: #0056b3;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .balance-row {
+            background: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .footer-note {
+            margin-top: 80px;
+            text-align: center;
+            font-size: 10px;
+            color: #999;
+            font-style: italic;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <div class="section">
+        <table class="header-table">
+            <tr>
+                <td>
+                    <h1>PURCHASE ORDER</h1>
+                </td>
+                <td class="logo-box">
+                    <div class="logo-styled">
+                        <span style="color:#0056b3;">E</span>LECTRO
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- COMPANY + CUSTOMER INFO -->
+    <div class="section">
+        <table width="100%">
+            <tr>
+                <td width="50%">
+                    <div class="box">
+                        <div class="box-title">From</div>
+                        <h2>ELECTRO MARKETPLACE LLC</h2>
+                        <p>Alphasoft360</p>
+                        <p>Sahwal, Punjab , Pakistan</p>
+                        <p>Email: billing@electro.com</p>
+                    </div>
+                </td>
+                <td width="50%">
+                    <div class="box">
+                        <div class="box-title">Ship To / Bill To</div>
+                        <div class="bold">{{ customer.name|upper }}</div>
+                        <p>{{ customer.address }}</p>
+                        <p>Phone No: {{ customer.phone }}</p>
+                        <p>Email: {{ customer.email }}</p>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- ORDER INFO -->
+    <div class="section box">
+        <div class="box-title">Order Information</div>
+        <table class="info-table">
+            <tr>
+                <td>Order Number:</td>
+                <td class="bold text-right" style="color:#0056b3;">#{{ poNumber }}</td>
+            </tr>
+            <tr>
+                <td>Date:</td>
+                <td class="bold text-right">{{ date|date('M d, Y') }}</td>
+            </tr>
+            <tr>
+                <td>Payment Terms:</td>
+                <td class="bold text-right">DUE UPON RECEIPT</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- ITEMS -->
+    <div class="section">
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th width="5%" class="text-center">#</th>
+                    <th>Product Description</th>
+                    <th width="10%" class="text-center">Qty</th>
+                    <th width="20%" class="text-right">Unit Price</th>
+                    <th width="20%" class="text-right">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="text-center">{{ loop.index }}</td>
+                    <td class="bold">{{ item.description }}</td>
+                    <td class="text-center">{{ item.qty }}</td>
+                    <td class="text-right">${{ item.rate|number_format(2) }}</td>
+                    <td class="text-right bold">${{ item.amount|number_format(2) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- TOTALS -->
+    <div class="section">
+        <table class="totals-table">
+            <tr>
+                <td>Subtotal</td>
+                <td>${{ subtotal|number_format(2) }}</td>
+            </tr>
+            <tr>
+                <td>Tax (0%)</td>
+                <td>$0.00</td>
+            </tr>
+            <tr class="total-row">
+                <td>TOTAL</td>
+                <td>${{ total|number_format(2) }}</td>
+            </tr>
+            <tr>
+                <td style="font-size:10px;color:#666;">Paid (Electronic)</td>
+                <td style="font-size:10px;color:#666;">-${{ paid|number_format(2) }}</td>
+            </tr>
+            <tr class="balance-row">
+                <td>Balance Due</td>
+                <td>$0.00</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="footer-note">
+        Generated electronically by ELECTRO Marketplace System
+    </div>
+
+</body>
+
+</html>
