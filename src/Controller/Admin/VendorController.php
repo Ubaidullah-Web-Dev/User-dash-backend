@@ -6,6 +6,9 @@ use App\Entity\Vendor;
 use App\Entity\VendorOrder;
 use App\Entity\Product;
 use App\Entity\Category;
+use App\DTO\VendorCreateDTO;
+use App\DTO\VendorOrderCreateDTO;
+use App\DTO\VendorOrderStatusUpdateDTO;
 use App\Repository\VendorRepository;
 use App\Repository\VendorOrderRepository;
 use App\Repository\ProductRepository;
@@ -16,6 +19,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/admin')]
 #[IsGranted('ROLE_ADMIN')]
@@ -98,16 +102,28 @@ class VendorController extends AbstractController
     public function createVendorOrder(
         Request $request,
         EntityManagerInterface $entityManager,
-        ProductRepository $productRepository
+        ProductRepository $productRepository,
+        ValidatorInterface $validator
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         
-        if (!isset($data['vendorId']) || !isset($data['productId']) || !isset($data['quantity'])) {
-            return $this->json(['message' => 'Missing required fields'], Response::HTTP_BAD_REQUEST);
+        $dto = new VendorOrderCreateDTO();
+        $dto->vendorId = $data['vendorId'] ?? null;
+        $dto->productId = $data['productId'] ?? null;
+        $dto->quantity = $data['quantity'] ?? null;
+        $dto->comment = $data['comment'] ?? null;
+
+        $errors = $validator->validate($dto);
+        if (count($errors) > 0) {
+            $errorMessages = [];
+            foreach ($errors as $error) {
+                $errorMessages[] = $error->getMessage();
+            }
+            return $this->json(['message' => 'Validation failed', 'errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
         }
 
-        $vendor = $entityManager->getRepository(Vendor::class)->find($data['vendorId']);
-        $product = $productRepository->find($data['productId']);
+        $vendor = $entityManager->getRepository(Vendor::class)->find($dto->vendorId);
+        $product = $productRepository->find($dto->productId);
 
         if (!$vendor || !$product) {
             return $this->json(['message' => 'Vendor or Product not found'], Response::HTTP_NOT_FOUND);
@@ -121,8 +137,8 @@ class VendorController extends AbstractController
         $order = new VendorOrder();
         $order->setVendor($vendor);
         $order->setProduct($product);
-        $order->setQuantity((int)$data['quantity']);
-        $order->setComment($data['comment'] ?? null);
+        $order->setQuantity($dto->quantity);
+        $order->setComment($dto->comment);
         $order->setStatus('pending');
 
         $entityManager->persist($order);
@@ -134,33 +150,88 @@ class VendorController extends AbstractController
         ], Response::HTTP_CREATED);
     }
 
+    #[Route('/vendors', name: 'admin_vendors_create', methods: ['POST'])]
+    public function createVendor(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        ValidatorInterface $validator
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+        
+        $dto = new VendorCreateDTO();
+        $dto->name = $data['name'] ?? null;
+        $dto->email = $data['email'] ?? null;
+        $dto->phone = $data['phone'] ?? null;
+        $dto->companyName = $data['companyName'] ?? null;
+        $dto->address = $data['address'] ?? null;
+        $dto->status = $data['status'] ?? 'active';
+        $dto->categoryId = isset($data['categoryId']) ? (int)$data['categoryId'] : null;
+
+        $errors = $validator->validate($dto);
+        if (count($errors) > 0) {
+            $errorMessages = [];
+            foreach ($errors as $error) {
+                $errorMessages[] = $error->getMessage();
+            }
+            return $this->json(['message' => 'Validation failed', 'errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
+        }
+
+        $category = $entityManager->getRepository(Category::class)->find($dto->categoryId);
+        if (!$category) {
+            return $this->json(['message' => 'Category not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $vendor = new Vendor();
+        $vendor->setName($dto->name);
+        $vendor->setEmail($dto->email);
+        $vendor->setPhone($dto->phone);
+        $vendor->setCompanyName($dto->companyName);
+        $vendor->setAddress($dto->address);
+        $vendor->setStatus($dto->status);
+        $vendor->setCategory($category);
+
+        $entityManager->persist($vendor);
+        $entityManager->flush();
+
+        return $this->json([
+            'message' => 'Vendor created successfully',
+            'id' => $vendor->getId(),
+            'name' => $vendor->getName()
+        ], Response::HTTP_CREATED);
+    }
+
     #[Route('/vendor-orders/{id}/status', name: 'admin_vendor_orders_update_status', methods: ['PATCH'])]
     public function updateOrderStatus(
         VendorOrder $order,
         Request $request,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        ValidatorInterface $validator
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
-        if (!isset($data['status'])) {
-            return $this->json(['message' => 'Status is required'], Response::HTTP_BAD_REQUEST);
-        }
 
-        $allowedStatuses = ['pending', 'approved', 'received', 'cancelled'];
-        if (!in_array($data['status'], $allowedStatuses)) {
-            return $this->json(['message' => 'Invalid status'], Response::HTTP_BAD_REQUEST);
+        $dto = new VendorOrderStatusUpdateDTO();
+        $dto->status = $data['status'] ?? null;
+
+        $errors = $validator->validate($dto);
+        if (count($errors) > 0) {
+            $errorMessages = [];
+            foreach ($errors as $error) {
+                $errorMessages[] = $error->getMessage();
+            }
+            return $this->json(['message' => 'Validation failed', 'errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
         }
 
         // Prevent updating if already received (optional, but good for stability)
-        if ($order->getStatus() === 'received' && $data['status'] !== 'received') {
+        if ($order->getStatus() === 'received' && $dto->status !== 'received') {
              // Maybe allow changing if needed, but the user said "Automatic stock update logic... when changes to received"
              // If we change FROM received, we might need to decrement stock, but user didn't ask for that.
              // For now, allow it but stock logic only increases.
         }
 
-        $order->setStatus($data['status']);
+        $order->setStatus($dto->status);
 
         // Handle stock increment when status changes to 'received'
-        if ($data['status'] === 'received' && $order->getReceivedAt() === null) {
+        if ($dto->status === 'received' && $order->getReceivedAt() === null) {
             $product = $order->getProduct();
             if ($product) {
                 $product->setStock($product->getStock() + $order->getQuantity());

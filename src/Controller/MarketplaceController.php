@@ -14,6 +14,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use App\DTO\ProductCreateDTO;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/products')]
 class MarketplaceController extends AbstractController
@@ -72,7 +74,8 @@ class MarketplaceController extends AbstractController
         Request $request, 
         EntityManagerInterface $entityManager, 
         CategoryRepository $categoryRepository,
-        SluggerInterface $slugger
+        SluggerInterface $slugger,
+        ValidatorInterface $validator
     ): JsonResponse {
         $user = $this->getUser();
         if (!$user) {
@@ -81,31 +84,47 @@ class MarketplaceController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
         
+        $dto = new ProductCreateDTO();
+        $dto->name = $data['name'] ?? null;
+        $dto->description = $data['description'] ?? null;
+        $dto->price = isset($data['price']) ? (float)$data['price'] : null;
+        $dto->stock = isset($data['stock']) ? (int)$data['stock'] : null;
+        $dto->unit = $data['unit'] ?? null;
+        $dto->category_id = isset($data['category_id']) ? (int)$data['category_id'] : null;
+        $dto->isRecommended = $data['isRecommended'] ?? false;
+        $dto->images = $data['images'] ?? [];
+
+        $errors = $validator->validate($dto);
+        if (count($errors) > 0) {
+            $errorMessages = [];
+            foreach ($errors as $error) {
+                $errorMessages[] = $error->getMessage();
+            }
+            return $this->json(['message' => 'Validation failed', 'errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
+        }
+        
         $product = new Product();
-        $product->setName($data['name'] ?? 'Untitled');
+        $product->setName($dto->name);
         $product->setSlug(strtolower($slugger->slug($product->getName())) . '-' . uniqid());
-        $product->setDescription($data['description'] ?? '');
-        $product->setPrice($data['price'] ?? '0.00');
-        $product->setStock($data['stock'] ?? 0);
-        $product->setIsRecommended($data['isRecommended'] ?? false);
+        $product->setDescription($dto->description);
+        $product->setPrice($dto->price);
+        $product->setStock($dto->stock);
+        $product->setIsRecommended($dto->isRecommended);
         $product->setUser($user);
 
-        if (isset($data['unit']) && !empty($data['unit'])) {
-            $unit = trim($data['unit']);
-            if (!preg_match('/^[a-zA-Z0-9 ]{1,20}$/', $unit)) {
-                return $this->json(['message' => 'Invalid unit format. Use max 20 alphanumeric characters.'], Response::HTTP_BAD_REQUEST);
-            }
-            $product->setUnit($unit);
+        if ($dto->unit !== null) {
+            $product->setUnit(trim($dto->unit));
         }
 
-        $category = $categoryRepository->find($data['category_id'] ?? 0);
+        $category = $categoryRepository->find($dto->category_id);
         if (!$category) {
             return $this->json(['message' => 'Invalid category'], Response::HTTP_BAD_REQUEST);
         }
         $product->setCategory($category);
 
-        if (isset($data['images']) && is_array($data['images'])) {
-            foreach ($data['images'] as $url) {
+        if (!empty($dto->images)) {
+            foreach ($dto->images as $url) {
+                if (empty(trim($url))) continue;
                 $image = new ProductImage();
                 $image->setUrl($url);
                 $product->addImage($image);

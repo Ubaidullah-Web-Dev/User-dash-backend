@@ -11,6 +11,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use App\DTO\OrderCreateDTO;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/orders')]
 class OrderController extends AbstractController
@@ -19,7 +21,8 @@ class OrderController extends AbstractController
     public function create(
         Request $request,
         CartItemRepository $cartItemRepository,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        ValidatorInterface $validator
     ): JsonResponse {
         $user = $this->getUser();
         if (!$user) {
@@ -27,22 +30,24 @@ class OrderController extends AbstractController
         }
 
         $data = json_decode($request->getContent(), true);
-        if (!$data || !isset($data['address']) || !isset($data['phone']) || !isset($data['name'])) {
-            return $this->json(['message' => 'Invalid data'], Response::HTTP_BAD_REQUEST);
+        
+        $dto = new OrderCreateDTO();
+        $dto->name = $data['name'] ?? null;
+        $dto->address = $data['address'] ?? null;
+        $dto->phone = $data['phone'] ?? null;
+
+        $errors = $validator->validate($dto);
+        if (count($errors) > 0) {
+            $errorMessages = [];
+            foreach ($errors as $error) {
+                $errorMessages[] = $error->getMessage();
+            }
+            return $this->json(['message' => 'Validation failed', 'errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
         }
 
-        // Backend Validation
-        if (strlen($data['name']) < 2 || is_numeric($data['name'])) {
-            return $this->json(['message' => 'Invalid name format'], Response::HTTP_BAD_REQUEST);
-        }
-
-        if (strlen($data['address']) < 5 || is_numeric($data['address'])) {
-            return $this->json(['message' => 'Invalid address format'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $phoneDigits = preg_replace('/\D/', '', $data['phone']);
+        $phoneDigits = preg_replace('/\D/', '', $dto->phone);
         if (strlen($phoneDigits) > 11 || empty($phoneDigits)) {
-            return $this->json(['message' => 'Phone number must be maximum 11 digits'], Response::HTTP_BAD_REQUEST);
+            return $this->json(['message' => 'Phone number must contain at most 11 digits'], Response::HTTP_BAD_REQUEST);
         }
 
         $cartItems = $cartItemRepository->findBy(['user' => $user]);
@@ -52,9 +57,9 @@ class OrderController extends AbstractController
 
         $order = new Order();
         $order->setUser($user);
-        $order->setAddress($data['address']);
-        $order->setPhone($data['phone']);
-        $order->setCustomerName($data['name'] ?? $user->getName());
+        $order->setAddress($dto->address);
+        $order->setPhone($dto->phone);
+        $order->setCustomerName($dto->name);
         
         $total = 0;
         foreach ($cartItems as $cartItem) {
