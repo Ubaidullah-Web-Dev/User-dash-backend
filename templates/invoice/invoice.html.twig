@@ -162,7 +162,7 @@
         <table class="header-table">
             <tr>
                 <td>
-                    <h1>PURCHASE ORDER</h1>
+                    <h1>{{ type == 'buyer' ? 'SUPPLY ORDER' : 'PURCHASE ORDER' }}</h1>
                 </td>
                 <td class="logo-box">
                     <div class="logo-styled">
@@ -182,24 +182,33 @@
                 <td width="50%">
                     <div class="box">
                         <div class="box-title">From</div>
-                        <h2>ELECTRO MARKETPLACE</h2>
-                        <p>Alphasoft360</p>
-                        <p>Sahwal, Punjab , Pakistan</p>
-                        <p>Email: billing@electro.com</p>
+                        {% if type == 'seller' %}
+                            <h2>ELECTRO MARKETPLACE</h2>
+                            <p>Alphasoft360</p>
+                            <p>Sahwal, Punjab , Pakistan</p>
+                            <p>Email: billing@electro.com</p>
+                        {% else %}
+                            <h2>{{ vendor.name|upper }}</h2>
+                            <p>{{ vendor.address }}</p>
+                            <p>Email: {{ vendor.email }}</p>
+                            <p>Phone: {{ vendor.phone }}</p>
+                        {% endif %}
                     </div>
                 </td>
                 <td width="50%">
                     <div class="box">
                         <div class="box-title">Ship To / Bill To</div>
-                        <div class="bold">{{ customer.name|upper }}</div>
-                        <p>{{ customer.address }}</p>
-                        <p>Phone No
-
-
-
-
-                            : {{ customer.phone }}</p>
-                        <p>Email: {{ customer.email }}</p>
+                        {% if type == 'seller' %}
+                            <div class="bold">{{ customer.name|upper }}</div>
+                            <p>{{ customer.address }}</p>
+                            <p>Phone No: {{ customer.phone }}</p>
+                            <p>Email: {{ customer.email }}</p>
+                        {% else %}
+                            <div class="bold">ELECTRO MARKETPLACE</div>
+                            <p>Alphasoft360</p>
+                            <p>Sahwal, Punjab , Pakistan</p>
+                            <p>Email: warehouse@electro.com</p>
+                        {% endif %}
                     </div>
                 </td>
             </tr>
@@ -272,7 +281,7 @@
             </tr>
             <tr class="balance-row">
                 <td>Balance Due</td>
-                <td>$0.00</td>
+                <td>${{ balance|number_format(2) }}</td>
             </tr>
         </table>
     </div>

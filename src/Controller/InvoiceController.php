@@ -44,14 +44,9 @@ class InvoiceController extends AbstractController
         }
 
         $logoData = '';
-        /*
-        $logoPath = $this->getParameter('kernel.project_dir') . '/public/images/logo.png';
-        if (file_exists($logoPath)) {
-            $logoData = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
-        }
-        */
 
         $html = $this->renderView('invoice/invoice.html.twig', [
+            'type' => 'seller',
             'logo' => $logoData,
             'poNumber' => 'PO-' . str_pad($order->getId(), 3, '0', STR_PAD_LEFT),
             'date' => $order->getCreatedAt(),
@@ -63,11 +58,65 @@ class InvoiceController extends AbstractController
             ],
             'items' => $itemsData,
             'subtotal' => $order->getTotal(),
-            'total' => $order->getTotal(), // Simplifying for now, subtotal == total in order entity
+            'total' => $order->getTotal(),
             'paid' => $order->getTotal(),
             'balance' => 0,
         ]);
 
+        return $this->generatePdfResponse($html, sprintf('PO-%s.pdf', $order->getId()));
+    }
+
+    #[Route('/buyer/download', name: 'invoice_buyer_download', methods: ['GET'])]
+    public function downloadBuyer(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['message' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $vendorOrderId = $request->query->get('vendorOrderId');
+        if (!$vendorOrderId) {
+            return $this->json(['message' => 'Vendor Order ID is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $vendorOrder = $entityManager->getRepository(\App\Entity\VendorOrder::class)->find($vendorOrderId);
+        if (!$vendorOrder) {
+            return $this->json(['message' => 'Vendor Order not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $itemsData = [];
+        $itemsData[] = [
+            'description' => $vendorOrder->getProduct()->getName(),
+            'qty' => $vendorOrder->getQuantity(),
+            'rate' => $vendorOrder->getProduct()->getPrice(),
+            'amount' => $vendorOrder->getProduct()->getPrice() * $vendorOrder->getQuantity(),
+        ];
+
+        $logoData = '';
+
+        $html = $this->renderView('invoice/invoice.html.twig', [
+            'type' => 'buyer',
+            'logo' => $logoData,
+            'poNumber' => 'VO-' . str_pad($vendorOrder->getId(), 3, '0', STR_PAD_LEFT),
+            'date' => $vendorOrder->getCreatedAt(),
+            'vendor' => [
+                'name' => $vendorOrder->getVendor()->getName(),
+                'email' => $vendorOrder->getVendor()->getEmail(),
+                'address' => $vendorOrder->getVendor()->getAddress(),
+                'phone' => $vendorOrder->getVendor()->getPhone(),
+            ],
+            'items' => $itemsData,
+            'subtotal' => $itemsData[0]['amount'],
+            'total' => $itemsData[0]['amount'],
+            'paid' => 0,
+            'balance' => $itemsData[0]['amount'],
+        ]);
+
+        return $this->generatePdfResponse($html, sprintf('VO-%s.pdf', $vendorOrder->getId()));
+    }
+
+    private function generatePdfResponse(string $html, string $filename): Response
+    {
         $options = new Options();
         $options->set('defaultFont', 'Helvetica');
         $options->set('isRemoteEnabled', true);
@@ -79,7 +128,7 @@ class InvoiceController extends AbstractController
 
         return new Response($dompdf->output(), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => sprintf('attachment; filename="PO-%s.pdf"', $order->getId()),
+            'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
         ]);
     }
 }
