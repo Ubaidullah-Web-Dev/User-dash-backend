@@ -27,7 +27,7 @@ class AdminUserController extends AbstractController
         return $this->json($data);
     }
 
-    #[Route('/users/{id}/roles', name: 'admin_user_update_roles', methods: ['POST'])]
+    #[Route('/users/{id}/role', name: 'admin_user_update_roles', methods: ['PATCH'])]
     public function updateRoles(
         int $id,
         Request $request,
