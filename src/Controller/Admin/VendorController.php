@@ -29,11 +29,9 @@ class VendorController extends AbstractController
     public function listVendors(Request $request, VendorRepository $vendorRepository): JsonResponse
     {
         $categoryId = $request->query->get('category');
-        if ($categoryId) {
-            $vendors = $vendorRepository->findBy(['category' => $categoryId]);
-        } else {
-            $vendors = $vendorRepository->findAll();
-        }
+        $search = $request->query->get('search');
+        
+        $vendors = $vendorRepository->searchByNameOrCompany($search, $categoryId ? (int) $categoryId : null);
 
         $data = [];
         foreach ($vendors as $vendor) {
@@ -75,18 +73,25 @@ class VendorController extends AbstractController
     #[Route('/vendor-orders', name: 'admin_vendor_orders_list', methods: ['GET'])]
     public function listVendorOrders(Request $request, VendorOrderRepository $repository): JsonResponse
     {
-        $status = $request->query->get('status');
-        if ($status) {
-            $orders = $repository->findBy(['status' => $status], ['createdAt' => 'DESC']);
-        } else {
-            $orders = $repository->findBy([], ['createdAt' => 'DESC']);
-        }
+        $filters = [
+            'status' => $request->query->get('status'),
+            'productName' => $request->query->get('productName'),
+            'orderId' => $request->query->get('orderId'),
+            'category' => $request->query->get('category'),
+            'productId' => $request->query->get('productId'),
+        ];
+        
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 10);
 
-        $data = [];
-        foreach ($orders as $order) {
-            $data[] = [
+        $paginatedResponse = $repository->getPaginatedFilterOrders($filters, $page, $limit);
+
+        $formattedData = [];
+        foreach ($paginatedResponse->data as $order) {
+            $formattedData[] = [
                 'id' => $order->getId(),
                 'vendorName' => $order->getVendor()->getName(),
+                'productId' => $order->getProduct()->getId(),
                 'productName' => $order->getProduct()->getName(),
                 'quantity' => $order->getQuantity(),
                 'status' => $order->getStatus(),
@@ -95,7 +100,13 @@ class VendorController extends AbstractController
             ];
         }
 
-        return $this->json($data);
+        return $this->json([
+            'data' => $formattedData,
+            'total' => $paginatedResponse->total,
+            'page' => $paginatedResponse->page,
+            'limit' => $paginatedResponse->limit,
+            'pages' => $paginatedResponse->pages,
+        ]);
     }
 
     #[Route('/vendor-orders', name: 'admin_vendor_orders_create', methods: ['POST'])]
@@ -242,5 +253,64 @@ class VendorController extends AbstractController
         $entityManager->flush();
 
         return $this->json(['message' => 'Order status updated successfully']);
+    }
+
+    #[Route('/vendor-orders/batch', name: 'admin_vendor_orders_batch_create', methods: ['POST'])]
+    public function createBatchVendorOrder(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        ProductRepository $productRepository,
+        ValidatorInterface $validator
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+        $vendorId = $data['vendorId'] ?? null;
+        $items = $data['items'] ?? [];
+
+        if (!$vendorId || empty($items)) {
+            return $this->json(['message' => 'Vendor ID and items are required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $vendor = $entityManager->getRepository(Vendor::class)->find($vendorId);
+        if (!$vendor) {
+            return $this->json(['message' => 'Vendor not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $orders = [];
+        foreach ($items as $itemsData) {
+            $productId = $itemsData['productId'] ?? null;
+            $quantity = $itemsData['quantity'] ?? null;
+            $comment = $itemsData['comment'] ?? null;
+
+            if (!$productId || !$quantity) {
+                return $this->json(['message' => 'Product ID and Quantity are required for all items'], Response::HTTP_BAD_REQUEST);
+            }
+
+            $product = $productRepository->find($productId);
+            if (!$product) {
+                return $this->json(['message' => "Product with ID $productId not found"], Response::HTTP_NOT_FOUND);
+            }
+
+            // Validate product belongs to vendor category
+            if ($product->getCategory()->getId() !== $vendor->getCategory()->getId()) {
+                return $this->json(['message' => "Product '{$product->getName()}' does not belong to the same category as the vendor"], Response::HTTP_BAD_REQUEST);
+            }
+
+            $order = new VendorOrder();
+            $order->setVendor($vendor);
+            $order->setProduct($product);
+            $order->setQuantity($quantity);
+            $order->setComment($comment);
+            $order->setStatus('pending');
+
+            $entityManager->persist($order);
+            $orders[] = $order;
+        }
+
+        $entityManager->flush();
+
+        return $this->json([
+            'message' => count($orders) . ' vendor orders created successfully',
+            'ids' => array_map(fn($o) => $o->getId(), $orders)
+        ], Response::HTTP_CREATED);
     }
 }

@@ -20,4 +20,24 @@ class VendorRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Vendor::class);
     }
+
+    /**
+     * @return Vendor[]
+     */
+    public function searchByNameOrCompany(?string $search, ?int $categoryId = null): array
+    {
+        $qb = $this->createQueryBuilder('v');
+
+        if ($search) {
+            $qb->andWhere('v.name LIKE :search OR v.companyName LIKE :search')
+                ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($categoryId) {
+            $qb->andWhere('v.category = :categoryId')
+                ->setParameter('categoryId', $categoryId);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
 }
