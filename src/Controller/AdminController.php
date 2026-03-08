@@ -37,27 +37,29 @@ class AdminController extends AbstractController
     #[Route('/products', name: 'admin_product_list', methods: ['GET'])]
     public function listProducts(ProductRepository $productRepo, Request $request): JsonResponse
     {
-        $search = $request->query->get('search');
-        $categoryId = $request->query->get('category');
+        $filters = [
+            'search' => $request->query->get('search'),
+            'category' => $request->query->get('category'),
+            'id' => $request->query->get('id'),
+            'minPrice' => $request->query->get('minPrice'),
+            'maxPrice' => $request->query->get('maxPrice'),
+            'status' => $request->query->get('status', 'all'),
+        ];
 
-        $qb = $productRepo->createQueryBuilder('p')
-            ->orderBy('p.createdAt', 'DESC');
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 10);
 
-        if ($search) {
-            $qb->andWhere('p.name LIKE :search OR p.description LIKE :search')
-               ->setParameter('search', '%' . $search . '%');
-        }
-
-        if ($categoryId) {
-            $qb->andWhere('p.category = :categoryId')
-               ->setParameter('categoryId', $categoryId);
-        }
-
-        $products = $qb->getQuery()->getResult();
+        $paginatedResponse = $productRepo->getPaginatedFilterProducts($filters, $page, $limit);
         
-        $data = array_map(fn(Product $product) => ProductDTO::fromEntity($product), $products);
+        $formattedData = array_map(fn(Product $product) => ProductDTO::fromEntity($product), $paginatedResponse->data);
 
-        return $this->json($data);
+        return $this->json([
+            'data' => $formattedData,
+            'total' => $paginatedResponse->total,
+            'page' => $paginatedResponse->page,
+            'limit' => $paginatedResponse->limit,
+            'pages' => $paginatedResponse->pages,
+        ]);
     }
 
     #[Route('/products/{id}', name: 'admin_product_delete', methods: ['DELETE'])]
@@ -111,6 +113,43 @@ class AdminController extends AbstractController
         $em->flush();
 
         return $this->json(['message' => 'Product updated successfully']);
+    }
+
+    #[Route('/categories', name: 'admin_category_create', methods: ['POST'])]
+    public function createCategory(
+        Request $request,
+        EntityManagerInterface $em,
+        ValidatorInterface $validator
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+        $name = $data['name'] ?? null;
+
+        if (!$name) {
+            return $this->json(['message' => 'Category name is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $category = new \App\Entity\Category();
+        $category->setName($name);
+        
+        // Generate slug from name
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name)));
+        $category->setSlug($slug);
+        
+        if (isset($data['image'])) {
+            $category->setImage($data['image']);
+        }
+
+        $em->persist($category);
+        $em->flush();
+
+        return $this->json([
+            'message' => 'Category created successfully',
+            'category' => [
+                'id' => $category->getId(),
+                'name' => $category->getName(),
+                'slug' => $category->getSlug()
+            ]
+        ], Response::HTTP_CREATED);
     }
 
     #[Route('/users', name: 'admin_user_list', methods: ['GET'])]
