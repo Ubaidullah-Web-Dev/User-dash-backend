@@ -263,10 +263,16 @@
     <!-- TOTALS -->
     <div class="section">
         <table class="totals-table">
-            <tr>
-                <td>Subtotal</td>
+            <tr class="subtotal-row">
+                <td>SUBTOTAL</td>
                 <td>${{ subtotal|number_format(2) }}</td>
             </tr>
+            {% if discountAmount is defined and discountAmount > 0 %}
+            <tr>
+                <td style="font-size:10px;color:#666;">Discount ({{ discountPercentage }}%)</td>
+                <td style="font-size:10px;color:#666;">-${{ discountAmount|number_format(2) }}</td>
+            </tr>
+            {% endif %}
             <tr>
                 <td>Tax (0%)</td>
                 <td>$0.00</td>
@@ -275,13 +281,19 @@
                 <td>TOTAL</td>
                 <td>${{ total|number_format(2) }}</td>
             </tr>
+            {% if amountTendered is defined and amountTendered is not null %}
             <tr>
-                <td style="font-size:10px;color:#666;">Paid (Electronic)</td>
-                <td style="font-size:10px;color:#666;">-${{ paid|number_format(2) }}</td>
+                <td style="font-size:10px;color:#666;">Cash Tendered</td>
+                <td style="font-size:10px;color:#666;">${{ amountTendered|number_format(2) }}</td>
             </tr>
+            <tr>
+                <td style="font-size:10px;color:#666;">Change Due</td>
+                <td style="font-size:10px;color:#666;">${{ changeDue|number_format(2) }}</td>
+            </tr>
+            {% endif %}
             <tr class="balance-row">
-                <td>Balance Due</td>
-                <td>${{ balance|number_format(2) }}</td>
+                <td>Status</td>
+                <td>PAID</td>
             </tr>
         </table>
     </div>

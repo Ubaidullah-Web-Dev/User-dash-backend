@@ -23,6 +23,18 @@ class ProductCreateDTO
     #[Assert\Regex(pattern: '/^[a-zA-Z0-9 ]{1,20}$/', message: 'Invalid unit format. Use max 20 alphanumeric characters.')]
     public ?string $unit = null;
 
+    public ?string $companyName = null;
+
+    public ?string $packSize = null;
+
+    public ?float $purchasePrice = null;
+
+    public ?string $expiryDate = null; // Y-m-d format
+
+    public ?string $batchNumber = null;
+
+    public ?int $minimumStock = 0;
+
     #[Assert\NotBlank(message: 'Category is required')]
     public ?int $category_id = null;
 

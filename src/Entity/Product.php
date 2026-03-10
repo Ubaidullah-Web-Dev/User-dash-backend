@@ -44,8 +44,26 @@ class Product
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $unit = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $companyName = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $packSize = null;
+
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
+    private ?string $purchasePrice = null;
+
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $expiryDate = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $batchNumber = null;
+
+    #[ORM\Column(options: ['default' => 0])]
+    private ?int $minimumStock = 0;
+
     #[ORM\ManyToOne(inversedBy: 'products')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     private ?Category $category = null;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
@@ -231,6 +249,78 @@ class Product
     public function setUnit(?string $unit): static
     {
         $this->unit = $unit;
+
+        return $this;
+    }
+
+    public function getCompanyName(): ?string
+    {
+        return $this->companyName;
+    }
+
+    public function setCompanyName(?string $companyName): static
+    {
+        $this->companyName = $companyName;
+
+        return $this;
+    }
+
+    public function getPackSize(): ?string
+    {
+        return $this->packSize;
+    }
+
+    public function setPackSize(?string $packSize): static
+    {
+        $this->packSize = $packSize;
+
+        return $this;
+    }
+
+    public function getPurchasePrice(): ?string
+    {
+        return $this->purchasePrice;
+    }
+
+    public function setPurchasePrice(?string $purchasePrice): static
+    {
+        $this->purchasePrice = $purchasePrice;
+
+        return $this;
+    }
+
+    public function getExpiryDate(): ?\DateTimeImmutable
+    {
+        return $this->expiryDate;
+    }
+
+    public function setExpiryDate(?\DateTimeImmutable $expiryDate): static
+    {
+        $this->expiryDate = $expiryDate;
+
+        return $this;
+    }
+
+    public function getBatchNumber(): ?string
+    {
+        return $this->batchNumber;
+    }
+
+    public function setBatchNumber(?string $batchNumber): static
+    {
+        $this->batchNumber = $batchNumber;
+
+        return $this;
+    }
+
+    public function getMinimumStock(): ?int
+    {
+        return $this->minimumStock;
+    }
+
+    public function setMinimumStock(int $minimumStock): static
+    {
+        $this->minimumStock = $minimumStock;
 
         return $this;
     }

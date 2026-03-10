@@ -21,6 +21,12 @@ class ProductDTO
     public array $seller;
     public array $images;
     public ?string $unit;
+    public ?string $companyName;
+    public ?string $packSize;
+    public ?string $purchasePrice;
+    public ?string $expiryDate;
+    public ?string $batchNumber;
+    public ?int $minimumStock;
 
     public static function fromEntity(Product $product): self
     {
@@ -47,6 +53,12 @@ class ProductDTO
             return $img->getUrl();
         }, $product->getImages()->toArray());
         $dto->unit = $product->getUnit();
+        $dto->companyName = $product->getCompanyName();
+        $dto->packSize = $product->getPackSize();
+        $dto->purchasePrice = $product->getPurchasePrice();
+        $dto->expiryDate = $product->getExpiryDate()?->format('Y-m-d');
+        $dto->batchNumber = $product->getBatchNumber();
+        $dto->minimumStock = $product->getMinimumStock();
 
         return $dto;
     }

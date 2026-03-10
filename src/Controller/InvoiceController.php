@@ -29,8 +29,13 @@ class InvoiceController extends AbstractController
         }
 
         $order = $entityManager->getRepository(Order::class)->find($orderId);
-        if (!$order || $order->getUser() !== $user) {
-            return $this->json(['message' => 'Order not found or unauthorized'], Response::HTTP_NOT_FOUND);
+        if (!$order) {
+            return $this->json(['message' => 'Order not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Check if admin or owner
+        if (!$this->isGranted('ROLE_ADMIN') && $order->getUser() !== $user) {
+            return $this->json(['message' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
         }
 
         $itemsData = [];
@@ -48,18 +53,22 @@ class InvoiceController extends AbstractController
         $html = $this->renderView('invoice/invoice.html.twig', [
             'type' => 'seller',
             'logo' => $logoData,
-            'poNumber' => 'PO-' . str_pad($order->getId(), 3, '0', STR_PAD_LEFT),
+            'poNumber' => str_pad($order->getId(), 6, '0', STR_PAD_LEFT),
             'date' => $order->getCreatedAt(),
             'customer' => [
-                'name' => $user->getName(),
-                'email' => $user->getEmail(),
+                'name' => $order->getCustomerName() ?? ($order->getRegisteredCustomer() ? $order->getRegisteredCustomer()->getName() : 'Walk-In Customer'),
+                'email' => $order->getRegisteredCustomer() ? $order->getRegisteredCustomer()->getEmail() : '',
                 'address' => $order->getAddress(),
                 'phone' => $order->getPhone(),
             ],
             'items' => $itemsData,
-            'subtotal' => $order->getTotal(),
+            'subtotal' => $order->getTotal() + ($order->getDiscountAmount() ?? 0),
             'total' => $order->getTotal(),
             'paid' => $order->getTotal(),
+            'discountPercentage' => $order->getDiscountPercentage(),
+            'discountAmount' => $order->getDiscountAmount(),
+            'amountTendered' => $order->getAmountTendered(),
+            'changeDue' => $order->getChangeDue(),
             'balance' => 0,
         ]);
 

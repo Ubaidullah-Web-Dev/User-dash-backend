@@ -93,6 +93,12 @@ class MarketplaceController extends AbstractController
         $dto->category_id = isset($data['category_id']) ? (int)$data['category_id'] : null;
         $dto->isRecommended = $data['isRecommended'] ?? false;
         $dto->images = $data['images'] ?? [];
+        $dto->companyName = $data['companyName'] ?? null;
+        $dto->packSize = $data['packSize'] ?? null;
+        $dto->purchasePrice = isset($data['purchasePrice']) ? (float)$data['purchasePrice'] : null;
+        $dto->expiryDate = $data['expiryDate'] ?? null;
+        $dto->batchNumber = $data['batchNumber'] ?? null;
+        $dto->minimumStock = isset($data['minimumStock']) ? (int)$data['minimumStock'] : 0;
 
         $errors = $validator->validate($dto);
         if (count($errors) > 0) {
@@ -111,6 +117,12 @@ class MarketplaceController extends AbstractController
         $product->setStock($dto->stock);
         $product->setIsRecommended($dto->isRecommended);
         $product->setUser($user);
+        $product->setCompanyName($dto->companyName);
+        $product->setPackSize($dto->packSize);
+        if ($dto->purchasePrice !== null) $product->setPurchasePrice((string)$dto->purchasePrice);
+        if ($dto->expiryDate !== null) $product->setExpiryDate(new \DateTimeImmutable($dto->expiryDate));
+        $product->setBatchNumber($dto->batchNumber);
+        $product->setMinimumStock($dto->minimumStock);
 
         if ($dto->unit !== null) {
             $product->setUnit(trim($dto->unit));

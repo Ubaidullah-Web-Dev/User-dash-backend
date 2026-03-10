@@ -16,4 +16,16 @@ class ProductUpdateDTO
     public ?int $stock = null;
 
     public ?bool $isRecommended = null;
+
+    public ?string $companyName = null;
+
+    public ?string $packSize = null;
+
+    public ?string $purchasePrice = null;
+
+    public ?string $expiryDate = null;
+
+    public ?string $batchNumber = null;
+
+    public ?int $minimumStock = null;
 }

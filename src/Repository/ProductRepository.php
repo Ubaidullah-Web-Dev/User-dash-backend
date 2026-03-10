@@ -73,4 +73,20 @@ class ProductRepository extends ServiceEntityRepository implements PaginationInt
                 ->setParameter('isActive', $isActive);
         }
     }
+
+    public function bulkAssignToCategory(array $ids, \App\Entity\Category $category): void
+    {
+        if (empty($ids)) {
+            return;
+        }
+
+        $this->createQueryBuilder('p')
+            ->update()
+            ->set('p.category', ':category')
+            ->where('p.id IN (:ids)')
+            ->setParameter('category', $category)
+            ->setParameter('ids', $ids)
+            ->getQuery()
+            ->execute();
+    }
 }
