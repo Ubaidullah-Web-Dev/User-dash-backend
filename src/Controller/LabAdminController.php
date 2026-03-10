@@ -140,9 +140,20 @@ class LabAdminController extends AbstractController
     }
 
     #[Route('/customers', name: 'admin_lab_customers', methods: ['GET'])]
-    public function listCustomers(RegisteredCustomerRepository $customerRepo): JsonResponse
+    public function listCustomers(Request $request, RegisteredCustomerRepository $customerRepo): JsonResponse
     {
-        $customers = $customerRepo->findAll();
+        $search = $request->query->get('search');
+        if ($search) {
+            $customers = $customerRepo->createQueryBuilder('c')
+                ->where('c.name LIKE :s OR c.phone LIKE :s')
+                ->setParameter('s', '%' . $search . '%')
+                ->setMaxResults(10)
+                ->getQuery()
+                ->getResult();
+        } else {
+            $customers = $customerRepo->findAll();
+        }
+
         return $this->json(array_map(fn(RegisteredCustomer $c) => [
             'id' => $c->getId(),
             'name' => $c->getName(),
@@ -158,18 +169,84 @@ class LabAdminController extends AbstractController
     public function createCustomer(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-        
+        $phone = $data['phone'] ?? '';
+        if ($phone) {
+            $existing = $em->getRepository(RegisteredCustomer::class)->findOneBy(['phone' => $phone]);
+            if ($existing) {
+                return $this->json(['message' => 'A customer with this phone number already exists'], Response::HTTP_CONFLICT);
+            }
+        }
+
         $customer = new RegisteredCustomer();
         $customer->setName($data['name'] ?? '');
-        $customer->setPhone($data['phone'] ?? '');
+        $customer->setPhone($phone);
         $customer->setLabName($data['labName'] ?? null);
         $customer->setCity($data['city'] ?? null);
         $customer->setAddress($data['address'] ?? null);
-        $customer->setCreatedAt(new \DateTime());
 
         $em->persist($customer);
         $em->flush();
 
         return $this->json(['message' => 'Customer registered successfully', 'id' => $customer->getId()], Response::HTTP_CREATED);
+    }
+
+    #[Route('/customers/{id}', name: 'admin_lab_customers_get', methods: ['GET'])]
+    public function getCustomer(int $id, RegisteredCustomerRepository $customerRepo): JsonResponse
+    {
+        $customer = $customerRepo->find($id);
+        if (!$customer) {
+            return $this->json(['message' => 'Customer not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json([
+            'id' => $customer->getId(),
+            'name' => $customer->getName(),
+            'phone' => $customer->getPhone(),
+            'labName' => $customer->getLabName(),
+            'city' => $customer->getCity(),
+            'address' => $customer->getAddress(),
+            'totalSpent' => $customer->getTotalSpent(),
+        ]);
+    }
+
+    #[Route('/customers/{id}', name: 'admin_lab_customers_update', methods: ['PUT'])]
+    public function updateCustomer(int $id, Request $request, RegisteredCustomerRepository $customerRepo, EntityManagerInterface $em): JsonResponse
+    {
+        $customer = $customerRepo->find($id);
+        if (!$customer) {
+            return $this->json(['message' => 'Customer not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        
+        if (isset($data['phone']) && $data['phone'] !== $customer->getPhone()) {
+            $existing = $customerRepo->findOneBy(['phone' => $data['phone']]);
+            if ($existing) {
+                return $this->json(['message' => 'This phone number is already registered to another customer'], Response::HTTP_CONFLICT);
+            }
+            $customer->setPhone($data['phone']);
+        }
+        if (isset($data['name'])) $customer->setName($data['name']);
+        if (isset($data['labName'])) $customer->setLabName($data['labName']);
+        if (isset($data['city'])) $customer->setCity($data['city']);
+        if (isset($data['address'])) $customer->setAddress($data['address']);
+
+        $em->flush();
+
+        return $this->json(['message' => 'Customer updated successfully']);
+    }
+
+    #[Route('/customers/{id}', name: 'admin_lab_customers_delete', methods: ['DELETE'])]
+    public function deleteCustomer(int $id, RegisteredCustomerRepository $customerRepo, EntityManagerInterface $em): JsonResponse
+    {
+        $customer = $customerRepo->find($id);
+        if (!$customer) {
+            return $this->json(['message' => 'Customer not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $em->remove($customer);
+        $em->flush();
+
+        return $this->json(['message' => 'Customer deleted successfully']);
     }
 }

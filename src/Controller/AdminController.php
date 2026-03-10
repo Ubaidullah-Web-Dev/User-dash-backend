@@ -10,6 +10,7 @@ use App\DTO\ProductUpdateDTO;
 use App\Repository\ProductRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Repository\CategoryRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -95,7 +96,8 @@ class AdminController extends AbstractController
         Request $request, 
         EntityManagerInterface $em,
         SerializerInterface $serializer,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        CategoryRepository $categoryRepo
     ): JsonResponse
     {
         try {
@@ -121,6 +123,14 @@ class AdminController extends AbstractController
         if ($updateDto->expiryDate !== null) $product->setExpiryDate(new \DateTimeImmutable($updateDto->expiryDate));
         if ($updateDto->batchNumber !== null) $product->setBatchNumber($updateDto->batchNumber);
         if ($updateDto->minimumStock !== null) $product->setMinimumStock($updateDto->minimumStock);
+        if ($updateDto->unit !== null) $product->setUnit($updateDto->unit);
+
+        if ($updateDto->categoryId !== null) {
+            $category = $categoryRepo->find($updateDto->categoryId);
+            if ($category) {
+                $product->setCategory($category);
+            }
+        }
 
         $em->flush();
 
@@ -364,7 +374,14 @@ class AdminController extends AbstractController
         $order->setDiscountPercentage($discountPercentage);
         $order->setDiscountAmount($discountAmount);
 
-        if ($phone) {
+        $registeredCustomerId = $data['registeredCustomerId'] ?? null;
+        if ($registeredCustomerId) {
+            $registeredCustomer = $registeredCustomerRepo->find($registeredCustomerId);
+            if ($registeredCustomer) {
+                $registeredCustomer->addOrder($order);
+                // Total spent updated inside addOrder
+            }
+        } elseif ($phone) {
             $registeredCustomer = $registeredCustomerRepo->findOneBy(['phone' => $phone]);
             if (!$registeredCustomer) {
                 $registeredCustomer = new \App\Entity\RegisteredCustomer();
@@ -373,7 +390,6 @@ class AdminController extends AbstractController
                 $em->persist($registeredCustomer);
             }
             $registeredCustomer->addOrder($order);
-            // $registeredCustomer->addTotalSpent($total) is automatically called inside addOrder
         } else {
             $guestUser = new \App\Entity\GuestUser();
             $guestUser->setName($customerName);

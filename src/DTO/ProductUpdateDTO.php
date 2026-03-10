@@ -11,7 +11,7 @@ class ProductUpdateDTO
 
     public ?string $description = null;
 
-    public ?string $price = null;
+    public ?float $price = null;
 
     public ?int $stock = null;
 
@@ -21,11 +21,15 @@ class ProductUpdateDTO
 
     public ?string $packSize = null;
 
-    public ?string $purchasePrice = null;
+    public ?float $purchasePrice = null;
 
     public ?string $expiryDate = null;
 
     public ?string $batchNumber = null;
 
     public ?int $minimumStock = null;
+
+    public ?int $categoryId = null;
+
+    public ?string $unit = null;
 }

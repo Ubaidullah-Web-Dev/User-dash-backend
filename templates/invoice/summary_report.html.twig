@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lab Intelligence Report - {{ periodLabel }}</title>
+    <style>
+        body { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; margin: 0; padding: 40px; font-size: 11px; color: #222; line-height: 1.5; }
+        .header { margin-bottom: 30px; border-bottom: 2px solid #6366f1; padding-bottom: 20px; }
+        .header table { width: 100%; border-collapse: collapse; }
+        .title { font-size: 24px; font-weight: 900; color: #6366f1; text-transform: uppercase; letter-spacing: -1px; }
+        .doc-type { font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px; }
+        .meta { text-align: right; }
+        .meta-item { margin-bottom: 4px; }
+        .meta-label { font-weight: bold; color: #64748b; text-transform: uppercase; font-size: 8px; }
+        .meta-value { font-weight: 900; font-size: 14px; color: #6366f1; }
+        
+        .section { margin-bottom: 30px; }
+        .section-title { font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 20px; }
+        
+        .stats-grid { width: 100%; border-collapse: separate; border-spacing: 15px 0; margin: 0 -15px; }
+        .stat-card { background: #f8fafc; padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0; width: 33.33%; text-align: center; }
+        .stat-label { font-size: 8px; font-weight: bold; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; }
+        .stat-value { font-size: 18px; font-weight: 900; color: #1e293b; }
+        .stat-value.positive { color: #10b981; }
+        .stat-value.negative { color: #ef4444; }
+
+        .details-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .details-table th { background: #f1f5f9; color: #475569; padding: 12px 15px; text-align: left; font-size: 9px; font-weight: 900; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
+        .details-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 11px; }
+        .details-table .label { font-weight: bold; color: #64748b; text-transform: uppercase; font-size: 9px; width: 40%; }
+        .details-table .value { font-weight: 900; text-align: right; }
+
+        .footer { margin-top: 80px; text-align: center; color: #94a3b8; font-size: 9px; border-top: 1px solid #f1f5f9; padding-top: 20px; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <table>
+            <tr>
+                <td>
+                    <div class="title">Lab Intelligence Report</div>
+                    <div class="doc-type">{{ reportType }} Analysis Period</div>
+                </td>
+                <td class="meta">
+                    <div class="meta-item">
+                        <span class="meta-label">Period:</span><br/>
+                        <span class="meta-value">{{ periodLabel }}</span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Financial Performance</div>
+        <table class="stats-grid">
+            <tr>
+                <td class="stat-card">
+                    <div class="stat-label">Total Revenue</div>
+                    <div class="stat-value">${{ revenue|number_format(2) }}</div>
+                </td>
+                <td class="stat-card">
+                    <div class="stat-label">Total Expenses</div>
+                    <div class="stat-value negative">-${{ expenses|number_format(2) }}</div>
+                </td>
+                <td class="stat-card">
+                    <div class="stat-label">Net Income</div>
+                    <div class="stat-value {{ netIncome >= 0 ? 'positive' : 'negative' }}">
+                        {{ netIncome >= 0 ? '+' : '' }}${{ netIncome|number_format(2) }}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Operational Metrics</div>
+        <table class="details-table">
+            <thead>
+                <tr>
+                    <th colspan="2">Metric Description</th>
+                    <th style="text-align: right">Volume / Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="label">Total Customers Served</td>
+                    <td>Based on transactional records</td>
+                    <td class="value">{{ customerCount }} Customers</td>
+                </tr>
+                <tr>
+                    <td class="label">Stock Units Added</td>
+                    <td>Inventory refills through vendor orders</td>
+                    <td class="value" style="color: #10b981;">+{{ stockAdded }} Units</td>
+                </tr>
+                <tr>
+                    <td class="label">Stock Units Utilized</td>
+                    <td>Inventory consumed via sales/pos</td>
+                    <td class="value" style="color: #ef4444;">-{{ stockRemoved }} Units</td>
+                </tr>
+                <tr>
+                    <td class="label">Stock Turnover Status</td>
+                    <td>Net inventory delta in period</td>
+                    <td class="value">{{ stockAdded - stockRemoved }} Units</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        Generated on {{ dateGenerated|date('d F Y, h:i A') }} • ELECTRO Laboratory Intelligence Summary<br/>
+        This document contains strictly confidential data for administrative use only.
+    </div>
+</body>
+</html>

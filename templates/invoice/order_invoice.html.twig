@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice - #{{ order.id }}</title>
+    <style>
+        body { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; margin: 0; padding: 40px; font-size: 11px; color: #222; line-height: 1.5; }
+        .header { margin-bottom: 30px; border-bottom: 2px solid #0ea5e9; padding-bottom: 20px; }
+        .header table { width: 100%; border-collapse: collapse; }
+        .title { font-size: 28px; font-weight: 900; color: #0ea5e9; text-transform: uppercase; letter-spacing: -1px; }
+        .doc-type { font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px; }
+        .meta { text-align: right; }
+        .meta-item { margin-bottom: 4px; }
+        .meta-label { font-weight: bold; color: #64748b; text-transform: uppercase; font-size: 8px; }
+        .meta-value { font-weight: 900; font-size: 12px; color: #0ea5e9; }
+        
+        .section { margin-bottom: 30px; }
+        .section-title { font-size: 9px; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 15px; }
+        
+        .grid { display: table; width: 100%; table-layout: fixed; }
+        .col { display: table-cell; vertical-align: top; }
+        
+        .info-card { background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-right: 10px; }
+        .info-label { font-size: 8px; font-weight: bold; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
+        .info-value { font-size: 11px; font-weight: bold; color: #1e293b; }
+
+        .items-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .items-table th { background: #0ea5e9; color: white; padding: 12px 15px; text-align: left; font-size: 9px; font-weight: 900; text-transform: uppercase; }
+        .items-table td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        .items-table tr:nth-child(even) { background: #f8fafc; }
+        
+        .summary-section { margin-top: 20px; text-align: right; }
+        .summary-table { display: inline-table; width: 300px; border-collapse: collapse; }
+        .summary-row td { padding: 5px 0; }
+        .summary-label { text-align: left; color: #64748b; font-weight: bold; text-transform: uppercase; font-size: 9px; }
+        .summary-value { text-align: right; font-weight: bold; color: #1e293b; }
+        
+        .total-box { background: #0ea5e9; color: white; padding: 15px 30px; border-radius: 12px; margin-top: 10px; }
+        .total-label { font-size: 9px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; opacity: 0.8; text-align: left; }
+        .total-value { font-size: 20px; font-weight: 900; text-align: right; }
+
+        .footer { margin-top: 60px; text-align: center; color: #94a3b8; font-size: 9px; border-top: 1px solid #f1f5f9; padding-top: 20px; font-weight: 500; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 8px; font-weight: 900; text-transform: uppercase; background: #e0f2fe; color: #0369a1; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <table>
+            <tr>
+                <td>
+                    <div class="title">Official Invoice</div>
+                    <div class="doc-type">Laboratory & Pharmacy Billing Receipt</div>
+                </td>
+                <td class="meta">
+                    <div class="meta-item">
+                        <span class="meta-label">Invoice Number:</span><br/>
+                        <span class="meta-value">#INV-{{ "%05d"|format(order.id) }}</span>
+                    </div>
+                    <div class="meta-item" style="margin-top: 10px;">
+                        <span class="meta-label">Date Issued:</span><br/>
+                        <span class="meta-value" style="color: #64748b; font-size: 10px;">{{ order.createdAt|date('d M Y, h:i A') }}</span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Billing Information</div>
+        <div class="grid">
+            <div class="col">
+                <div class="info-card">
+                    <div class="info-label">Customer / Patient</div>
+                    <div class="info-value">
+                        {% if order.registeredCustomer %}
+                            {{ order.registeredCustomer.name }}
+                            <div style="font-weight: normal; color: #64748b; margin-top: 2px;">{{ order.registeredCustomer.phone }}</div>
+                            {% if order.registeredCustomer.labName %}
+                                <div style="font-weight: normal; font-size: 9px; color: #0ea5e9; margin-top: 2px;">{{ order.registeredCustomer.labName }}</div>
+                            {% endif %}
+                        {% elseif order.guestUser %}
+                            {{ order.guestUser.name }}
+                            <div style="font-weight: normal; color: #64748b; margin-top: 2px;">Guest Account</div>
+                        {% else %}
+                            Walk-in Customer
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="info-card" style="margin-right: 0;">
+                    <div class="info-label">Payment Status</div>
+                    <div class="info-value">
+                        <span class="badge">PAID IN FULL</span>
+                    </div>
+                    <div style="margin-top: 10px;" class="info-label">Payment Method</div>
+                    <div class="info-value">Cash / Direct Payment</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Transaction Items</div>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th width="50%">Description</th>
+                    <th width="15%" class="text-right">Rate</th>
+                    <th width="15%" class="text-center">Qty</th>
+                    <th width="20%" class="text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 900; font-size: 12px;">{{ item.product.name }}</div>
+                        <div style="color: #64748b; font-size: 8px; margin-top: 2px;">Category: {{ item.product.category.name|default('General') }}</div>
+                    </td>
+                    <td class="text-right">${{ item.price|number_format(2) }}</td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-right" style="font-weight: bold;">${{ (item.price * item.quantity)|number_format(2) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="summary-section">
+        <table class="summary-table">
+            <tr class="summary-row">
+                <td class="summary-label">Subtotal</td>
+                <td class="summary-value">${{ (order.total + order.discountAmount)|number_format(2) }}</td>
+            </tr>
+            {% if order.discountAmount > 0 %}
+            <tr class="summary-row">
+                <td class="summary-label">Discount ({{ order.discountPercentage }}%)</td>
+                <td class="summary-value" style="color: #ef4444;">-${{ order.discountAmount|number_format(2) }}</td>
+            </tr>
+            {% endif %}
+            <tr>
+                <td colspan="2">
+                    <div class="total-box">
+                        <div class="total-label">Grand Total</div>
+                        <div class="total-value">${{ order.total|number_format(2) }}</div>
+                    </div>
+                </td>
+            </tr>
+            <tr class="summary-row" style="margin-top: 10px;">
+                <td class="summary-label" style="padding-top: 15px;">Amount Paid</td>
+                <td class="summary-value" style="padding-top: 15px;">${{ order.amountTendered|number_format(2) }}</td>
+            </tr>
+            <tr class="summary-row">
+                <td class="summary-label">Balance / Change</td>
+                <td class="summary-value">${{ order.changeDue|number_format(2) }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="footer">
+        Electro Laboratory & Reagent Management System.<br/>
+        This is an electronic record and does not require a physical signature.<br/>
+        Thank you for your business!
+    </div>
+</body>
+</html>
