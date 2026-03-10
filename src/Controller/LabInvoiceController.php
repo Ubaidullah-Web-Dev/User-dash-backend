@@ -111,19 +111,26 @@ class LabInvoiceController extends AbstractController
 
         $orders = $qb->orderBy('o.createdAt', 'ASC')->getQuery()->getResult();
 
-        $statementItems = [];
+        $statementOrders = [];
         $totalSpent = 0;
         foreach ($orders as $order) {
             $totalSpent += $order->getTotal();
+            
+            $productNames = [];
             foreach ($order->getItems() as $item) {
-                $statementItems[] = [
-                    'date' => $order->getCreatedAt()->format('Y-m-d'),
-                    'orderId' => $order->getId(),
-                    'productName' => $item->getProduct() ? $item->getProduct()->getName() : 'Unknown Product',
-                    'quantity' => $item->getQuantity(),
-                    'price' => $item->getPrice()
-                ];
+                $productNames[] = $item->getProduct() ? $item->getProduct()->getName() : 'Unknown Product';
             }
+
+            $pendingAmount = $order->getChangeDue() < 0 ? abs($order->getChangeDue()) : 0;
+
+            $statementOrders[] = [
+                'date' => $order->getCreatedAt()->format('Y-m-d'),
+                'orderId' => $order->getId(),
+                'products' => implode(', ', $productNames),
+                'total' => $order->getTotal(),
+                'amountTendered' => $order->getAmountTendered() ?: $order->getTotal(), // if null, assume fully paid for old records
+                'pending' => $pendingAmount
+            ];
         }
 
         $html = $this->renderView('invoice/customer_statement.html.twig', [
@@ -134,8 +141,9 @@ class LabInvoiceController extends AbstractController
                 'city' => $customer->getCity(),
                 'address' => $customer->getAddress()
             ],
+            'customerRemainingBalance' => $customer->getRemainingBalance(),
             'periodLabel' => $periodLabel,
-            'items' => $statementItems,
+            'orders' => $statementOrders,
             'totalSpent' => $totalSpent,
             'date' => new \DateTime()
         ]);

@@ -378,6 +378,10 @@ class AdminController extends AbstractController
         if ($registeredCustomerId) {
             $registeredCustomer = $registeredCustomerRepo->find($registeredCustomerId);
             if ($registeredCustomer) {
+                // If change is negative, customer underpaid. Add to outstanding balance.
+                if ($changeDue < 0) {
+                    $registeredCustomer->addRemainingBalance(abs($changeDue));
+                }
                 $registeredCustomer->addOrder($order);
                 // Total spent updated inside addOrder
             }
@@ -388,6 +392,9 @@ class AdminController extends AbstractController
                 $registeredCustomer->setPhone($phone);
                 $registeredCustomer->setName($customerName);
                 $em->persist($registeredCustomer);
+            }
+            if ($changeDue < 0) {
+                $registeredCustomer->addRemainingBalance(abs($changeDue));
             }
             $registeredCustomer->addOrder($order);
         } else {

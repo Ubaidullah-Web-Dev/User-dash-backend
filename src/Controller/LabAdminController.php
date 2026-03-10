@@ -142,27 +142,31 @@ class LabAdminController extends AbstractController
     #[Route('/customers', name: 'admin_lab_customers', methods: ['GET'])]
     public function listCustomers(Request $request, RegisteredCustomerRepository $customerRepo): JsonResponse
     {
-        $search = $request->query->get('search');
-        if ($search) {
-            $customers = $customerRepo->createQueryBuilder('c')
-                ->where('c.name LIKE :s OR c.phone LIKE :s')
-                ->setParameter('s', '%' . $search . '%')
-                ->setMaxResults(10)
-                ->getQuery()
-                ->getResult();
-        } else {
-            $customers = $customerRepo->findAll();
-        }
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 10);
+        
+        $filters = [
+            'search' => $request->query->get('search', '')
+        ];
 
-        return $this->json(array_map(fn(RegisteredCustomer $c) => [
-            'id' => $c->getId(),
-            'name' => $c->getName(),
-            'phone' => $c->getPhone(),
-            'labName' => $c->getLabName(),
-            'city' => $c->getCity(),
-            'address' => $c->getAddress(),
-            'totalSpent' => $c->getTotalSpent(),
-        ], $customers));
+        $paginatedResponse = $customerRepo->getPaginatedCustomers($filters, $page, $limit);
+
+        return $this->json([
+            'data' => array_map(fn(RegisteredCustomer $c) => [
+                'id' => $c->getId(),
+                'name' => $c->getName(),
+                'phone' => $c->getPhone(),
+                'labName' => $c->getLabName(),
+                'city' => $c->getCity(),
+                'address' => $c->getAddress(),
+                'totalSpent' => $c->getTotalSpent(),
+                'remainingBalance' => $c->getRemainingBalance(),
+            ], $paginatedResponse->data),
+            'total' => $paginatedResponse->total,
+            'page' => $paginatedResponse->page,
+            'limit' => $paginatedResponse->limit,
+            'pages' => $paginatedResponse->pages,
+        ]);
     }
 
     #[Route('/customers', name: 'admin_lab_customers_create', methods: ['POST'])]
@@ -206,6 +210,7 @@ class LabAdminController extends AbstractController
             'city' => $customer->getCity(),
             'address' => $customer->getAddress(),
             'totalSpent' => $customer->getTotalSpent(),
+            'remainingBalance' => $customer->getRemainingBalance(),
         ]);
     }
 

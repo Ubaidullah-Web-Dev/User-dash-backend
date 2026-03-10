@@ -89,21 +89,23 @@
             <tr>
                 <th width="12%">Date</th>
                 <th width="10%">Ref ID</th>
-                <th>Product Description</th>
-                <th width="10%" style="text-align: center">Qty</th>
-                <th width="15%" style="text-align: right">Unit Price</th>
+                <th>Products</th>
                 <th width="15%" style="text-align: right">Gross Amount</th>
+                <th width="15%" style="text-align: right">Paid</th>
+                <th width="15%" style="text-align: right; color: #ffb8b8;">Pending</th>
             </tr>
         </thead>
         <tbody>
-            {% for item in items %}
+            {% for order in orders %}
             <tr>
-                <td>{{ item.date|date('d M Y') }}</td>
-                <td style="color: #0984e3; font-weight: 900;">#{{ item.orderId }}</td>
-                <td style="font-weight: 800;">{{ item.productName }}</td>
-                <td style="text-align: center">{{ item.quantity }}</td>
-                <td style="text-align: right">${{ item.price|number_format(2) }}</td>
-                <td style="text-align: right; font-weight: 900;">${{ (item.quantity * item.price)|number_format(2) }}</td>
+                <td>{{ order.date|date('d M Y') }}</td>
+                <td style="color: #0984e3; font-weight: 900;">#{{ order.orderId }}</td>
+                <td style="font-weight: 600;">{{ order.products }}</td>
+                <td style="text-align: right; font-weight: 900;">${{ order.total|number_format(2) }}</td>
+                <td style="text-align: right;">${{ order.amountTendered|number_format(2) }}</td>
+                <td style="text-align: right; font-weight: 900; color: {{ order.pending > 0 ? '#d63031' : '#b2bec3' }};">
+                    ${{ order.pending|number_format(2) }}
+                </td>
             </tr>
             {% else %}
             <tr>
@@ -119,6 +121,12 @@
         <div class="summary-label">Total Period Spending</div>
         <div class="summary-value">${{ totalSpent|number_format(2) }}</div>
     </div>
+    {% if customerRemainingBalance is defined and customerRemainingBalance > 0 %}
+    <div class="summary-box" style="margin-right: 20px; background: #d63031;">
+        <div class="summary-label">Outstanding Balance</div>
+        <div class="summary-value">${{ customerRemainingBalance|number_format(2) }}</div>
+    </div>
+    {% endif %}
 
     <div class="footer">
         This document serves as an electronic record of sales and inventory usage for the specified period.<br>

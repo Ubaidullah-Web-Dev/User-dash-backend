@@ -69,6 +69,7 @@ class InvoiceController extends AbstractController
             'discountAmount' => $order->getDiscountAmount(),
             'amountTendered' => $order->getAmountTendered(),
             'changeDue' => $order->getChangeDue(),
+            'remainingBalance' => $order->getRegisteredCustomer() ? $order->getRegisteredCustomer()->getRemainingBalance() : 0,
             'balance' => 0,
         ]);
 

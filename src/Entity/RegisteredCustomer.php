@@ -33,6 +33,9 @@ class RegisteredCustomer
     #[ORM\Column]
     private float $totalSpent = 0.0;
 
+    #[ORM\Column]
+    private float $remainingBalance = 0.0;
+
     #[ORM\Column(type: 'datetime')]
     private ?\DateTimeInterface $createdAt = null;
 
@@ -65,6 +68,10 @@ class RegisteredCustomer
     public function getTotalSpent(): float { return $this->totalSpent; }
     public function setTotalSpent(float $totalSpent): self { $this->totalSpent = $totalSpent; return $this; }
     public function addTotalSpent(float $amount): self { $this->totalSpent += $amount; return $this; }
+
+    public function getRemainingBalance(): float { return $this->remainingBalance; }
+    public function setRemainingBalance(float $remainingBalance): self { $this->remainingBalance = $remainingBalance; return $this; }
+    public function addRemainingBalance(float $amount): self { $this->remainingBalance += $amount; return $this; }
 
     public function getCreatedAt(): ?\DateTimeInterface { return $this->createdAt; }
 
