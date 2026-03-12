@@ -292,14 +292,7 @@ class AdminController extends AbstractController
         ];
     }
 
-    #[Route('/users', name: 'admin_user_list', methods: ['GET'])]
-    public function listUsers(UserRepository $userRepo): JsonResponse
-    {
-        $users = $userRepo->findAll();
-        $data = array_map(fn(User $user) => UserDTO::fromEntity($user), $users);
 
-        return $this->json($data);
-    }
 
     #[Route('/orders/walk-in', name: 'admin_order_walk_in', methods: ['POST'])]
     public function walkInOrder(

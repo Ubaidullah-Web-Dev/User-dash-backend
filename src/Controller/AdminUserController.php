@@ -17,14 +17,26 @@ use Symfony\Component\Serializer\SerializerInterface;
 class AdminUserController extends AbstractController
 {
     #[Route('/users', name: 'admin_users_list', methods: ['GET'])]
-    public function listUsers(UserRepository $userRepository): JsonResponse
+    public function listUsers(Request $request, UserRepository $userRepository): JsonResponse
     {
         $this->denyAccessUnlessGranted('USER_VIEW');
 
-        $users = $userRepository->findAll();
-        $data = array_map(fn($user) => UserDTO::fromEntity($user), $users);
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 10);
+        $filters = [
+            'search' => $request->query->get('search'),
+            'role' => $request->query->get('role'),
+        ];
 
-        return $this->json($data);
+        $paginatedResponse = $userRepository->getPaginatedUsers($filters, $page, $limit);
+
+        return $this->json([
+            'data' => array_map(fn($user) => UserDTO::fromEntity($user), $paginatedResponse->data),
+            'total' => $paginatedResponse->total,
+            'page' => $paginatedResponse->page,
+            'pages' => $paginatedResponse->pages,
+            'limit' => $paginatedResponse->limit,
+        ]);
     }
 
     #[Route('/users/{id}/role', name: 'admin_user_update_roles', methods: ['PATCH'])]

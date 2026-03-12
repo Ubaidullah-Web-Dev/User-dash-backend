@@ -11,6 +11,13 @@ roles:
             - POST_CREATE
             - POST_EDIT_ALL
             - USER_VIEW
+            - USER_EDIT_ROLE
+    
+    ROLE_MODERATOR:
+        permissions:
+            - POST_VIEW
+            - POST_EDIT_ALL
+            - USER_VIEW
     
     ROLE_SUPER_ADMIN:
         permissions:
