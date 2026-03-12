@@ -129,9 +129,14 @@ class LabAdminController extends AbstractController
     }
 
     #[Route('/invoices', name: 'admin_lab_invoices', methods: ['GET'])]
-    public function listInvoices(OrderRepository $orderRepo): JsonResponse
+    public function listInvoices(Request $request, OrderRepository $orderRepo): JsonResponse
     {
-        $orders = $orderRepo->findBy([], ['createdAt' => 'DESC'], 50);
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 10);
+        $search = $request->query->get('search', '');
+
+        $paginatedResponse = $orderRepo->getPaginatedOrders(['search' => $search], $page, $limit);
+
         return $this->json([
             'data' => array_map(fn(Order $o) => [
                 'id' => $o->getId(),
@@ -139,7 +144,11 @@ class LabAdminController extends AbstractController
                 'phone' => $o->getPhone(),
                 'totalAmount' => (string)$o->getTotal(),
                 'createdAt' => $o->getCreatedAt()->format('Y-m-d H:i:s'),
-            ], $orders)
+            ], $paginatedResponse->data),
+            'total' => $paginatedResponse->total,
+            'page' => $paginatedResponse->page,
+            'limit' => $paginatedResponse->limit,
+            'pages' => $paginatedResponse->pages,
         ]);
     }
 
