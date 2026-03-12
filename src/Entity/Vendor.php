@@ -50,7 +50,7 @@ class Vendor
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'vendors')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     private ?Category $category = null;
 
     #[ORM\OneToMany(mappedBy: 'vendor', targetEntity: VendorOrder::class)]

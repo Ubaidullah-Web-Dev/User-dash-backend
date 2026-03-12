@@ -38,6 +38,9 @@
         <table>
             <tr>
                 <td>
+                    {% if logo %}
+                        <img src="{{ logo }}" alt="Logo" style="height: 80px; margin-bottom: 15px;">
+                    {% endif %}
                     <div class="title">Lab Intelligence Report</div>
                     <div class="doc-type">{{ reportType }} Analysis Period</div>
                 </td>

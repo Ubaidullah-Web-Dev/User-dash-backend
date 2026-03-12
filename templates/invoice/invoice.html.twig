@@ -165,9 +165,13 @@
                     <h1>{{ type == 'buyer' ? 'SUPPLY ORDER' : 'PURCHASE ORDER' }}</h1>
                 </td>
                 <td class="logo-box">
-                    <div class="logo-styled">
-                        <span style="color:#0056b3;">E</span>LECTRO
-                    </div>
+                    {% if logo %}
+                        <img src="{{ logo }}" alt="Logo" style="height: 80px; width: auto;">
+                    {% else %}
+                        <div class="logo-styled">
+                            <span style="color:#0056b3;">E</span>LECTRO
+                        </div>
+                    {% endif %}
                 </td>
             </tr>
         </table>

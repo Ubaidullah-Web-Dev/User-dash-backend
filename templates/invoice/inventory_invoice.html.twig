@@ -45,6 +45,9 @@
         <table>
             <tr>
                 <td>
+                    {% if logo %}
+                        <img src="{{ logo }}" alt="Logo" style="height: 80px; margin-bottom: 15px;">
+                    {% endif %}
                     <div class="title">{{ documentTitle }}</div>
                     <div class="doc-type">Laboratory Inventory Management System</div>
                 </td>

@@ -70,6 +70,7 @@ class LabAdminController extends AbstractController
         $productId = $data['productId'] ?? null;
         $quantity = $data['quantity'] ?? 0;
         $purchasePrice = $data['purchasePrice'] ?? null;
+        $supplier = $data['supplier'] ?? null;
 
         if (!$productId || $quantity <= 0) {
             return $this->json(['message' => 'Invalid product or quantity'], Response::HTTP_BAD_REQUEST);
@@ -83,6 +84,9 @@ class LabAdminController extends AbstractController
         $product->setStock($product->getStock() + $quantity);
         if ($purchasePrice !== null) {
             $product->setPurchasePrice((string)$purchasePrice);
+        }
+        if ($supplier) {
+            $product->setCompanyName($supplier);
         }
 
         $em->flush();

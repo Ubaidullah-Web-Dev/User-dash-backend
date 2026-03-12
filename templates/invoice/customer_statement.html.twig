@@ -44,7 +44,7 @@
                     <div class="header-subtitle">Electronic Activity Report</div>
                 </td>
                 <td align="right">
-                    <div style="font-size: 20px; font-weight: 900; color: #0984e3; border: 3px solid #0984e3; padding: 5px 15px; border-radius: 8px;">ELECTRO</div>
+                    {% if logo %}<img src="{{ logo }}" alt="Logo" style="height: 80px;">{% else %}<div style="font-size: 20px; font-weight: 900; color: #0984e3; border: 3px solid #0984e3; padding: 5px 15px; border-radius: 8px;">ELECTRO</div>{% endif %}
                 </td>
             </tr>
         </table>

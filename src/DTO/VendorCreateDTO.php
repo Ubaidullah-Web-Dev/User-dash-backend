@@ -22,6 +22,5 @@ class VendorCreateDTO
     #[Assert\Choice(choices: ['active', 'inactive'])]
     public ?string $status = 'active';
 
-    #[Assert\NotBlank(message: 'Category is required')]
     public ?int $categoryId = null;
 }

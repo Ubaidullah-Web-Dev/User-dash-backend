@@ -48,7 +48,11 @@ class InvoiceController extends AbstractController
             ];
         }
 
+        $logoPath = $this->getParameter('kernel.project_dir') . '/public/images/logo.png';
         $logoData = '';
+        if (extension_loaded('gd') && file_exists($logoPath)) {
+            $logoData = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+        }
 
         $html = $this->renderView('invoice/invoice.html.twig', [
             'type' => 'seller',
@@ -102,7 +106,11 @@ class InvoiceController extends AbstractController
             'amount' => $vendorOrder->getProduct()->getPrice() * $vendorOrder->getQuantity(),
         ];
 
+        $logoPath = $this->getParameter('kernel.project_dir') . '/public/images/logo.png';
         $logoData = '';
+        if (extension_loaded('gd') && file_exists($logoPath)) {
+            $logoData = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+        }
 
         $html = $this->renderView('invoice/invoice.html.twig', [
             'type' => 'buyer',

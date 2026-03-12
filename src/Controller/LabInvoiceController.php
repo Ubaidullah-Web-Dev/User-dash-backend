@@ -28,6 +28,7 @@ class LabInvoiceController extends AbstractController
 
         $html = $this->renderView('invoice/inventory_invoice.html.twig', [
             'type' => 'reagent',
+            'logo' => $this->getLogoData(),
             'isEditing' => true, // Assuming if we are here, it's either new or edit, we can use a generic term
             'documentTitle' => 'Reagent Inventory Record',
             'documentNumber' => 'REG-' . str_pad($product->getId(), 5, '0', STR_PAD_LEFT),
@@ -63,6 +64,7 @@ class LabInvoiceController extends AbstractController
 
         $html = $this->renderView('invoice/inventory_invoice.html.twig', [
             'type' => 'stock_in',
+            'logo' => $this->getLogoData(),
             'documentTitle' => 'Stock Entry Receipt',
             'documentNumber' => 'STK-' . date('Ymd') . '-' . rand(100, 999),
             'date' => new \DateTime(),
@@ -134,6 +136,7 @@ class LabInvoiceController extends AbstractController
         }
 
         $html = $this->renderView('invoice/customer_statement.html.twig', [
+            'logo' => $this->getLogoData(),
             'customer' => [
                 'name' => $customer->getName(),
                 'phone' => $customer->getPhone(),
@@ -165,6 +168,7 @@ class LabInvoiceController extends AbstractController
         }
 
         $html = $this->renderView('invoice/order_invoice.html.twig', [
+            'logo' => $this->getLogoData(),
             'order' => $order,
             'date' => new \DateTime()
         ]);
@@ -239,6 +243,7 @@ class LabInvoiceController extends AbstractController
         $stockRemoved = (int)($stockRemoved ?? 0);
 
         $html = $this->renderView('invoice/summary_report.html.twig', [
+            'logo' => $this->getLogoData(),
             'periodLabel' => $periodLabel,
             'reportType' => ucfirst($type),
             'revenue' => $revenue,
@@ -268,5 +273,14 @@ class LabInvoiceController extends AbstractController
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
         ]);
+    }
+
+    private function getLogoData(): string
+    {
+        $logoPath = $this->getParameter('kernel.project_dir') . '/public/images/logo.png';
+        if (extension_loaded('gd') && file_exists($logoPath)) {
+            return 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+        }
+        return '';
     }
 }

@@ -48,6 +48,9 @@
         <table>
             <tr>
                 <td>
+                    {% if logo %}
+                        <img src="{{ logo }}" alt="Logo" style="height: 80px; margin-bottom: 15px;">
+                    {% endif %}
                     <div class="title">Official Invoice</div>
                     <div class="doc-type">Laboratory & Pharmacy Billing Receipt</div>
                 </td>

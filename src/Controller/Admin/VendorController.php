@@ -42,10 +42,10 @@ class VendorController extends AbstractController
                 'phone' => $vendor->getPhone(),
                 'companyName' => $vendor->getCompanyName(),
                 'status' => $vendor->getStatus(),
-                'category' => [
+                'category' => $vendor->getCategory() ? [
                     'id' => $vendor->getCategory()->getId(),
                     'name' => $vendor->getCategory()->getName()
-                ]
+                ] : null
             ];
         }
 
@@ -63,10 +63,10 @@ class VendorController extends AbstractController
             'companyName' => $vendor->getCompanyName(),
             'address' => $vendor->getAddress(),
             'status' => $vendor->getStatus(),
-            'category' => [
+            'category' => $vendor->getCategory() ? [
                 'id' => $vendor->getCategory()->getId(),
                 'name' => $vendor->getCategory()->getName()
-            ]
+            ] : null
         ]);
     }
 
@@ -187,9 +187,12 @@ class VendorController extends AbstractController
             return $this->json(['message' => 'Validation failed', 'errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
         }
 
-        $category = $entityManager->getRepository(Category::class)->find($dto->categoryId);
-        if (!$category) {
-            return $this->json(['message' => 'Category not found'], Response::HTTP_NOT_FOUND);
+        $category = null;
+        if ($dto->categoryId !== null) {
+            $category = $entityManager->getRepository(Category::class)->find($dto->categoryId);
+            if (!$category) {
+                return $this->json(['message' => 'Category not found'], Response::HTTP_NOT_FOUND);
+            }
         }
 
         $vendor = new Vendor();
@@ -199,7 +202,9 @@ class VendorController extends AbstractController
         $vendor->setCompanyName($dto->companyName);
         $vendor->setAddress($dto->address);
         $vendor->setStatus($dto->status);
-        $vendor->setCategory($category);
+        if ($category) {
+            $vendor->setCategory($category);
+        }
 
         $entityManager->persist($vendor);
         $entityManager->flush();
