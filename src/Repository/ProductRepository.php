@@ -29,10 +29,12 @@ class ProductRepository extends ServiceEntityRepository implements PaginationInt
     /**
      * @return PaginatedResponseDto
      */
-    public function getPaginatedFilterProducts(array $filters, int $page = 1, int $limit = 10): PaginatedResponseDto
+    public function getPaginatedFilterProducts(array $filters, int $companyId, int $page = 1, int $limit = 10): PaginatedResponseDto
     {
         $qb = $this->createQueryBuilder('p')
             ->leftJoin('p.category', 'c')
+            ->andWhere('p.company = :companyId')
+            ->setParameter('companyId', $companyId)
             ->orderBy('p.createdAt', 'DESC');
 
         $this->applyFilters($qb, $filters);

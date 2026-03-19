@@ -8,6 +8,10 @@ class RegisterDTO
 {
     #[Assert\NotBlank]
     #[Assert\Email]
+    #[Assert\Regex(
+        pattern: '/@(gmail\.com|outlook\.com|yahoo\.com)$/',
+        message: 'Only Gmail, Outlook, and Yahoo emails are allowed.'
+    )]
     public ?string $email = null;
 
     #[Assert\NotBlank]

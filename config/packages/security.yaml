@@ -18,22 +18,17 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         login:
-            pattern: ^/api/login
+            pattern: ^/(?:[^/]+/)?api/login
             stateless: true
-            json_login:
-                check_path: /api/login
-                username_path: email
-                password_path: password
-                success_handler: lexik_jwt_authentication.handler.authentication_success
-                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+            security: false
 
         register:
-            pattern: ^/api/register
+            pattern: ^/(?:[^/]+/)?api/register
             stateless: true
             security: false
 
         api:
-            pattern: ^/api
+            pattern: ^/(?:[^/]+/)?api
             stateless: true
             jwt: ~
 
@@ -42,11 +37,12 @@ security:
             provider: app_user_provider
 
     access_control:
-        - { path: ^/api/login, roles: PUBLIC_ACCESS }
-        - { path: ^/api/register, roles: PUBLIC_ACCESS }
-        - { path: ^/api/forgot-password, roles: PUBLIC_ACCESS }
-        - { path: ^/api/reset-password, roles: PUBLIC_ACCESS }
-        - { path: ^/api/admin, roles: ROLE_ADMIN }
+        - { path: ^/(?:[^/]+/)?api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/(?:[^/]+/)?api/register, roles: PUBLIC_ACCESS }
+        - { path: ^/(?:[^/]+/)?api/forgot-password, roles: PUBLIC_ACCESS }
+        - { path: ^/(?:[^/]+/)?api/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/(?:[^/]+/)?api/admin, roles: ROLE_ADMIN }
+        - { path: ^/(?:[^/]+/)?api/super-admin, roles: ROLE_SUPER_ADMIN }
 
 when@test:
     security:

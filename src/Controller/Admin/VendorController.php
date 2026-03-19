@@ -20,18 +20,20 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use App\Service\TenantContext;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 
 #[Route('/api/admin')]
 #[IsGranted('ROLE_ADMIN')]
 class VendorController extends AbstractController
 {
     #[Route('/vendors', name: 'admin_vendors_list', methods: ['GET'])]
-    public function listVendors(Request $request, VendorRepository $vendorRepository): JsonResponse
+    public function listVendors(Request $request, VendorRepository $vendorRepository, TenantContext $tenantContext): JsonResponse
     {
         $categoryId = $request->query->get('category');
         $search = $request->query->get('search');
         
-        $vendors = $vendorRepository->searchByNameOrCompany($search, $categoryId ? (int) $categoryId : null);
+        $vendors = $vendorRepository->searchByNameOrCompany($search, $tenantContext->getCurrentCompanyId(), $categoryId ? (int) $categoryId : null);
 
         $data = [];
         foreach ($vendors as $vendor) {
@@ -71,7 +73,7 @@ class VendorController extends AbstractController
     }
 
     #[Route('/vendor-orders', name: 'admin_vendor_orders_list', methods: ['GET'])]
-    public function listVendorOrders(Request $request, VendorOrderRepository $repository): JsonResponse
+    public function listVendorOrders(Request $request, VendorOrderRepository $repository, TenantContext $tenantContext): JsonResponse
     {
         $filters = [
             'status' => $request->query->get('status'),
@@ -84,7 +86,7 @@ class VendorController extends AbstractController
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 10);
 
-        $paginatedResponse = $repository->getPaginatedFilterOrders($filters, $page, $limit);
+        $paginatedResponse = $repository->getPaginatedFilterOrders($filters, $tenantContext->getCurrentCompanyId(), $page, $limit);
 
         $formattedData = [];
         foreach ($paginatedResponse->data as $order) {
@@ -114,7 +116,8 @@ class VendorController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager,
         ProductRepository $productRepository,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        TenantContext $tenantContext
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         
@@ -146,6 +149,7 @@ class VendorController extends AbstractController
         }
 
         $order = new VendorOrder();
+        $order->setCompany($tenantContext->getCurrentCompany());
         $order->setVendor($vendor);
         $order->setProduct($product);
         $order->setQuantity($dto->quantity);
@@ -165,7 +169,8 @@ class VendorController extends AbstractController
     public function createVendor(
         Request $request,
         EntityManagerInterface $entityManager,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        TenantContext $tenantContext
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         
@@ -196,6 +201,7 @@ class VendorController extends AbstractController
         }
 
         $vendor = new Vendor();
+        $vendor->setCompany($tenantContext->getCurrentCompany());
         $vendor->setName($dto->name);
         $vendor->setEmail($dto->email);
         $vendor->setPhone($dto->phone);
@@ -206,8 +212,18 @@ class VendorController extends AbstractController
             $vendor->setCategory($category);
         }
 
-        $entityManager->persist($vendor);
-        $entityManager->flush();
+        try {
+            $entityManager->persist($vendor);
+            $entityManager->flush();
+        } catch (UniqueConstraintViolationException $e) {
+            return $this->json([
+                'message' => 'A vendor with this email address already exists.'
+            ], Response::HTTP_CONFLICT);
+        } catch (\Exception $e) {
+            return $this->json([
+                'message' => 'Failed to save vendor. Please try again later.'
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
 
         return $this->json([
             'message' => 'Vendor created successfully',
@@ -265,7 +281,8 @@ class VendorController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager,
         ProductRepository $productRepository,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        TenantContext $tenantContext
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         $vendorId = $data['vendorId'] ?? null;
@@ -301,6 +318,7 @@ class VendorController extends AbstractController
             }
 
             $order = new VendorOrder();
+            $order->setCompany($tenantContext->getCurrentCompany());
             $order->setVendor($vendor);
             $order->setProduct($product);
             $order->setQuantity($quantity);

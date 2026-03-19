@@ -1,5 +1,15 @@
-controllers:
-    resource:
-        path: ../src/Controller/
-        namespace: App\Controller
+# Non-slugged routes (Default Company)
+controllers_default:
+    resource: '../src/Controller/'
     type: attribute
+    name_prefix: 'default_'
+
+# Slugged routes (Other Companies)
+controllers_tenant:
+    resource: '../src/Controller/'
+    type: attribute
+    prefix: '/{companySlug}'
+    name_prefix: 'tenant_'
+    exclude: '../src/Controller/SuperAdminController.php'
+    requirements:
+        companySlug: '^(?!api|super-admin|login|register|_wdt|_profiler|images|uploads|pdfs|favicon.ico)[^/]+$'

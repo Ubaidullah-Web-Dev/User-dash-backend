@@ -22,6 +22,10 @@ doctrine:
                 alias: App
         controller_resolver:
             auto_mapping: false
+        filters:
+            tenant_filter:
+                class: App\Doctrine\TenantFilter
+                enabled: true
 
 when@test:
     doctrine:

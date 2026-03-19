@@ -21,6 +21,10 @@ class Vendor
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\ManyToOne(targetEntity: Company::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Company $company = null;
+
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Vendor name is required')]
     private ?string $name = null;
@@ -192,6 +196,17 @@ class Vendor
                 $vendorOrder->setVendor(null);
             }
         }
+        return $this;
+    }
+
+    public function getCompany(): ?Company
+    {
+        return $this->company;
+    }
+
+    public function setCompany(?Company $company): self
+    {
+        $this->company = $company;
         return $this;
     }
 }

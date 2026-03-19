@@ -29,9 +29,11 @@ class OrderRepository extends ServiceEntityRepository implements PaginationInter
     /**
      * @return PaginatedResponseDto
      */
-    public function getPaginatedOrders(array $filters, int $page = 1, int $limit = 10): PaginatedResponseDto
+    public function getPaginatedOrders(array $filters, int $companyId, int $page = 1, int $limit = 10): PaginatedResponseDto
     {
         $qb = $this->createQueryBuilder('o')
+            ->andWhere('o.company = :companyId')
+            ->setParameter('companyId', $companyId)
             ->orderBy('o.createdAt', 'DESC');
 
         if (!empty($filters['search'])) {

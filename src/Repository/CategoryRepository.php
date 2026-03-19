@@ -34,6 +34,11 @@ class CategoryRepository extends ServiceEntityRepository implements PaginationIn
         $qb = $this->createQueryBuilder('c')
             ->orderBy('c.name', 'ASC');
 
+        if (!empty($filters['companyId'])) {
+            $qb->andWhere('c.company = :companyId')
+                ->setParameter('companyId', $filters['companyId']);
+        }
+
         if (!empty($filters['search'])) {
             $qb->andWhere('c.name LIKE :search OR c.slug LIKE :search')
                 ->setParameter('search', '%' . $filters['search'] . '%');

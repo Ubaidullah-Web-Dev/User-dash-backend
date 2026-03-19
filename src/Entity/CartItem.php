@@ -13,6 +13,10 @@ class CartItem
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\ManyToOne(targetEntity: Company::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Company $company = null;
+
     #[ORM\ManyToOne(inversedBy: 'cartItems')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
@@ -79,4 +83,7 @@ class CartItem
 
         return $this;
     }
+
+    public function getCompany(): ?Company { return $this->company; }
+    public function setCompany(?Company $company): static { $this->company = $company; return $this; }
 }

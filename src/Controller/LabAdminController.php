@@ -14,6 +14,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Service\TenantContext;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 
 #[Route('/api/admin/labs')]
 class LabAdminController extends AbstractController
@@ -21,9 +23,11 @@ class LabAdminController extends AbstractController
     #[Route('/dashboard', name: 'admin_lab_dashboard', methods: ['GET'])]
     public function dashboard(
         ProductRepository $productRepo,
-        OrderRepository $orderRepo
+        OrderRepository $orderRepo,
+        TenantContext $tenantContext
     ): JsonResponse {
-        $products = $productRepo->findAll();
+        $companyId = $tenantContext->getCurrentCompanyId();
+        $products = $productRepo->findBy(['company' => $companyId]);
         $totalStockValue = 0;
         $lowStockCount = 0;
 
@@ -40,11 +44,13 @@ class LabAdminController extends AbstractController
         $todaySales = $orderRepo->createQueryBuilder('o')
             ->select('SUM(o.total)')
             ->where('o.createdAt >= :today')
+            ->andWhere('o.company = :companyId')
             ->setParameter('today', $today)
+            ->setParameter('companyId', $companyId)
             ->getQuery()
             ->getSingleScalarResult();
 
-        $recentSales = $orderRepo->findBy([], ['createdAt' => 'DESC'], 5);
+        $recentSales = $orderRepo->findBy(['company' => $companyId], ['createdAt' => 'DESC'], 5);
 
         return $this->json([
             'totalProducts' => count($products),
@@ -64,7 +70,8 @@ class LabAdminController extends AbstractController
     public function stockIn(
         Request $request,
         ProductRepository $productRepo,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        TenantContext $tenantContext
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         $productId = $data['productId'] ?? null;
@@ -76,9 +83,9 @@ class LabAdminController extends AbstractController
             return $this->json(['message' => 'Invalid product or quantity'], Response::HTTP_BAD_REQUEST);
         }
 
-        $product = $productRepo->find($productId);
+        $product = $productRepo->findOneBy(['id' => $productId, 'company' => $tenantContext->getCurrentCompanyId()]);
         if (!$product) {
-            return $this->json(['message' => 'Product not found'], Response::HTTP_NOT_FOUND);
+            return $this->json(['message' => 'Product not found or access denied'], Response::HTTP_NOT_FOUND);
         }
 
         $product->setStock($product->getStock() + $quantity);
@@ -97,11 +104,16 @@ class LabAdminController extends AbstractController
     #[Route('/reports', name: 'admin_lab_reports', methods: ['GET'])]
     public function reports(
         OrderRepository $orderRepo,
-        ProductRepository $productRepo
+        ProductRepository $productRepo,
+        TenantContext $tenantContext
     ): JsonResponse {
+        $companyId = $tenantContext->getCurrentCompanyId();
+
         // Daily Sales for the last 30 days
         $dailySales = $orderRepo->createQueryBuilder('o')
             ->select("SUBSTRING(o.createdAt, 1, 10) as date, SUM(o.total) as total")
+            ->where('o.company = :companyId')
+            ->setParameter('companyId', $companyId)
             ->groupBy('date')
             ->orderBy('date', 'DESC')
             ->setMaxResults(30)
@@ -111,6 +123,8 @@ class LabAdminController extends AbstractController
         // Low stock products
         $lowStockProducts = $productRepo->createQueryBuilder('p')
             ->where('p.stock < p.minimumStock')
+            ->andWhere('p.company = :companyId')
+            ->setParameter('companyId', $companyId)
             ->getQuery()
             ->getResult();
         
@@ -129,13 +143,13 @@ class LabAdminController extends AbstractController
     }
 
     #[Route('/invoices', name: 'admin_lab_invoices', methods: ['GET'])]
-    public function listInvoices(Request $request, OrderRepository $orderRepo): JsonResponse
+    public function listInvoices(Request $request, OrderRepository $orderRepo, TenantContext $tenantContext): JsonResponse
     {
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 10);
         $search = $request->query->get('search', '');
 
-        $paginatedResponse = $orderRepo->getPaginatedOrders(['search' => $search], $page, $limit);
+        $paginatedResponse = $orderRepo->getPaginatedOrders(['search' => $search], $tenantContext->getCurrentCompanyId(), $page, $limit);
 
         return $this->json([
             'data' => array_map(fn(Order $o) => [
@@ -153,7 +167,7 @@ class LabAdminController extends AbstractController
     }
 
     #[Route('/customers', name: 'admin_lab_customers', methods: ['GET'])]
-    public function listCustomers(Request $request, RegisteredCustomerRepository $customerRepo): JsonResponse
+    public function listCustomers(Request $request, RegisteredCustomerRepository $customerRepo, EntityManagerInterface $em, TenantContext $tenantContext): JsonResponse
     {
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 10);
@@ -162,10 +176,18 @@ class LabAdminController extends AbstractController
             'search' => $request->query->get('search', '')
         ];
 
-        $paginatedResponse = $customerRepo->getPaginatedCustomers($filters, $page, $limit);
+        $paginatedResponse = $customerRepo->getPaginatedCustomers($filters, $tenantContext->getCurrentCompanyId(), $page, $limit);
 
-        return $this->json([
-            'data' => array_map(fn(RegisteredCustomer $c) => [
+        // Calculate total discount for each customer from their orders
+        $customerData = array_map(function(RegisteredCustomer $c) use ($em) {
+            $totalDiscount = $em->getRepository(Order::class)->createQueryBuilder('o')
+                ->select('SUM(o.discountAmount)')
+                ->where('o.registeredCustomer = :customer')
+                ->setParameter('customer', $c)
+                ->getQuery()
+                ->getSingleScalarResult();
+
+            return [
                 'id' => $c->getId(),
                 'name' => $c->getName(),
                 'phone' => $c->getPhone(),
@@ -173,8 +195,13 @@ class LabAdminController extends AbstractController
                 'city' => $c->getCity(),
                 'address' => $c->getAddress(),
                 'totalSpent' => $c->getTotalSpent(),
+                'totalDiscount' => (float)($totalDiscount ?? 0),
                 'remainingBalance' => $c->getRemainingBalance(),
-            ], $paginatedResponse->data),
+            ];
+        }, $paginatedResponse->data);
+
+        return $this->json([
+            'data' => $customerData,
             'total' => $paginatedResponse->total,
             'page' => $paginatedResponse->page,
             'limit' => $paginatedResponse->limit,
@@ -183,36 +210,46 @@ class LabAdminController extends AbstractController
     }
 
     #[Route('/customers', name: 'admin_lab_customers_create', methods: ['POST'])]
-    public function createCustomer(Request $request, EntityManagerInterface $em): JsonResponse
+    public function createCustomer(Request $request, EntityManagerInterface $em, TenantContext $tenantContext): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         $phone = $data['phone'] ?? '';
         if ($phone) {
-            $existing = $em->getRepository(RegisteredCustomer::class)->findOneBy(['phone' => $phone]);
+            $existing = $em->getRepository(RegisteredCustomer::class)->findOneBy([
+                'phone' => $phone,
+                'company' => $tenantContext->getCurrentCompanyId()
+            ]);
             if ($existing) {
-                return $this->json(['message' => 'A customer with this phone number already exists'], Response::HTTP_CONFLICT);
+                return $this->json(['message' => 'A customer with this phone number already registered for your company'], Response::HTTP_CONFLICT);
             }
         }
 
         $customer = new RegisteredCustomer();
+        $customer->setCompany($tenantContext->getCurrentCompany());
         $customer->setName($data['name'] ?? '');
         $customer->setPhone($phone);
         $customer->setLabName($data['labName'] ?? null);
         $customer->setCity($data['city'] ?? null);
         $customer->setAddress($data['address'] ?? null);
 
-        $em->persist($customer);
-        $em->flush();
+        try {
+            $em->persist($customer);
+            $em->flush();
+        } catch (UniqueConstraintViolationException $e) {
+             return $this->json(['message' => 'Phone number already in use.'], Response::HTTP_CONFLICT);
+        } catch (\Exception $e) {
+             return $this->json(['message' => 'Failed to save customer record.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
 
         return $this->json(['message' => 'Customer registered successfully', 'id' => $customer->getId()], Response::HTTP_CREATED);
     }
 
     #[Route('/customers/{id}', name: 'admin_lab_customers_get', methods: ['GET'])]
-    public function getCustomer(int $id, RegisteredCustomerRepository $customerRepo): JsonResponse
+    public function getCustomer(int $id, RegisteredCustomerRepository $customerRepo, TenantContext $tenantContext): JsonResponse
     {
-        $customer = $customerRepo->find($id);
+        $customer = $customerRepo->findOneBy(['id' => $id, 'company' => $tenantContext->getCurrentCompanyId()]);
         if (!$customer) {
-            return $this->json(['message' => 'Customer not found'], Response::HTTP_NOT_FOUND);
+            return $this->json(['message' => 'Customer not found or access denied'], Response::HTTP_NOT_FOUND);
         }
 
         return $this->json([
@@ -228,11 +265,11 @@ class LabAdminController extends AbstractController
     }
 
     #[Route('/customers/{id}', name: 'admin_lab_customers_update', methods: ['PUT'])]
-    public function updateCustomer(int $id, Request $request, RegisteredCustomerRepository $customerRepo, EntityManagerInterface $em): JsonResponse
+    public function updateCustomer(int $id, Request $request, RegisteredCustomerRepository $customerRepo, EntityManagerInterface $em, TenantContext $tenantContext): JsonResponse
     {
-        $customer = $customerRepo->find($id);
+        $customer = $customerRepo->findOneBy(['id' => $id, 'company' => $tenantContext->getCurrentCompanyId()]);
         if (!$customer) {
-            return $this->json(['message' => 'Customer not found'], Response::HTTP_NOT_FOUND);
+            return $this->json(['message' => 'Customer not found or access denied'], Response::HTTP_NOT_FOUND);
         }
 
         $data = json_decode($request->getContent(), true);
@@ -255,11 +292,11 @@ class LabAdminController extends AbstractController
     }
 
     #[Route('/customers/{id}', name: 'admin_lab_customers_delete', methods: ['DELETE'])]
-    public function deleteCustomer(int $id, RegisteredCustomerRepository $customerRepo, EntityManagerInterface $em): JsonResponse
+    public function deleteCustomer(int $id, RegisteredCustomerRepository $customerRepo, EntityManagerInterface $em, TenantContext $tenantContext): JsonResponse
     {
-        $customer = $customerRepo->find($id);
+        $customer = $customerRepo->findOneBy(['id' => $id, 'company' => $tenantContext->getCurrentCompanyId()]);
         if (!$customer) {
-            return $this->json(['message' => 'Customer not found'], Response::HTTP_NOT_FOUND);
+            return $this->json(['message' => 'Customer not found or access denied'], Response::HTTP_NOT_FOUND);
         }
 
         $em->remove($customer);

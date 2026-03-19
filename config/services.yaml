@@ -24,6 +24,9 @@ services:
         tags:
             - { name: 'doctrine.event_subscriber' }
 
+    App\Service\TenantContext:
+        public: true
+
     App\EventListener\JWTCreatedListener:
         tags:
             - { name: kernel.event_listener, event: lexik_jwt_authentication.on_jwt_created, method: onJWTCreated }

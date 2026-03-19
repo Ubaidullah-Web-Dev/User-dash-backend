@@ -19,6 +19,10 @@ class Order
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
+    #[ORM\ManyToOne(targetEntity: Company::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Company $company = null;
+
     #[ORM\Column(length: 255)]
     private ?string $address = null;
 
@@ -109,6 +113,17 @@ class Order
             $this->items->add($item);
             $item->setOrder($this);
         }
+        return $this;
+    }
+
+    public function getCompany(): ?Company
+    {
+        return $this->company;
+    }
+
+    public function setCompany(?Company $company): self
+    {
+        $this->company = $company;
         return $this;
     }
 }

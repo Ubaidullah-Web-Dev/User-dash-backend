@@ -24,12 +24,14 @@ class VendorRepository extends ServiceEntityRepository
     /**
      * @return Vendor[]
      */
-    public function searchByNameOrCompany(?string $search, ?int $categoryId = null): array
+    public function searchByNameOrCompany(?string $search, int $companyId, ?int $categoryId = null): array
     {
-        $qb = $this->createQueryBuilder('v');
+        $qb = $this->createQueryBuilder('v')
+            ->andWhere('v.company = :companyId')
+            ->setParameter('companyId', $companyId);
 
         if ($search) {
-            $qb->andWhere('v.name LIKE :search OR v.companyName LIKE :search')
+            $qb->andWhere('(v.name LIKE :search OR v.companyName LIKE :search)')
                 ->setParameter('search', '%' . $search . '%');
         }
 

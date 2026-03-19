@@ -29,11 +29,13 @@ class VendorOrderRepository extends ServiceEntityRepository implements Paginatio
     /**
      * @return PaginatedResponseDto
      */
-    public function getPaginatedFilterOrders(array $filters, int $page = 1, int $limit = 10): PaginatedResponseDto
+    public function getPaginatedFilterOrders(array $filters, int $companyId, int $page = 1, int $limit = 10): PaginatedResponseDto
     {
         $qb = $this->createQueryBuilder('vo')
             ->leftJoin('vo.product', 'p')
             ->leftJoin('p.category', 'c')
+            ->andWhere('vo.company = :companyId')
+            ->setParameter('companyId', $companyId)
             ->orderBy('vo.createdAt', 'DESC');
 
         $this->applyFilters($qb, $filters);

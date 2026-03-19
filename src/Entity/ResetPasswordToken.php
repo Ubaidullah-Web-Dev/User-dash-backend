@@ -19,7 +19,11 @@ class ResetPasswordToken
     #[ORM\Column]
     private ?\DateTimeImmutable $expiresAt = null;
 
-    #[ORM\ManyToOne(inversedBy: 'resetPasswordTokens')]
+    #[ORM\ManyToOne(targetEntity: Company::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Company $company = null;
+
+    #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
@@ -63,4 +67,7 @@ class ResetPasswordToken
 
         return $this;
     }
+
+    public function getCompany(): ?Company { return $this->company; }
+    public function setCompany(?Company $company): static { $this->company = $company; return $this; }
 }

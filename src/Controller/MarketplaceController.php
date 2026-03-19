@@ -16,6 +16,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use App\DTO\ProductCreateDTO;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use App\Service\TenantContext;
 
 #[Route('/api/products')]
 class MarketplaceController extends AbstractController
@@ -75,7 +76,8 @@ class MarketplaceController extends AbstractController
         EntityManagerInterface $entityManager, 
         CategoryRepository $categoryRepository,
         SluggerInterface $slugger,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        TenantContext $tenantContext
     ): JsonResponse {
         $user = $this->getUser();
         if (!$user) {
@@ -120,9 +122,24 @@ class MarketplaceController extends AbstractController
         $product->setCompanyName($dto->companyName);
         $product->setPackSize($dto->packSize);
         if ($dto->purchasePrice !== null) $product->setPurchasePrice((string)$dto->purchasePrice);
-        if ($dto->expiryDate !== null) $product->setExpiryDate(new \DateTimeImmutable($dto->expiryDate));
+        
+        if ($dto->expiryDate !== null && trim($dto->expiryDate) !== '') {
+            try {
+                $product->setExpiryDate(new \DateTimeImmutable($dto->expiryDate));
+            } catch (\Exception $e) {
+                // Do not set if invalid
+            }
+        }
+
         $product->setBatchNumber($dto->batchNumber);
         $product->setMinimumStock($dto->minimumStock);
+
+        $company = $tenantContext->getCurrentCompany();
+        if ($company) {
+            $product->setCompany($company);
+        } else {
+            return $this->json(['message' => 'Company context not found'], Response::HTTP_BAD_REQUEST);
+        }
 
         if ($dto->unit !== null) {
             $product->setUnit(trim($dto->unit));

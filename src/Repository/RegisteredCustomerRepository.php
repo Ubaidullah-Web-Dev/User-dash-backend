@@ -29,9 +29,11 @@ class RegisteredCustomerRepository extends ServiceEntityRepository implements Pa
     /**
      * @return PaginatedResponseDto
      */
-    public function getPaginatedCustomers(array $filters, int $page = 1, int $limit = 10): PaginatedResponseDto
+    public function getPaginatedCustomers(array $filters, int $companyId, int $page = 1, int $limit = 10): PaginatedResponseDto
     {
         $qb = $this->createQueryBuilder('c')
+            ->andWhere('c.company = :companyId')
+            ->setParameter('companyId', $companyId)
             ->orderBy('c.createdAt', 'DESC');
 
         if (!empty($filters['search'])) {

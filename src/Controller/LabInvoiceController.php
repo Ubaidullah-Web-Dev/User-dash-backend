@@ -130,6 +130,8 @@ class LabInvoiceController extends AbstractController
                 'orderId' => $order->getId(),
                 'products' => implode(', ', $productNames),
                 'total' => $order->getTotal(),
+                'discountPercentage' => $order->getDiscountPercentage() ?: 0,
+                'discountAmount' => $order->getDiscountAmount() ?: 0,
                 'amountTendered' => $order->getAmountTendered() ?: $order->getTotal(), // if null, assume fully paid for old records
                 'pending' => $pendingAmount
             ];

@@ -18,17 +18,19 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use App\Service\TenantContext;
 
 #[Route('/api/admin')]
 class AdminController extends AbstractController
 {
     #[Route('/dashboard', name: 'admin_dashboard_stats', methods: ['GET'])]
-    public function dashboard(ProductRepository $productRepo, UserRepository $userRepo): JsonResponse
+    public function dashboard(ProductRepository $productRepo, UserRepository $userRepo, TenantContext $tenantContext): JsonResponse
     {
+        $companyId = $tenantContext->getCurrentCompanyId();
         return $this->json([
             'stats' => [
-                'total_products' => $productRepo->count([]),
-                'total_users' => $userRepo->count([]),
+                'total_products' => $productRepo->count(['company' => $companyId]),
+                'total_users' => $userRepo->count(['company' => $companyId]),
                 'total_sales' => 0,
                 'pending_orders' => 0,
             ]
@@ -36,7 +38,7 @@ class AdminController extends AbstractController
     }
 
     #[Route('/products', name: 'admin_product_list', methods: ['GET'])]
-    public function listProducts(ProductRepository $productRepo, Request $request): JsonResponse
+    public function listProducts(ProductRepository $productRepo, Request $request, TenantContext $tenantContext): JsonResponse
     {
         $filters = [
             'search' => $request->query->get('search'),
@@ -49,8 +51,9 @@ class AdminController extends AbstractController
 
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 10);
+        $companyId = $tenantContext->getCurrentCompanyId();
 
-        $paginatedResponse = $productRepo->getPaginatedFilterProducts($filters, $page, $limit);
+        $paginatedResponse = $productRepo->getPaginatedFilterProducts($filters, $companyId, $page, $limit);
         
         $formattedData = array_map(fn(Product $product) => ProductDTO::fromEntity($product), $paginatedResponse->data);
 
@@ -141,19 +144,37 @@ class AdminController extends AbstractController
     public function createCategory(
         Request $request,
         EntityManagerInterface $em,
-        ProductRepository $productRepo
+        ProductRepository $productRepo,
+        \App\Service\TenantContext $tenantContext,
+        \App\Repository\VendorRepository $vendorRepo
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         $name = $data['name'] ?? null;
+        $vendorId = $data['vendorId'] ?? null;
 
         if (!$name) {
             return $this->json(['message' => 'Category name is required'], Response::HTTP_BAD_REQUEST);
         }
 
+        $company = $tenantContext->getCurrentCompany();
+        if (!$company) {
+            return $this->json(['message' => 'Company context not found'], Response::HTTP_BAD_REQUEST);
+        }
+
         $category = new \App\Entity\Category();
+        $category->setCompany($company);
         $this->updateCategoryFields($category, $data);
 
         $em->persist($category);
+        
+        // Handle vendor association
+        if ($vendorId) {
+            $vendor = $vendorRepo->find($vendorId);
+            if ($vendor && $vendor->getCompany()->getId() === $company->getId()) {
+                $vendor->setCategory($category);
+            }
+        }
+
         $em->flush();
 
         // Optional initial product assignment
@@ -171,13 +192,40 @@ class AdminController extends AbstractController
 
     #[Route('/categories/{id}', name: 'admin_category_update', methods: ['PUT'])]
     public function updateCategory(
-        \App\Entity\Category $category,
+        int $id,
         Request $request,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        CategoryRepository $categoryRepo,
+        \App\Service\TenantContext $tenantContext,
+        \App\Repository\VendorRepository $vendorRepo
     ): JsonResponse {
+        $category = $categoryRepo->find($id);
+        if (!$category || $category->getCompany()->getId() !== $tenantContext->getCurrentCompanyId()) {
+            return $this->json(['message' => 'Category not found'], Response::HTTP_NOT_FOUND);
+        }
+
         $data = json_decode($request->getContent(), true);
         $this->updateCategoryFields($category, $data);
         
+        $vendorId = $data['vendorId'] ?? null;
+        if ($vendorId !== null) {
+            // Unlink current vendors if changing (simple logic: one category can have multiple vendors but here we might want to link/unlink specific ones)
+            // User said "link it to a vendor", which implies a primary association or setting it on a specific vendor.
+            
+            // First unlink vendors currently linked to this category for this company
+            $currentVendors = $vendorRepo->findBy(['category' => $category]);
+            foreach ($currentVendors as $v) {
+                $v->setCategory(null);
+            }
+
+            if ($vendorId > 0) {
+                $vendor = $vendorRepo->find($vendorId);
+                if ($vendor && $vendor->getCompany()->getId() === $tenantContext->getCurrentCompanyId()) {
+                    $vendor->setCategory($category);
+                }
+            }
+        }
+
         $em->flush();
 
         return $this->json([
@@ -187,8 +235,13 @@ class AdminController extends AbstractController
     }
 
     #[Route('/categories/{id}', name: 'admin_category_delete', methods: ['DELETE'])]
-    public function deleteCategory(\App\Entity\Category $category, EntityManagerInterface $em): JsonResponse
+    public function deleteCategory(int $id, CategoryRepository $categoryRepo, \App\Service\TenantContext $tenantContext, EntityManagerInterface $em): JsonResponse
     {
+        $category = $categoryRepo->find($id);
+        if (!$category || $category->getCompany()->getId() !== $tenantContext->getCurrentCompanyId()) {
+            return $this->json(['message' => 'Category not found'], Response::HTTP_NOT_FOUND);
+        }
+
         // Check if category has products
         if (!$category->getProducts()->isEmpty()) {
             return $this->json([
@@ -204,11 +257,18 @@ class AdminController extends AbstractController
 
     #[Route('/categories/{id}/products', name: 'admin_category_assign_products', methods: ['PATCH'])]
     public function assignProductsToCategory(
-        \App\Entity\Category $category,
+        int $id,
         Request $request,
         ProductRepository $productRepo,
+        CategoryRepository $categoryRepo,
+        \App\Service\TenantContext $tenantContext,
         EntityManagerInterface $em
     ): JsonResponse {
+        $category = $categoryRepo->find($id);
+        if (!$category || $category->getCompany()->getId() !== $tenantContext->getCurrentCompanyId()) {
+            return $this->json(['message' => 'Category not found'], Response::HTTP_NOT_FOUND);
+        }
+
         $data = json_decode($request->getContent(), true);
         $productIds = $data['productIds'] ?? [];
 
@@ -216,10 +276,23 @@ class AdminController extends AbstractController
             return $this->json(['message' => 'No products specified'], Response::HTTP_BAD_REQUEST);
         }
 
-        $productRepo->bulkAssignToCategory($productIds, $category);
+        // Filter products to ensure they belong to the same company
+        $validProductIds = [];
+        foreach ($productIds as $pId) {
+            $p = $productRepo->find($pId);
+            if ($p && $p->getCompany()->getId() === $tenantContext->getCurrentCompanyId()) {
+                $validProductIds[] = $pId;
+            }
+        }
+
+        if (empty($validProductIds)) {
+            return $this->json(['message' => 'No valid products found for this company'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $productRepo->bulkAssignToCategory($validProductIds, $category);
 
         return $this->json([
-            'message' => sprintf('Assigned %d products to category %s', count($productIds), $category->getName())
+            'message' => sprintf('Assigned %d products to category %s', count($validProductIds), $category->getName())
         ]);
     }
 
@@ -241,22 +314,40 @@ class AdminController extends AbstractController
     }
 
     #[Route('/categories/stats', name: 'admin_category_stats', methods: ['GET'])]
-    public function listCategoriesWithStats(\App\Repository\CategoryRepository $categoryRepo, Request $request): JsonResponse
+    public function listCategoriesWithStats(
+        CategoryRepository $categoryRepo, 
+        Request $request,
+        \App\Service\TenantContext $tenantContext
+    ): JsonResponse
     {
         $search = $request->query->get('search');
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 10);
 
-        $filters = ['search' => $search];
+        $filters = [
+            'search' => $search,
+            'companyId' => $tenantContext->getCurrentCompanyId()
+        ];
         $paginatedResponse = $categoryRepo->getPaginatedFilterCategories($filters, $page, $limit);
 
         $data = array_map(function (\App\Entity\Category $category) {
+            // Find linked vendor (we assume simple 1-1 for now as per user intent)
+            $vendor = null;
+            if (!$category->getVendors()->isEmpty()) {
+                $v = $category->getVendors()->first();
+                $vendor = [
+                    'id' => $v->getId(),
+                    'name' => $v->getName()
+                ];
+            }
+
             return [
                 'id' => $category->getId(),
                 'name' => $category->getName(),
                 'slug' => $category->getSlug(),
                 'image' => $category->getImage(),
-                'productCount' => $category->getProducts()->count()
+                'productCount' => $category->getProducts()->count(),
+                'vendor' => $vendor
             ];
         }, $paginatedResponse->data);
 
@@ -299,7 +390,8 @@ class AdminController extends AbstractController
         Request $request, 
         EntityManagerInterface $em, 
         ProductRepository $productRepo,
-        \App\Repository\RegisteredCustomerRepository $registeredCustomerRepo
+        \App\Repository\RegisteredCustomerRepository $registeredCustomerRepo,
+        TenantContext $tenantContext
     ): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -317,10 +409,14 @@ class AdminController extends AbstractController
             return $this->json(['message' => 'Sale must contain at least one item'], Response::HTTP_BAD_REQUEST);
         }
 
+        $company = $tenantContext->getCurrentCompany();
+        $companyId = $tenantContext->getCurrentCompanyId();
+
         $order = new \App\Entity\Order();
         $order->setCustomerName($customerName);
         $order->setPhone($phone ?? 'N/A');
         $order->setAddress('In-Store POS');
+        $order->setCompany($company);
         
         $adminUser = $this->getUser();
         if (!$adminUser) {
@@ -338,9 +434,9 @@ class AdminController extends AbstractController
                 return $this->json(['message' => 'Invalid product or quantity'], Response::HTTP_BAD_REQUEST);
             }
 
-            $product = $productRepo->find($productId);
+            $product = $productRepo->findOneBy(['id' => $productId, 'company' => $companyId]);
             if (!$product) {
-                return $this->json(['message' => "Product ID $productId not found in global registry"], Response::HTTP_BAD_REQUEST);
+                return $this->json(['message' => "Product ID $productId not found or access denied"], Response::HTTP_BAD_REQUEST);
             }
 
             if ($product->getStock() < $quantity) {
@@ -354,6 +450,7 @@ class AdminController extends AbstractController
             $orderItem->setProduct($product);
             $orderItem->setQuantity($quantity);
             $orderItem->setPrice($product->getPrice());
+            $orderItem->setCompany($company);
             
             $order->addItem($orderItem);
 
@@ -369,7 +466,7 @@ class AdminController extends AbstractController
 
         $registeredCustomerId = $data['registeredCustomerId'] ?? null;
         if ($registeredCustomerId) {
-            $registeredCustomer = $registeredCustomerRepo->find($registeredCustomerId);
+            $registeredCustomer = $registeredCustomerRepo->findOneBy(['id' => $registeredCustomerId, 'company' => $companyId]);
             if ($registeredCustomer) {
                 // If change is negative, customer underpaid. Add to outstanding balance.
                 if ($changeDue < 0) {
@@ -379,11 +476,12 @@ class AdminController extends AbstractController
                 // Total spent updated inside addOrder
             }
         } elseif ($phone) {
-            $registeredCustomer = $registeredCustomerRepo->findOneBy(['phone' => $phone]);
+            $registeredCustomer = $registeredCustomerRepo->findOneBy(['phone' => $phone, 'company' => $companyId]);
             if (!$registeredCustomer) {
                 $registeredCustomer = new \App\Entity\RegisteredCustomer();
                 $registeredCustomer->setPhone($phone);
                 $registeredCustomer->setName($customerName);
+                $registeredCustomer->setCompany($company);
                 $em->persist($registeredCustomer);
             }
             if ($changeDue < 0) {
@@ -393,13 +491,18 @@ class AdminController extends AbstractController
         } else {
             $guestUser = new \App\Entity\GuestUser();
             $guestUser->setName($customerName);
+            $guestUser->setCompany($company);
             $em->persist($guestUser);
             
             $guestUser->addOrder($order);
         }
 
-        $em->persist($order);
-        $em->flush();
+        try {
+            $em->persist($order);
+            $em->flush();
+        } catch (\Exception $e) {
+            return $this->json(['message' => 'Checkout failed: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
 
         return $this->json([
             'message' => 'Sale completed successfully',

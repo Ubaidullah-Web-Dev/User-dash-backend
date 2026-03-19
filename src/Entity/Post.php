@@ -23,6 +23,10 @@ class Post
     #[ORM\JoinColumn(nullable: false)]
     private ?User $author = null;
 
+    #[ORM\ManyToOne(targetEntity: Company::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Company $company = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -58,6 +62,18 @@ class Post
     public function setAuthor(?User $author): static
     {
         $this->author = $author;
+        return $this;
+    }
+
+    public function getCompany(): ?Company
+    {
+        return $this->company;
+    }
+
+    public function setCompany(?Company $company): static
+    {
+        $this->company = $company;
+
         return $this;
     }
 }

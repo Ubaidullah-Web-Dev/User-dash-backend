@@ -17,7 +17,11 @@ use Symfony\Component\Serializer\SerializerInterface;
 class AdminUserController extends AbstractController
 {
     #[Route('/users', name: 'admin_users_list', methods: ['GET'])]
-    public function listUsers(Request $request, UserRepository $userRepository): JsonResponse
+    public function listUsers(
+        Request $request, 
+        UserRepository $userRepository,
+        \App\Service\TenantContext $tenantContext
+    ): JsonResponse
     {
         $this->denyAccessUnlessGranted('USER_VIEW');
 
@@ -26,6 +30,7 @@ class AdminUserController extends AbstractController
         $filters = [
             'search' => $request->query->get('search'),
             'role' => $request->query->get('role'),
+            'companyId' => $tenantContext->getCurrentCompanyId(),
         ];
 
         $paginatedResponse = $userRepository->getPaginatedUsers($filters, $page, $limit);
@@ -45,12 +50,13 @@ class AdminUserController extends AbstractController
         Request $request,
         UserRepository $userRepository,
         EntityManagerInterface $entityManager,
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        \App\Service\TenantContext $tenantContext
     ): JsonResponse {
         $this->denyAccessUnlessGranted('USER_EDIT_ROLE');
 
         $user = $userRepository->find($id);
-        if (!$user) {
+        if (!$user || $user->getCompany()?->getId() !== $tenantContext->getCurrentCompanyId()) {
             return $this->json(['message' => 'User not found'], Response::HTTP_NOT_FOUND);
         }
 

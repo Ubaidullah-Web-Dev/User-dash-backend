@@ -17,6 +17,10 @@ class VendorOrder
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\ManyToOne(targetEntity: Company::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Company $company = null;
+
     #[ORM\ManyToOne(inversedBy: 'vendorOrders')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Vendor $vendor = null;
@@ -147,4 +151,7 @@ class VendorOrder
         $this->receivedAt = $receivedAt;
         return $this;
     }
+
+    public function getCompany(): ?Company { return $this->company; }
+    public function setCompany(?Company $company): static { $this->company = $company; return $this; }
 }

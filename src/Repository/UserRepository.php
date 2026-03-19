@@ -50,6 +50,11 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
                 ->setParameter('role', '%"' . $filters['role'] . '"%');
         }
 
+        if (!empty($filters['companyId'])) {
+            $qb->andWhere('u.company = :companyId')
+                ->setParameter('companyId', $filters['companyId']);
+        }
+
         return $this->paginate($qb, $page, $limit);
     }
     public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void

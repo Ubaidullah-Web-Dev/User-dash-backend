@@ -13,9 +13,16 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+
+use App\Service\TenantContext;
 
 class AuthController extends AbstractController
 {
+    public function __construct(
+        private TenantContext $tenantContext
+    ) {}
+
     #[Route('/api/register', name: 'api_register', methods: ['POST'])]
     public function register(
         Request $request,
@@ -44,6 +51,11 @@ class AuthController extends AbstractController
             return $this->json(['message' => 'Passwords do not match'], Response::HTTP_BAD_REQUEST);
         }
 
+        $existingUser = $entityManager->getRepository(User::class)->findOneBy(['email' => $registerDto->email]);
+        if ($existingUser) {
+            return $this->json(['message' => 'Email already in use'], Response::HTTP_CONFLICT);
+        }
+
         $user = new User();
         $user->setEmail($registerDto->email);
         $user->setName($registerDto->name);
@@ -52,15 +64,44 @@ class AuthController extends AbstractController
         $hashedPassword = $passwordHasher->hashPassword($user, $registerDto->password);
         $user->setPassword($hashedPassword);
 
-        $entityManager->persist($user);
-        $entityManager->flush();
+        // Set the company from the context (resolved from URL slug)
+        $company = $this->tenantContext->getCurrentCompany();
+        if (!$company) {
+            return $this->json(['message' => 'Could not determine company. Please try again.'], Response::HTTP_BAD_REQUEST);
+        }
+        $user->setCompany($company);
+
+        try {
+            $entityManager->persist($user);
+            $entityManager->flush();
+        } catch (\Exception $e) {
+            return $this->json(['message' => 'Registration failed. Please try again later.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
 
         return $this->json(['message' => 'User registered successfully'], Response::HTTP_CREATED);
     }
 
     #[Route('/api/login', name: 'api_login', methods: ['POST'])]
-    public function login(): Response
-    {
-        return $this->json(['message' => 'This should be handled by JWT bundle']);
+    public function login(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        UserPasswordHasherInterface $passwordHasher,
+        JWTTokenManagerInterface $jwtManager
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+
+        if (!$data || empty($data['email']) || empty($data['password'])) {
+            return $this->json(['message' => 'Email and password are required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = $entityManager->getRepository(User::class)->findOneBy(['email' => $data['email']]);
+
+        if (!$user || !$passwordHasher->isPasswordValid($user, $data['password'])) {
+            return $this->json(['message' => 'Invalid credentials'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $token = $jwtManager->create($user);
+
+        return $this->json(['token' => $token]);
     }
 }
