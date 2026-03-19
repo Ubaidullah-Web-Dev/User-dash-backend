@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20260319162814 extends AbstractMigration
+final class Version20260319192234 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -65,13 +65,11 @@ final class Version20260319162814 extends AbstractMigration
         $this->addSql('ALTER TABLE vendor_order ADD CONSTRAINT FK_E36F91D8979B1AD6 FOREIGN KEY (company_id) REFERENCES companies (id)');
         $this->addSql('ALTER TABLE vendor_order ADD CONSTRAINT FK_E36F91D8F603EE73 FOREIGN KEY (vendor_id) REFERENCES vendor (id)');
         $this->addSql('ALTER TABLE vendor_order ADD CONSTRAINT FK_E36F91D84584665A FOREIGN KEY (product_id) REFERENCES product (id)');
-        $this->addSql('DROP TABLE users');
     }
 
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->addSql('CREATE TABLE users (id INT AUTO_INCREMENT NOT NULL, user_id INT NOT NULL, name VARCHAR(255) CHARACTER SET utf8mb4 NOT NULL COLLATE `utf8mb4_unicode_ci`, mail VARCHAR(255) CHARACTER SET utf8mb4 NOT NULL COLLATE `utf8mb4_unicode_ci`, phone INT DEFAULT NULL, PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB COMMENT = \'\' ');
         $this->addSql('ALTER TABLE cart_item DROP FOREIGN KEY FK_F0FE2527979B1AD6');
         $this->addSql('ALTER TABLE cart_item DROP FOREIGN KEY FK_F0FE2527A76ED395');
         $this->addSql('ALTER TABLE cart_item DROP FOREIGN KEY FK_F0FE25274584665A');

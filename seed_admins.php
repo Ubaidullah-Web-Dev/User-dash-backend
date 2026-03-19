@@ -47,8 +47,7 @@ $companyIds = [];
 
 foreach ($companies as $comp) {
     try {
-        $stmt = $conn->prepare("SELECT id FROM companies WHERE slug = ?");
-        $result = $stmt->executeQuery([$comp['slug']])->fetchAssociative();
+        $result = $conn->fetchAssociative("SELECT id FROM companies WHERE slug = ?", [$comp['slug']]);
 
         if ($result) {
             $companyIds[$comp['slug']] = $result['id'];
@@ -110,8 +109,7 @@ foreach ($users as $userData) {
     $companyId = $companyIds[$userData['company_slug']];
 
     // Check if user exists
-    $stmt = $conn->prepare("SELECT id FROM user WHERE email = ?");
-    $result = $stmt->executeQuery([$userData['email']])->fetchAssociative();
+    $result = $conn->fetchAssociative("SELECT id FROM user WHERE email = ?", [$userData['email']]);
 
     if ($result) {
         // Update user
