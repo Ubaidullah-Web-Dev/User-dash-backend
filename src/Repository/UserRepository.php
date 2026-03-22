@@ -55,6 +55,11 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
                 ->setParameter('companyId', $filters['companyId']);
         }
 
+        if (!empty($filters['excludeSuperAdmin'])) {
+            $qb->andWhere('u.roles NOT LIKE :superAdminRole')
+                ->setParameter('superAdminRole', '%"ROLE_SUPER_ADMIN"%');
+        }
+
         return $this->paginate($qb, $page, $limit);
     }
     public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void

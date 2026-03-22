@@ -31,6 +31,7 @@ class AdminUserController extends AbstractController
             'search' => $request->query->get('search'),
             'role' => $request->query->get('role'),
             'companyId' => $tenantContext->getCurrentCompanyId(),
+            'excludeSuperAdmin' => true,
         ];
 
         $paginatedResponse = $userRepository->getPaginatedUsers($filters, $page, $limit);
@@ -58,6 +59,11 @@ class AdminUserController extends AbstractController
         $user = $userRepository->find($id);
         if (!$user || $user->getCompany()?->getId() !== $tenantContext->getCurrentCompanyId()) {
             return $this->json(['message' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Prevent modifying Super Admin roles by regular admins
+        if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
+            return $this->json(['message' => 'Access denied: Cannot modify Super Admin roles'], Response::HTTP_FORBIDDEN);
         }
 
         try {
