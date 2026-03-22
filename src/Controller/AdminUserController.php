@@ -92,4 +92,34 @@ class AdminUserController extends AbstractController
             'user' => UserDTO::fromEntity($user)
         ]);
     }
+
+    #[Route('/users/{id}', name: 'admin_user_delete', methods: ['DELETE'])]
+    public function deleteUser(
+        int $id,
+        UserRepository $userRepository,
+        EntityManagerInterface $entityManager,
+        \App\Service\TenantContext $tenantContext
+    ): JsonResponse {
+        $this->denyAccessUnlessGranted('USER_DELETE');
+
+        $user = $userRepository->find($id);
+        if (!$user || $user->getCompany()?->getId() !== $tenantContext->getCurrentCompanyId()) {
+            return $this->json(['message' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Safety: Cannot delete self
+        if ($user === $this->getUser()) {
+            return $this->json(['message' => 'Security protocol violation: Self-deletion is restricted'], Response::HTTP_FORBIDDEN);
+        }
+
+        // Safety: Cannot delete Super Admin
+        if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
+            return $this->json(['message' => 'Access denied: Super Admin deletion restricted'], Response::HTTP_FORBIDDEN);
+        }
+
+        $entityManager->remove($user);
+        $entityManager->flush();
+
+        return $this->json(['message' => 'User database entry purged successfully']);
+    }
 }
