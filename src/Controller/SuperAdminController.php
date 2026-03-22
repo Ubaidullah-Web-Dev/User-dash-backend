@@ -176,4 +176,36 @@ class SuperAdminController extends AbstractController
 
         return $this->json($data);
     }
+
+    #[Route('/admins', name: 'super_admin_create_admin', methods: ['POST'])]
+    public function createSuperAdmin(
+        Request $request, 
+        EntityManagerInterface $entityManager,
+        \Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface $passwordHasher
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+        if (!$data || !isset($data['email']) || !isset($data['password']) || !isset($data['name'])) {
+            return $this->json(['message' => 'Missing email, password or name'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Find the system company (ID 1)
+        $company = $entityManager->getRepository(\App\Entity\Company::class)->find(1);
+        if (!$company) {
+            return $this->json(['message' => 'System company not found'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        $user = new \App\Entity\User();
+        $user->setEmail($data['email']);
+        $user->setName($data['name']);
+        $user->setRoles(['ROLE_SUPER_ADMIN']);
+        $user->setCompany($company);
+        
+        $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
+        $user->setPassword($hashedPassword);
+
+        $entityManager->persist($user);
+        $entityManager->flush();
+
+        return $this->json(['message' => 'New Super Admin entry provisioned successfully'], Response::HTTP_CREATED);
+    }
 }
