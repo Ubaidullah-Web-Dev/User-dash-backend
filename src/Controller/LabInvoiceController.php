@@ -114,12 +114,15 @@ class LabInvoiceController extends AbstractController
         $orders = $qb->orderBy('o.createdAt', 'ASC')->getQuery()->getResult();
 
         $statementOrders = [];
-        $totalSpent = 0;
-        $totalDiscount = 0;
+        $totalSpent = 0.0;
+        $totalDiscount = 0.0;
         
         foreach ($orders as $order) {
-            $totalSpent += $order->getTotal();
-            $totalDiscount += ($order->getDiscountAmount() ?: 0);
+            $orderTotal = (float)($order->getTotal() ?: 0);
+            $orderDiscount = (float)($order->getDiscountAmount() ?: 0);
+            
+            $totalSpent += $orderTotal;
+            $totalDiscount += $orderDiscount;
             
             $productNames = [];
             foreach ($order->getItems() as $item) {
@@ -132,16 +135,16 @@ class LabInvoiceController extends AbstractController
                 'date' => $order->getCreatedAt()->format('Y-m-d'),
                 'orderId' => $order->getId(),
                 'products' => implode(', ', $productNames),
-                'total' => $order->getTotal(),
+                'total' => $orderTotal,
                 'discountPercentage' => $order->getDiscountPercentage() ?: 0,
-                'discountAmount' => $order->getDiscountAmount() ?: 0,
-                'amountTendered' => $order->getAmountTendered() ?: $order->getTotal(),
+                'discountAmount' => $orderDiscount,
+                'amountTendered' => $order->getAmountTendered() ?: $orderTotal,
                 'pending' => $pendingAmount
             ];
         }
 
         $company = $customer->getCompany();
-        $settings = $company ? $company->getSettingsJson() : [];
+        $settings = ($company && $company->getSettingsJson()) ? $company->getSettingsJson() : [];
         
         $companyData = [
             'name' => $company ? $company->getName() : 'Unique Healthcare Solutions',
@@ -162,9 +165,9 @@ class LabInvoiceController extends AbstractController
             'customerRemainingBalance' => $customer->getRemainingBalance(),
             'periodLabel' => $periodLabel,
             'orders' => $statementOrders,
-            'totalSpent' => $totalSpent,
-            'subTotal' => $totalSpent + $totalDiscount,
-            'totalDiscount' => $totalDiscount,
+            'totalSpent' => (float)$totalSpent,
+            'subTotal' => (float)($totalSpent + $totalDiscount),
+            'totalDiscount' => (float)$totalDiscount,
             'statementNumber' => 'STMT-' . date('Ymd') . '-' . str_pad($customer->getId(), 4, '0', STR_PAD_LEFT),
             'date' => new \DateTime()
         ]);
