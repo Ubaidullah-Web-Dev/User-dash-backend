@@ -5,645 +5,310 @@
     <meta charset="UTF-8">
     <title>Account Statement - {{ customer.name }}</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700;900&family=Barlow+Condensed:wght@700;900&display=swap');
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         body {
-            font-family: 'Barlow', Helvetica, Arial, sans-serif;
-            background: #ffffff;
-            color: #1a1f2e;
+            font-family: DejaVu Sans, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 40px;
             font-size: 11px;
-            padding: 0;
+            color: #2d3436;
         }
 
-        /* ── TOP ACCENT BAR ── */
-        .top-bar {
-            height: 8px;
-            background: #f5c518;
-            width: 100%;
+        .header {
+            margin-bottom: 40px;
         }
 
-        .page-wrap {
-            padding: 36px 48px 100px 48px;
-        }
-
-        /* ── HEADER ── */
-        .header-row {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 28px;
-        }
-
-        .brand-block .brand-name {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 22px;
+        .header-title {
+            font-size: 28px;
             font-weight: 900;
-            color: #1a1f2e;
-            letter-spacing: 0.5px;
+            letter-spacing: -1px;
             text-transform: uppercase;
+            color: #0984e3;
+            margin: 0;
         }
 
-        .brand-block .brand-tagline {
-            font-size: 9px;
-            font-weight: 600;
-            color: #8a8f9e;
+        .header-subtitle {
+            font-size: 10px;
+            font-weight: bold;
+            color: #636e72;
             text-transform: uppercase;
             letter-spacing: 2px;
-            margin-top: 3px;
+            margin-top: 5px;
         }
 
-        /* LOGO placeholder if no logo passed */
-        .brand-block .logo-box {
-            display: inline-block;
-            border: 2.5px solid #1a1f2e;
-            border-radius: 6px;
-            padding: 4px 10px;
+        .divider {
+            height: 1px;
+            background: #dfe6e9;
+            margin: 30px 0;
+        }
+
+        .info-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+        }
+
+        .info-grid td {
+            vertical-align: top;
+            width: 50%;
+        }
+
+        .box {
+            padding: 20px;
+            border: 1px solid #dfe6e9;
+            border-radius: 12px;
+            background: #fafafa;
+        }
+
+        .box-label {
+            font-[10px] uppercase font-weight: bold;
+            color: #b2bec3;
+            margin-bottom: 5px;
+        }
+
+        .box-value {
+            font-size: 13px;
+            font-weight: 900;
+            color: #2d3436;
+        }
+
+        .statement-meta {
+            text-align: right;
+        }
+
+        .meta-item {
             margin-bottom: 8px;
         }
 
-        .title-block {
-            text-align: right;
+        .meta-label {
+            font-weight: bold;
+            color: #636e72;
+            padding-right: 15px;
         }
 
-        .title-block .doc-title {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 52px;
+        .meta-value {
             font-weight: 900;
-            color: #1a1f2e;
-            letter-spacing: -1px;
-            line-height: 1;
-            text-transform: uppercase;
+            color: #0984e3;
         }
 
-        /* yellow bar behind INVOICE text */
-        .title-block .title-accent {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 0;
-        }
-
-        .title-block .yellow-stripe {
-            height: 52px;
-            width: 14px;
-            background: #f5c518;
-            margin-left: 10px;
-            border-radius: 2px;
-        }
-
-        /* ── YELLOW DIVIDER BAR ── */
-        .yellow-bar {
-            height: 5px;
-            background: #f5c518;
-            border-radius: 2px;
-            margin-bottom: 24px;
-        }
-
-        /* ── INFO SECTION ── */
-        .info-section {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 32px;
-        }
-
-        .customer-block .to-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: #8a8f9e;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 6px;
-        }
-
-        .customer-block .customer-name {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 20px;
-            font-weight: 900;
-            color: #1a1f2e;
-            text-transform: uppercase;
-        }
-
-        .customer-block .customer-detail {
-            font-size: 11px;
-            color: #4a5068;
-            font-weight: 600;
-            margin-top: 4px;
-            line-height: 1.7;
-        }
-
-        .meta-block {
-            text-align: right;
-        }
-
-        .meta-block table {
-            border-collapse: collapse;
-            margin-left: auto;
-        }
-
-        .meta-block td {
-            padding: 4px 0 4px 24px;
-            vertical-align: top;
-        }
-
-        .meta-block .meta-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: #8a8f9e;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            text-align: right;
-        }
-
-        .meta-block .meta-value {
-            font-size: 11px;
-            font-weight: 900;
-            color: #1a1f2e;
-            text-align: right;
-        }
-
-        .meta-block .meta-value.accent {
-            color: #c9a800;
-        }
-
-        .meta-block .status-badge {
-            display: inline-block;
-            background: #1a1f2e;
-            color: #f5c518;
-            font-size: 8px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            padding: 3px 8px;
-            border-radius: 3px;
-        }
-
-        /* ── ITEMS TABLE ── */
         table.items-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 8px;
-        }
-
-        table.items-table thead tr {
-            background: #1a1f2e;
+            margin-top: 20px;
         }
 
         table.items-table th {
-            padding: 11px 13px;
-            color: #ffffff;
+            background: #0984e3;
+            color: white;
+            padding: 12px;
             text-align: left;
             text-transform: uppercase;
             font-size: 9px;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-
-        table.items-table th.num-col {
-            color: #f5c518;
-            width: 6%;
-        }
-
-        table.items-table th.right {
-            text-align: right;
+            font-weight: 900;
         }
 
         table.items-table td {
-            padding: 11px 13px;
-            border-bottom: 1px solid #eaecf1;
-            font-weight: 600;
-            color: #1a1f2e;
-            font-size: 11px;
+            padding: 12px;
+            border-bottom: 1px solid #f1f2f6;
+            font-weight: 500;
         }
 
-        table.items-table tr:nth-child(even) td {
-            background: #f8f8fa;
+        table.items-table tr:nth-child(even) {
+            background: #f9f9f9;
         }
 
-        .row-num {
-            font-weight: 900;
-            color: #c9a800;
-            font-size: 12px;
-        }
-
-        .ref-id {
-            font-weight: 900;
-            color: #1a1f2e;
-            font-size: 11px;
-        }
-
-        .td-right {
+        .summary-box {
+            float: right;
+            width: 250px;
+            margin-top: 30px;
+            padding: 20px;
+            background: #0984e3;
+            border-radius: 12px;
+            color: white;
             text-align: right;
         }
 
-        .td-discount-pos {
-            color: #2b9e6a;
-            font-weight: 700;
-        }
-
-        .td-discount-none {
-            color: #c5c9d6;
-        }
-
-        .td-pending-pos {
-            color: #c0392b;
-            font-weight: 900;
-        }
-
-        .td-pending-zero {
-            color: #c5c9d6;
-        }
-
-        .discount-pct {
-            font-size: 8px;
-            color: #8a8f9e;
-            margin-top: 2px;
-        }
-
-        /* ── SUMMARY SECTION ── */
-        .summary-section {
-            margin-top: 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-
-        /* LEFT: Thank you + footer notes */
-        .summary-left {
-            flex: 1;
-            padding-right: 40px;
-        }
-
-        .thank-you {
-            font-size: 13px;
-            font-weight: 700;
-            color: #1a1f2e;
-            margin-bottom: 14px;
-        }
-
-        .terms-label {
-            font-size: 9px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #1a1f2e;
-            margin-bottom: 4px;
-        }
-
-        .terms-text {
-            font-size: 9px;
-            color: #8a8f9e;
-            line-height: 1.6;
-            margin-bottom: 14px;
-        }
-
-        /* ── ADDITIONAL DATA COMMENT ──
-             If you want to show Payment Info (bank account, routing number, notes),
-             render it inside .payment-info block below.
-             Fields suggested: account number, bank name, branch, IBAN, swift code, payment instructions.
-        */
-        .payment-info .terms-label {
-            margin-top: 0;
-        }
-
-        .payment-info .payment-line {
-            font-size: 10px;
-            color: #4a5068;
-            font-weight: 600;
-            line-height: 1.8;
-        }
-
-        /* RIGHT: Totals */
-        .summary-right {
-            min-width: 240px;
-            text-align: right;
-        }
-
-        .totals-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 0;
-        }
-
-        .totals-table td {
-            padding: 6px 0;
-            font-size: 11px;
-        }
-
-        .totals-table .t-label {
-            color: #8a8f9e;
-            font-weight: 700;
-            text-align: left;
-            text-transform: uppercase;
-            font-size: 10px;
-            letter-spacing: 0.5px;
-        }
-
-        .totals-table .t-value {
-            font-weight: 900;
-            text-align: right;
-            color: #1a1f2e;
-            padding-left: 20px;
-        }
-
-        /* Total highlighted row */
-        .total-highlight-row td {
-            background: #f5c518 !important;
-            padding: 10px 12px;
-            border-radius: 0;
-        }
-
-        .total-highlight-row .t-label {
-            color: #1a1f2e;
-            font-size: 12px;
-            font-weight: 900;
-            text-transform: uppercase;
-        }
-
-        .total-highlight-row .t-value {
-            color: #1a1f2e;
-            font-size: 16px;
-            font-weight: 900;
-        }
-
-        /* Outstanding balance row — red version */
-        .outstanding-row td {
-            background: #c0392b !important;
-            padding: 8px 12px;
-            margin-top: 6px;
-        }
-
-        .outstanding-row .t-label {
-            color: #ffffff;
+        .summary-label {
             font-size: 10px;
             font-weight: 900;
             text-transform: uppercase;
+            opacity: 0.8;
+            margin-bottom: 5px;
         }
 
-        .outstanding-row .t-value {
-            color: #ffffff;
-            font-size: 15px;
+        .summary-value {
+            font-size: 22px;
             font-weight: 900;
         }
 
-        /* ── FOOTER ── */
         .footer {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-        }
-
-        .footer-bar {
-            height: 5px;
-            background: #f5c518;
-        }
-
-        .footer-links {
-            background: #1a1f2e;
-            padding: 12px 48px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        /* ── ADDITIONAL DATA COMMENT ──
-             Footer links row shows Phone, Address, Website, Authorised Sign.
-             If you have those fields on the customer/company object,
-             replace the placeholder spans below with real template variables.
-             e.g. {{ company.phone }}, {{ company.address }}, {{ company.website }}
-        */
-        .footer-links .footer-item {
-            font-size: 9px;
-            font-weight: 700;
-            color: #8a8f9e;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .footer-links .footer-item span {
-            color: #ffffff;
-        }
-
-        .footer-links .footer-divider {
-            color: #3a3f50;
-            font-size: 14px;
-            font-weight: 300;
-        }
-
-        .footer-sign {
-            font-size: 9px;
-            font-weight: 700;
-            color: #8a8f9e;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            text-align: right;
-        }
-
-        .footer-sign .sign-line {
-            border-top: 1px solid #3a3f50;
-            width: 120px;
-            margin-bottom: 6px;
-        }
-
-        /* empty state */
-        .empty-row td {
+            bottom: 40px;
+            left: 40px;
+            right: 40px;
             text-align: center;
-            padding: 40px;
-            color: #c5c9d6;
-            font-style: italic;
-            font-size: 11px;
+            border-top: 1px solid #dfe6e9;
+            padding-top: 20px;
+            font-size: 9px;
+            color: #b2bec3;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid #0984e3;
+            color: #0984e3;
+            font-weight: bold;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 
 <body>
-
-    <div class="top-bar"></div>
-
-    <div class="page-wrap">
-
-        <!-- ══ HEADER ══ -->
-        <div class="header-row">
-            <div class="brand-block">
-                {% if logo %}
-                <img src="{{ logo }}" alt="Logo" style="height: 64px; margin-bottom: 6px; display:block;">
-                {% else %}
-                <div class="logo-box">
-                    <span
-                        style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:900; letter-spacing:1px; color:#1a1f2e;">UHS</span>
-                </div>
-                {% endif %}
-                <div class="brand-name">{{ company.name }}</div>
-                <div class="brand-tagline">Electronic Activity Report</div>
-            </div>
-
-            <div class="title-block">
-                <div class="title-accent">
-                    <div class="doc-title">INVOICE</div>
-                    <div class="yellow-stripe"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ══ YELLOW DIVIDER ══ -->
-        <div class="yellow-bar"></div>
-
-        <!-- ══ INFO SECTION ══ -->
-        <div class="info-section">
-            <div class="customer-block">
-                <div class="to-label">Invoice To:</div>
-                <div class="customer-name">{{ customer.name|upper }}</div>
-                <div class="customer-detail">
-                    {{ customer.phone }}<br>
-                    {{ customer.address|default('N/A') }}<br>
-                    {{ customer.city|default('N/A') }}
-                </div>
-            </div>
-
-            <div class="meta-block">
-                <table>
-                    <tr>
-                        <td class="meta-label">Report Period</td>
-                        <td class="meta-value accent">{{ periodLabel|upper }}</td>
-                    </tr>
-                    <tr>
-                        <td class="meta-label">Generated On</td>
-                        <td class="meta-value">{{ date|date('d M Y, H:i') }}</td>
-                    </tr>
-                    <tr>
-                        <td class="meta-label">Status</td>
-                        <td class="meta-value"><span class="status-badge">Verified Record</span></td>
-                    </tr>
-                    <tr>
-                        <td class="meta-label">Statement #</td>
-                        <td class="meta-value accent">{{ statementNumber }}</td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-
-        <!-- ══ ITEMS TABLE ══ -->
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th class="num-col">SL.</th>
-                    <th style="width:8%">Ref ID</th>
-                    <th>Products</th>
-                    <th class="right" style="width:12%">Gross Amt.</th>
-                    <th class="right" style="width:12%">Discount</th>
-                    <th class="right" style="width:10%">Paid</th>
-                    <th class="right" style="width:10%">Pending</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for order in orders %}
-                <tr>
-                    <td class="row-num">{{ loop.index }}</td>
-                    <td class="ref-id">#{{ order.orderId }}</td>
-                    <td style="font-weight:600;">{{ order.products }}</td>
-                    <td class="td-right" style="font-weight:900;">${{ order.total|number_format(2) }}</td>
-                    <td
-                        class="td-right {% if order.discountAmount > 0 %}td-discount-pos{% else %}td-discount-none{% endif %}">
-                        {% if order.discountAmount > 0 %}
-                        -${{ order.discountAmount|number_format(2) }}
-                        <div class="discount-pct">({{ order.discountPercentage|number_format(0) }}%)</div>
-                        {% else %}
-                        —
-                        {% endif %}
-                    </td>
-                    <td class="td-right" style="font-weight:700;">${{ order.amountTendered|number_format(2) }}</td>
-                    <td class="td-right {% if order.pending > 0 %}td-pending-pos{% else %}td-pending-zero{% endif %}">
-                        ${{ order.pending|number_format(2) }}
-                    </td>
-                </tr>
-                {% else %}
-                <tr class="empty-row">
-                    <td colspan="7">No activity recorded for this period.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
+    <div class="header">
+        <table width="100%">
+            <tr>
+                <td>
+                    <h1 class="header-title">Unique Healthcare Solutions</h1>
+                    <div class="header-subtitle">Electronic Activity Report</div>
+                </td>
+                <td align="right">
+                    {% if logo %}<img src="{{ logo }}" alt="Logo" style="height: 80px;">{% else %}<div
+                        style="font-size: 20px; font-weight: 900; color: #0984e3; border: 3px solid #0984e3; padding: 5px 15px; border-radius: 8px;">
+                        Unique Healthcare Solutions</div>{% endif %}
+                </td>
+            </tr>
         </table>
+    </div>
 
-        <!-- ══ SUMMARY SECTION ══ -->
-        <div class="summary-section">
+    <div class="divider"></div>
 
-            <!-- LEFT ── Notes / Terms / Payment Info -->
-            <div class="summary-left">
-                <div class="thank-you">Thank you for your business.</div>
+    <table class="info-grid">
+        <tr>
+            <td>
+                <div class="box">
+                    <div class="box-label"
+                        style="font-size: 10px; text-transform: uppercase; font-weight: 900; color: #0984e3; letter-spacing: 1.5px; margin-bottom: 15px; border-bottom: 2px solid #0984e3; padding-bottom: 8px;">
+                        Customer Information</div>
 
-                <div class="terms-label">Terms &amp; Conditions</div>
-                <div class="terms-text">
-                    This document serves as an electronic record of sales and inventory usage for the specified period.
-                    All figures are in USD. Disputes must be raised within 7 days of receipt.
+                    <div style="margin-bottom: 12px;">
+                        <div
+                            style="font-size: 9px; text-transform: uppercase; font-weight: 700; color: #b2bec3; letter-spacing: 1px; margin-bottom: 3px;">
+                            Full Name</div>
+                        <div class="box-value">{{ customer.name|upper }}</div>
+                    </div>
+
+                    <div style="height: 1px; background: #dfe6e9; margin: 10px 0;"></div>
+
+                    <div style="margin-bottom: 12px;">
+                        <div
+                            style="font-size: 9px; text-transform: uppercase; font-weight: 700; color: #b2bec3; letter-spacing: 1px; margin-bottom: 3px;">
+                            Phone Number</div>
+                        <div style="font-size: 12px; font-weight: 700; color: #2d3436;">{{ customer.phone }}</div>
+                    </div>
+
+                    <div style="height: 1px; background: #dfe6e9; margin: 10px 0;"></div>
+
+                    <div style="margin-bottom: 12px;">
+                        <div
+                            style="font-size: 9px; text-transform: uppercase; font-weight: 700; color: #b2bec3; letter-spacing: 1px; margin-bottom: 3px;">
+                            Address</div>
+                        <div style="font-size: 12px; font-weight: 700; color: #2d3436;">{{
+                            customer.address|default('N/A') }}</div>
+                    </div>
+
+                    <div style="height: 1px; background: #dfe6e9; margin: 10px 0;"></div>
+
+                    <div style="margin-bottom: 12px;">
+                        <div
+                            style="font-size: 9px; text-transform: uppercase; font-weight: 700; color: #b2bec3; letter-spacing: 1px; margin-bottom: 3px;">
+                            City</div>
+                        <div style="font-size: 12px; font-weight: 700; color: #2d3436;">{{ customer.city|default('N/A')
+                            }}</div>
+                    </div>
+
+                    <div style="height: 1px; background: #dfe6e9; margin: 10px 0;"></div>
                 </div>
-            </div>
+            </td>
+            <td align="right">
+                <div class="statement-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">REPORT PERIOD:</span>
+                        <span class="meta-value">{{ periodLabel|upper }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">GENERATED ON:</span>
+                        <span class="meta-value">{{ date|date('d M Y, H:i') }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">STATUS:</span>
+                        <span class="meta-value" style="color: #00b894;">VERIFIED RECORD</span>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
 
-            <!-- RIGHT ── Totals -->
-            <div class="summary-right">
-                <table class="totals-table">
-                    <!-- ADDITIONAL DATA COMMENT:
-                         Sub Total row — if you track sub-total before discounts separately,
-                         add a field like {{ subTotal }} and render it here.
-                    -->
-                    <tr>
-                        <td class="t-label">Sub Total</td>
-                        <td class="t-value">${{ subTotal|number_format(2) }}</td>
-                    </tr>
-
-                    <!-- ADDITIONAL DATA COMMENT:
-                         Tax row — if a tax percentage or tax amount is available
-                         (e.g. {{ taxRate }} or {{ taxAmount }}), render it here.
-                    -->
-                    <tr>
-                        <td class="t-label">Tax</td>
-                        <td class="t-value">0.00%</td>
-                    </tr>
-
-                    <tr class="total-highlight-row">
-                        <td class="t-label">Total Period Spending</td>
-                        <td class="t-value">${{ totalSpent|number_format(2) }}</td>
-                    </tr>
-
-                    {% if customerRemainingBalance is defined and customerRemainingBalance > 0 %}
-                    <tr>
-                        <td colspan="2" style="padding:4px 0;"></td>
-                    </tr>
-                    <tr class="outstanding-row">
-                        <td class="t-label">Outstanding Balance</td>
-                        <td class="t-value">${{ customerRemainingBalance|number_format(2) }}</td>
-                    </tr>
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th width="10%">Date</th>
+                <th width="8%">Ref ID</th>
+                <th>Products</th>
+                <th width="12%" style="text-align: right">Gross Amount</th>
+                <th width="12%" style="text-align: right; color: #55efc4;">Discount</th>
+                <th width="12%" style="text-align: right">Paid</th>
+                <th width="12%" style="text-align: right; color: #ffb8b8;">Pending</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.date|date('d M Y') }}</td>
+                <td style="color: #0984e3; font-weight: 900;">#{{ order.orderId }}</td>
+                <td style="font-weight: 600;">{{ order.products }}</td>
+                <td style="text-align: right; font-weight: 900;">${{ order.total|number_format(2) }}</td>
+                <td
+                    style="text-align: right; font-weight: 700; color: {{ order.discountAmount > 0 ? '#00b894' : '#b2bec3' }};">
+                    {% if order.discountAmount > 0 %}
+                    -${{ order.discountAmount|number_format(2) }}
+                    <div style="font-size: 8px; color: #636e72;">({{ order.discountPercentage|number_format(0) }}%)
+                    </div>
+                    {% else %}
+                    —
                     {% endif %}
-                </table>
-            </div>
+                </td>
+                <td style="text-align: right;">${{ order.amountTendered|number_format(2) }}</td>
+                <td
+                    style="text-align: right; font-weight: 900; color: {{ order.pending > 0 ? '#d63031' : '#b2bec3' }};">
+                    ${{ order.pending|number_format(2) }}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 40px; color: #b2bec3; font-style: italic;">
+                    No activity recorded for this period.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
-        </div>
-        <!-- end summary-section -->
-
+    <div class="summary-box">
+        <div class="summary-label">Total Period Spending</div>
+        <div class="summary-value">${{ totalSpent|number_format(2) }}</div>
     </div>
-    <!-- end page-wrap -->
+    {% if customerRemainingBalance is defined and customerRemainingBalance > 0 %}
+    <div class="summary-box" style="margin-right: 20px; background: #d63031;">
+        <div class="summary-label">Outstanding Balance</div>
+        <div class="summary-value">${{ customerRemainingBalance|number_format(2) }}</div>
+    </div>
+    {% endif %}
 
-    <!-- ══ FOOTER ══ -->
     <div class="footer">
-        <div class="footer-bar"></div>
-        <div class="footer-links">
-            <div style="display:flex; align-items:center; gap:16px;">
-                <div class="footer-item">Phone # <span>|</span> &nbsp;{{ company.phone }}</div>
-                <div class="footer-divider">|</div>
-                <div class="footer-item">Address <span>|</span> &nbsp;{{ company.address }}</div>
-            </div>
-            <div class="footer-sign">
-                <div class="sign-line"></div>
-                Authorised Sign
-            </div>
-        </div>
+        This document serves as an electronic record of sales and inventory usage for the specified period.<br>
+        &copy; {{ "now"|date("Y") }} Unique Healthcare Solutions. All rights reserved.
     </div>
-
 </body>
 
 </html>
