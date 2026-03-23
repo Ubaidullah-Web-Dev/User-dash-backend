@@ -115,8 +115,11 @@ class LabInvoiceController extends AbstractController
 
         $statementOrders = [];
         $totalSpent = 0;
+        $totalDiscount = 0;
+        
         foreach ($orders as $order) {
             $totalSpent += $order->getTotal();
+            $totalDiscount += ($order->getDiscountAmount() ?: 0);
             
             $productNames = [];
             foreach ($order->getItems() as $item) {
@@ -132,13 +135,23 @@ class LabInvoiceController extends AbstractController
                 'total' => $order->getTotal(),
                 'discountPercentage' => $order->getDiscountPercentage() ?: 0,
                 'discountAmount' => $order->getDiscountAmount() ?: 0,
-                'amountTendered' => $order->getAmountTendered() ?: $order->getTotal(), // if null, assume fully paid for old records
+                'amountTendered' => $order->getAmountTendered() ?: $order->getTotal(),
                 'pending' => $pendingAmount
             ];
         }
 
+        $company = $customer->getCompany();
+        $settings = $company ? $company->getSettingsJson() : [];
+        
+        $companyData = [
+            'name' => $company ? $company->getName() : 'Unique Healthcare Solutions',
+            'phone' => $settings['phone'] ?? 'N/A',
+            'address' => $settings['address'] ?? 'N/A',
+        ];
+
         $html = $this->renderView('invoice/customer_statement.html.twig', [
             'logo' => $this->getLogoData(),
+            'company' => $companyData,
             'customer' => [
                 'name' => $customer->getName(),
                 'phone' => $customer->getPhone(),
@@ -150,6 +163,9 @@ class LabInvoiceController extends AbstractController
             'periodLabel' => $periodLabel,
             'orders' => $statementOrders,
             'totalSpent' => $totalSpent,
+            'subTotal' => $totalSpent + $totalDiscount,
+            'totalDiscount' => $totalDiscount,
+            'statementNumber' => 'STMT-' . date('Ymd') . '-' . str_pad($customer->getId(), 4, '0', STR_PAD_LEFT),
             'date' => new \DateTime()
         ]);
 
