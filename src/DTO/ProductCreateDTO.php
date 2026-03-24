@@ -9,7 +9,6 @@ class ProductCreateDTO
     #[Assert\NotBlank(message: 'Product name is required')]
     public ?string $name = null;
 
-    #[Assert\NotBlank(message: 'Description is required')]
     public ?string $description = null;
 
     #[Assert\NotBlank(message: 'Price is required')]
