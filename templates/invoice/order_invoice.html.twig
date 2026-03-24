@@ -234,7 +234,7 @@
                         <td class="meta-label">Status</td>
                         <td>
                             {% if order.changeDue < 0 %}
-                                <span class="status-badge status-pending">PENDING: ${{ (order.changeDue * -1)|number_format(2) }}</span>
+                                <span class="status-badge status-pending">PENDING: PKR {{ (order.changeDue * -1)|number_format(2) }}</span>
                             {% else %}
                                 <span class="status-badge status-paid">PAID IN FULL</span>
                             {% endif %}
@@ -261,9 +261,9 @@
                     <div style="font-weight: bold;">{{ item.product.name }}</div>
                     <div style="color: #636e72; font-size: 8px;">{{ item.product.category.name|default('General') }}</div>
                 </td>
-                <td class="text-right">${{ item.price|number_format(2) }}</td>
+                <td class="text-right">PKR {{ item.price|number_format(2) }}</td>
                 <td class="text-center">{{ item.quantity }}</td>
-                <td class="text-right" style="font-weight: bold;">${{ (item.price * item.quantity)|number_format(2) }}</td>
+                <td class="text-right" style="font-weight: bold;">PKR {{ (item.price * item.quantity)|number_format(2) }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -273,31 +273,31 @@
         <table class="summary-table">
             <tr>
                 <td class="summary-label">Subtotal</td>
-                <td class="summary-value">${{ (order.total + (order.discountAmount ?? 0))|number_format(2) }}</td>
+                <td class="summary-value">PKR {{ (order.total + (order.discountAmount ?? 0))|number_format(2) }}</td>
             </tr>
             {% if order.discountAmount > 0 %}
             <tr>
                 <td class="summary-label">Discount ({{ order.discountPercentage }}%)</td>
-                <td class="summary-value" style="color: #d63031;">-${{ order.discountAmount|number_format(2) }}</td>
+                <td class="summary-value" style="color: #d63031;">-PKR {{ order.discountAmount|number_format(2) }}</td>
             </tr>
             {% endif %}
             <tr class="total-row">
                 <td class="summary-label" style="color: #2d3436;">Grand Total</td>
-                <td class="summary-value">${{ order.total|number_format(2) }}</td>
+                <td class="summary-value">PKR {{ order.total|number_format(2) }}</td>
             </tr>
             <tr>
                 <td class="summary-label" style="padding-top: 10px;">Amount Paid</td>
-                <td class="summary-value" style="padding-top: 10px;">${{ (order.amountTendered ?? 0)|number_format(2) }}</td>
+                <td class="summary-value" style="padding-top: 10px;">PKR {{ (order.amountTendered ?? 0)|number_format(2) }}</td>
             </tr>
             {% if order.changeDue < 0 %}
             <tr class="pending-row">
                 <td class="summary-label" style="color: #d63031;">Pending Amount</td>
-                <td class="summary-value">${{ (order.changeDue * -1)|number_format(2) }}</td>
+                <td class="summary-value">PKR {{ (order.changeDue * -1)|number_format(2) }}</td>
             </tr>
             {% else %}
             <tr>
                 <td class="summary-label">Change Due</td>
-                <td class="summary-value">${{ (order.changeDue ?? 0)|number_format(2) }}</td>
+                <td class="summary-value">PKR {{ (order.changeDue ?? 0)|number_format(2) }}</td>
             </tr>
             {% endif %}
         </table>

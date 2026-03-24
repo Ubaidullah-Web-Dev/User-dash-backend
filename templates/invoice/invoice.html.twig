@@ -256,8 +256,8 @@
                     <td class="text-center">{{ loop.index }}</td>
                     <td class="bold">{{ item.description }}</td>
                     <td class="text-center">{{ item.qty }}</td>
-                    <td class="text-right">${{ item.rate|number_format(2) }}</td>
-                    <td class="text-right bold">${{ item.amount|number_format(2) }}</td>
+                    <td class="text-right">PKR {{ item.rate|number_format(2) }}</td>
+                    <td class="text-right bold">PKR {{ item.amount|number_format(2) }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -269,34 +269,34 @@
         <table class="totals-table">
             <tr class="subtotal-row">
                 <td>SUBTOTAL</td>
-                <td>${{ subtotal|number_format(2) }}</td>
+                <td>PKR {{ subtotal|number_format(2) }}</td>
             </tr>
             {% if discountAmount is defined and discountAmount > 0 %}
             <tr>
                 <td style="font-size:10px;color:#666;">Discount ({{ discountPercentage }}%)</td>
-                <td style="font-size:10px;color:#666;">-${{ discountAmount|number_format(2) }}</td>
+                <td style="font-size:10px;color:#666;">-PKR {{ discountAmount|number_format(2) }}</td>
             </tr>
             {% endif %}
             <tr>
                 <td>Tax (0%)</td>
-                <td>$0.00</td>
+                <td>PKR 0.00</td>
             </tr>
             <tr class="total-row">
                 <td>TOTAL</td>
-                <td>${{ total|number_format(2) }}</td>
+                <td>PKR {{ total|number_format(2) }}</td>
             </tr>
             {% if amountTendered is defined and amountTendered is not null %}
             <tr>
                 <td style="font-size:10px;color:#666;">Cash Tendered</td>
-                <td style="font-size:10px;color:#666;">${{ amountTendered|number_format(2) }}</td>
+                <td style="font-size:10px;color:#666;">PKR {{ amountTendered|number_format(2) }}</td>
             </tr>
             <tr>
                 {% if changeDue < 0 %}
                     <td style="font-size:10px;color:#d63031;font-weight:bold;">Pending Amount</td>
-                    <td style="font-size:10px;color:#d63031;font-weight:bold;">${{ changeDue|abs|number_format(2) }}</td>
+                    <td style="font-size:10px;color:#d63031;font-weight:bold;">PKR {{ changeDue|abs|number_format(2) }}</td>
                 {% else %}
                     <td style="font-size:10px;color:#666;">Change Due</td>
-                    <td style="font-size:10px;color:#666;">${{ changeDue|number_format(2) }}</td>
+                    <td style="font-size:10px;color:#666;">PKR {{ changeDue|number_format(2) }}</td>
                 {% endif %}
             </tr>
             {% endif %}

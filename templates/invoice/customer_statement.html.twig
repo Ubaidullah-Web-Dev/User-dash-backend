@@ -322,19 +322,19 @@
                     <div style="font-size: 10px; color: #636e72;">{{ order.products }}</div>
                     {% if order.discountAmount > 0 %}
                     <div style="font-size: 9px; color: #00b894; margin-top: 2px;">
-                        Discount Applied: -${{ order.discountAmount|number_format(2) }} ({{ order.discountPercentage
+                        Discount Applied: -PKR {{ order.discountAmount|number_format(2) }} ({{ order.discountPercentage
                         }}%)
                     </div>
                     {% endif %}
                     {% if order.pending > 0 %}
                     <div style="font-size: 9px; color: #d63031;">
-                        Pending: ${{ order.pending|number_format(2) }}
+                        Pending: PKR {{ order.pending|number_format(2) }}
                     </div>
                     {% endif %}
                 </td>
-                <td class="text-right">${{ order.total|number_format(2) }}</td>
+                <td class="text-right">PKR {{ order.total|number_format(2) }}</td>
                 <td class="text-center">1</td>
-                <td class="text-right">${{ order.total|number_format(2) }}</td>
+                <td class="text-right">PKR {{ order.total|number_format(2) }}</td>
             </tr>
             {% else %}
             <tr>
@@ -369,17 +369,17 @@
                 <table class="summary-table">
                     <tr>
                         <td class="meta-label">Sub Total:</td>
-                        <td>${{ totalSpent|number_format(2) }}</td>
+                        <td>PKR {{ totalSpent|number_format(2) }}</td>
                     </tr>
                     <tr class="summary-row-total">
                         <td class="meta-label">Total:</td>
-                        <td>${{ totalSpent|number_format(2) }}</td>
+                        <td>PKR {{ totalSpent|number_format(2) }}</td>
                     </tr>
                 </table>
 
                 {% if customerRemainingBalance is defined and customerRemainingBalance > 0 %}
                 <div style="margin-top: 10px; text-align: right; color: #d63031; font-weight: bold;">
-                    Outstanding Balance: ${{ customerRemainingBalance|number_format(2) }}
+                    Outstanding Balance: PKR {{ customerRemainingBalance|number_format(2) }}
                 </div>
                 {% endif %}
             </td>

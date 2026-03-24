@@ -128,21 +128,21 @@
             <tr>
                 <td class="stat-card">
                     <div class="stat-label">Gross Revenue</div>
-                    <div class="stat-value">${{ revenue|number_format(2) }}</div>
+                    <div class="stat-value">PKR {{ revenue|number_format(2) }}</div>
                 </td>
                 <td class="stat-card">
                     <div class="stat-label">Total Expenses</div>
-                    <div class="stat-value negative">-${{ expenses|number_format(2) }}</div>
+                    <div class="stat-value negative">-PKR {{ expenses|number_format(2) }}</div>
                 </td>
                 <td class="stat-card">
                     <div class="stat-label">Net Income</div>
                     <div class="stat-value {{ netIncome >= 0 ? 'positive' : 'negative' }}">
-                        {{ netIncome >= 0 ? '+' : '' }}${{ netIncome|number_format(2) }}
+                        {{ netIncome >= 0 ? '+' : '' }}PKR {{ netIncome|number_format(2) }}
                     </div>
                 </td>
                 <td class="stat-card" style="border-color: #d63031;">
                     <div class="stat-label" style="color: #d63031;">Total Pending</div>
-                    <div class="stat-value negative">${{ totalPending|number_format(2) }}</div>
+                    <div class="stat-value negative">PKR {{ totalPending|number_format(2) }}</div>
                 </td>
             </tr>
         </table>
