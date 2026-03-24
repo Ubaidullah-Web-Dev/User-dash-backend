@@ -4,62 +4,130 @@
     <meta charset="UTF-8">
     <title>Lab Intelligence Report - {{ periodLabel }}</title>
     <style>
-        body { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; margin: 0; padding: 40px; font-size: 11px; color: #222; line-height: 1.5; }
-        .header { margin-bottom: 30px; border-bottom: 2px solid #6366f1; padding-bottom: 20px; }
-        .header table { width: 100%; border-collapse: collapse; }
-        .title { font-size: 24px; font-weight: 900; color: #6366f1; text-transform: uppercase; letter-spacing: -1px; }
-        .doc-type { font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px; }
-        .meta { text-align: right; }
-        .meta-item { margin-bottom: 4px; }
-        .meta-label { font-weight: bold; color: #64748b; text-transform: uppercase; font-size: 8px; }
-        .meta-value { font-weight: 900; font-size: 14px; color: #6366f1; }
-        
-        .section { margin-bottom: 30px; }
-        .section-title { font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 20px; }
-        
-        .stats-grid { width: 100%; border-collapse: separate; border-spacing: 15px 0; margin: 0 -15px; }
-        .stat-card { background: #f8fafc; padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0; width: 33.33%; text-align: center; }
-        .stat-label { font-size: 8px; font-weight: bold; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; }
-        .stat-value { font-size: 18px; font-weight: 900; color: #1e293b; }
-        .stat-value.positive { color: #10b981; }
-        .stat-value.negative { color: #ef4444; }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 30px;
+            font-size: 11px;
+            color: #2d3436;
+            background: #fff;
+            line-height: 1.4;
+        }
 
+        /* Invoice Title Bar */
+        .invoice-title-container {
+            margin: 20px 0;
+            position: relative;
+            text-align: center;
+        }
+
+        .invoice-title-container::before,
+        .invoice-title-container::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 30%;
+            height: 12px;
+            background-color: #ffc107;
+            transform: translateY(-50%);
+        }
+
+        .invoice-title-container::before { left: 0; }
+        .invoice-title-container::after { right: 0; }
+
+        .invoice-title {
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            display: inline-block;
+            padding: 0 20px;
+            background: #fff;
+            position: relative;
+            z-index: 1;
+            letter-spacing: 2px;
+        }
+
+        .doc-type {
+            font-size: 9px;
+            font-weight: bold;
+            color: #636e72;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        /* Section */
+        .section { margin-bottom: 25px; }
+        .section-title {
+            font-size: 10px;
+            font-weight: bold;
+            color: #2d3436;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #ffc107;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+
+        /* Stats Grid */
+        .stats-grid { width: 100%; border-collapse: separate; border-spacing: 10px 0; margin: 0 -10px; }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #dfe6e9;
+            width: 25%;
+            text-align: center;
+            vertical-align: top;
+        }
+        .stat-label { font-size: 8px; font-weight: bold; color: #636e72; text-transform: uppercase; margin-bottom: 5px; }
+        .stat-value { font-size: 16px; font-weight: 900; color: #2d3436; }
+        .positive { color: #00b894; }
+        .negative { color: #d63031; }
+
+        /* Details Table */
         .details-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .details-table th { background: #f1f5f9; color: #475569; padding: 12px 15px; text-align: left; font-size: 9px; font-weight: 900; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
-        .details-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 11px; }
-        .details-table .label { font-weight: bold; color: #64748b; text-transform: uppercase; font-size: 9px; width: 40%; }
+        .details-table th {
+            background: #2d3436;
+            color: #fff;
+            padding: 10px;
+            text-align: left;
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .details-table td { padding: 12px 10px; border-bottom: 1px solid #dfe6e9; font-size: 11px; }
+        .details-table .label { font-weight: bold; color: #636e72; font-size: 9px; text-transform: uppercase; }
         .details-table .value { font-weight: 900; text-align: right; }
 
-        .footer { margin-top: 80px; text-align: center; color: #94a3b8; font-size: 9px; border-top: 1px solid #f1f5f9; padding-top: 20px; font-weight: 500; }
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            color: #636e72;
+            font-size: 9px;
+            border-top: 1px solid #dfe6e9;
+            padding-top: 15px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <table>
-            <tr>
-                <td>
-                    {% if logo %}
-                        <img src="{{ logo }}" alt="Logo" style="height: 80px; margin-bottom: 15px;">
-                    {% endif %}
-                    <div class="title">Lab Intelligence Report</div>
-                    <div class="doc-type">{{ reportType }} Analysis Period</div>
-                </td>
-                <td class="meta">
-                    <div class="meta-item">
-                        <span class="meta-label">Period:</span><br/>
-                        <span class="meta-value">{{ periodLabel }}</span>
-                    </div>
-                </td>
-            </tr>
-        </table>
+    <div style="text-align: center; margin: -30px -30px 20px -30px;">
+        <img src="{{ absolute_url(asset('images/invoice_header.png')) }}" alt="Header" style="width: 100%; display: block;">
     </div>
 
-    <div class="section">
-        <div class="section-title">Financial Performance</div>
+    <div class="invoice-title-container">
+        <span class="invoice-title">Intelligence Report</span>
+    </div>
+    <div class="doc-type">{{ reportType }} Analysis Summary • {{ periodLabel }}</div>
+
+    <div class="section" style="margin-top: 30px;">
+        <div class="section-title">Financial Performance Matrix</div>
         <table class="stats-grid">
             <tr>
                 <td class="stat-card">
-                    <div class="stat-label">Total Revenue</div>
+                    <div class="stat-label">Gross Revenue</div>
                     <div class="stat-value">${{ revenue|number_format(2) }}</div>
                 </td>
                 <td class="stat-card">
@@ -72,47 +140,57 @@
                         {{ netIncome >= 0 ? '+' : '' }}${{ netIncome|number_format(2) }}
                     </div>
                 </td>
+                <td class="stat-card" style="border-color: #d63031;">
+                    <div class="stat-label" style="color: #d63031;">Total Pending</div>
+                    <div class="stat-value negative">${{ totalPending|number_format(2) }}</div>
+                </td>
             </tr>
         </table>
     </div>
 
     <div class="section">
-        <div class="section-title">Operational Metrics</div>
+        <div class="section-title">Operational Data Insights</div>
         <table class="details-table">
             <thead>
                 <tr>
-                    <th colspan="2">Metric Description</th>
-                    <th style="text-align: right">Volume / Value</th>
+                    <th colspan="2">Analytical Metric</th>
+                    <th style="text-align: right">Quantifiable Value</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td class="label">Total Customers Served</td>
-                    <td>Based on transactional records</td>
-                    <td class="value">{{ customerCount }} Customers</td>
+                    <td class="label">Customer Footfall</td>
+                    <td>Total unique patient / customer interactions</td>
+                    <td class="value">{{ customerCount }} Count</td>
                 </tr>
                 <tr>
-                    <td class="label">Stock Units Added</td>
-                    <td>Inventory refills through vendor orders</td>
-                    <td class="value" style="color: #10b981;">+{{ stockAdded }} Units</td>
+                    <td class="label">Stock Influx</td>
+                    <td>New reagent / product units added to inventory</td>
+                    <td class="value positive">+{{ stockAdded }} Units</td>
                 </tr>
                 <tr>
-                    <td class="label">Stock Units Utilized</td>
-                    <td>Inventory consumed via sales/pos</td>
-                    <td class="value" style="color: #ef4444;">-{{ stockRemoved }} Units</td>
+                    <td class="label">Stock Consumption</td>
+                    <td>Inventory units utilized for sales/orders</td>
+                    <td class="value negative">-{{ stockRemoved }} Units</td>
                 </tr>
                 <tr>
-                    <td class="label">Stock Turnover Status</td>
-                    <td>Net inventory delta in period</td>
-                    <td class="value">{{ stockAdded - stockRemoved }} Units</td>
+                    <td class="label">Inventory Delta</td>
+                    <td>Net change in physical stock level</td>
+                    <td class="value" style="color: {{ (stockAdded - stockRemoved) >= 0 ? '#00b894' : '#d63031' }};">
+                        {{ (stockAdded - stockRemoved) >= 0 ? '+' : '' }}{{ stockAdded - stockRemoved }} Units
+                    </td>
                 </tr>
             </tbody>
         </table>
     </div>
 
     <div class="footer">
-        Generated on {{ dateGenerated|date('d F Y, h:i A') }} • Unique Healthcare Solutions Intelligence Summary<br/>
-        This document contains strictly confidential data for administrative use only.
+        Generated on {{ dateGenerated|date('d F Y, h:i A') }} • Unique Healthcare Solutions Management System<br>
+        Strictly confidential administrative document for internal use only.
+    </div>
+
+    <div style="margin: 40px -30px -30px -30px;">
+        <img src="{{ absolute_url(asset('images/invoice_footer.png')) }}" alt="Footer" style="width: 100%; display: block;">
     </div>
 </body>
 </html>

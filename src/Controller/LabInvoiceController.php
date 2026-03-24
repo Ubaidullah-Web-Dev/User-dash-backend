@@ -219,9 +219,9 @@ class LabInvoiceController extends AbstractController
             $periodLabel = (string)$year;
         }
 
-        // 1. Revenue & Customers
+        // 1. Revenue, Customers & Pending
         $orderData = $em->getRepository(Order::class)->createQueryBuilder('o')
-            ->select('SUM(o.total) as total, COUNT(o.id) as customerCount')
+            ->select('SUM(o.total) as total, COUNT(o.id) as customerCount, SUM(CASE WHEN o.changeDue < 0 THEN ABS(o.changeDue) ELSE 0 END) as totalPending')
             ->where('o.createdAt BETWEEN :start AND :end')
             ->setParameter('start', $startDate)
             ->setParameter('end', $endDate)
@@ -230,6 +230,7 @@ class LabInvoiceController extends AbstractController
 
         $revenue = (float)($orderData['total'] ?? 0);
         $customerCount = (int)($orderData['customerCount'] ?? 0);
+        $totalPending = (float)($orderData['totalPending'] ?? 0);
 
         // 2. Expenses & Stock Added (Vendor Orders received)
         $vendorOrders = $em->getRepository(VendorOrder::class)->createQueryBuilder('vo')
@@ -270,6 +271,7 @@ class LabInvoiceController extends AbstractController
             'stockAdded' => $stockAdded,
             'stockRemoved' => $stockRemoved,
             'customerCount' => $customerCount,
+            'totalPending' => $totalPending,
             'dateGenerated' => new \DateTime()
         ]);
 

@@ -111,7 +111,7 @@ class LabAdminController extends AbstractController
 
         // Daily Sales for the last 30 days
         $dailySales = $orderRepo->createQueryBuilder('o')
-            ->select("SUBSTRING(o.createdAt, 1, 10) as date, SUM(o.total) as total")
+            ->select("SUBSTRING(o.createdAt, 1, 10) as date, SUM(o.total) as total, SUM(CASE WHEN o.changeDue < 0 THEN ABS(o.changeDue) ELSE 0 END) as pending")
             ->where('o.company = :companyId')
             ->setParameter('companyId', $companyId)
             ->groupBy('date')
@@ -157,6 +157,7 @@ class LabAdminController extends AbstractController
                 'customerName' => $o->getCustomerName(),
                 'phone' => $o->getPhone(),
                 'totalAmount' => (string)$o->getTotal(),
+                'pendingAmount' => $o->getChangeDue() < 0 ? abs($o->getChangeDue()) : 0,
                 'createdAt' => $o->getCreatedAt()->format('Y-m-d H:i:s'),
             ], $paginatedResponse->data),
             'total' => $paginatedResponse->total,
