@@ -174,7 +174,8 @@ class LabAdminController extends AbstractController
         $limit = $request->query->getInt('limit', 10);
         
         $filters = [
-            'search' => $request->query->get('search', '')
+            'search' => $request->query->get('search', ''),
+            'pending' => $request->query->get('pending')
         ];
 
         $paginatedResponse = $customerRepo->getPaginatedCustomers($filters, $tenantContext->getCurrentCompanyId(), $page, $limit);

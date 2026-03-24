@@ -41,6 +41,14 @@ class RegisteredCustomerRepository extends ServiceEntityRepository implements Pa
                 ->setParameter('search', '%' . $filters['search'] . '%');
         }
 
+        if (isset($filters['pending'])) {
+            if ($filters['pending'] === 'true') {
+                $qb->andWhere('c.remainingBalance > 0');
+            } elseif ($filters['pending'] === 'false') {
+                $qb->andWhere('c.remainingBalance = 0');
+            }
+        }
+
         return $this->paginate($qb, $page, $limit);
     }
 }
