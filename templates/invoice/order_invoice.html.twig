@@ -285,6 +285,12 @@
                 <td class="summary-label" style="color: #2d3436;">Grand Total</td>
                 <td class="summary-value">PKR {{ order.total|number_format(2) }}</td>
             </tr>
+            {% if order.previousBalancePayment > 0 %}
+            <tr>
+                <td class="summary-label" style="padding-top: 5px;">Payment towards Previous Balance</td>
+                <td class="summary-value text-emerald-500" style="padding-top: 5px;">PKR {{ order.previousBalancePayment|number_format(2) }}</td>
+            </tr>
+            {% endif %}
             <tr>
                 <td class="summary-label" style="padding-top: 10px;">Amount Paid</td>
                 <td class="summary-value" style="padding-top: 10px;">PKR {{ (order.amountTendered ?? 0)|number_format(2) }}</td>

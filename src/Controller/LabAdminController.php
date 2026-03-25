@@ -287,6 +287,7 @@ class LabAdminController extends AbstractController
         if (isset($data['labName'])) $customer->setLabName($data['labName']);
         if (isset($data['city'])) $customer->setCity($data['city']);
         if (isset($data['address'])) $customer->setAddress($data['address']);
+        if (isset($data['remainingBalance'])) $customer->setRemainingBalance((float)$data['remainingBalance']);
 
         $em->flush();
 
@@ -305,5 +306,35 @@ class LabAdminController extends AbstractController
         $em->flush();
 
         return $this->json(['message' => 'Customer deleted successfully']);
+    }
+
+    #[Route('/customers/{id}/adjust-balance', name: 'admin_lab_customers_adjust_balance', methods: ['POST'])]
+    public function adjustCustomerBalance(int $id, Request $request, RegisteredCustomerRepository $customerRepo, EntityManagerInterface $em, TenantContext $tenantContext): JsonResponse
+    {
+        $customer = $customerRepo->findOneBy(['id' => $id, 'company' => $tenantContext->getCurrentCompanyId()]);
+        if (!$customer) {
+            return $this->json(['message' => 'Customer not found or access denied'], Response::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $amount = (float)($data['amount'] ?? 0);
+        $action = $data['action'] ?? 'add'; // 'add' or 'subtract'
+
+        if ($amount < 0) {
+            return $this->json(['message' => 'Amount must be positive'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($action === 'subtract') {
+            $customer->setRemainingBalance($customer->getRemainingBalance() - $amount);
+        } else {
+            $customer->setRemainingBalance($customer->getRemainingBalance() + $amount);
+        }
+
+        $em->flush();
+
+        return $this->json([
+            'message' => 'Balance adjusted successfully',
+            'newBalance' => $customer->getRemainingBalance()
+        ]);
     }
 }

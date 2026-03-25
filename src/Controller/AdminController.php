@@ -463,6 +463,9 @@ class AdminController extends AbstractController
         $order->setChangeDue($changeDue);
         $order->setDiscountPercentage($discountPercentage);
         $order->setDiscountAmount($discountAmount);
+        
+        $previousBalancePayment = (float)($data['previousBalancePayment'] ?? 0);
+        $order->setPreviousBalancePayment($previousBalancePayment);
 
         $registeredCustomerId = $data['registeredCustomerId'] ?? null;
         if ($registeredCustomerId) {
@@ -472,6 +475,14 @@ class AdminController extends AbstractController
                 if ($changeDue < 0) {
                     $registeredCustomer->addRemainingBalance(abs($changeDue));
                 }
+                
+                // Subtract the previous balance payment
+                if ($previousBalancePayment > 0) {
+                    $registeredCustomer->setRemainingBalance(
+                        $registeredCustomer->getRemainingBalance() - $previousBalancePayment
+                    );
+                }
+
                 $registeredCustomer->addOrder($order);
                 // Total spent updated inside addOrder
             }
@@ -487,6 +498,13 @@ class AdminController extends AbstractController
             if ($changeDue < 0) {
                 $registeredCustomer->addRemainingBalance(abs($changeDue));
             }
+
+            if ($previousBalancePayment > 0) {
+                $registeredCustomer->setRemainingBalance(
+                    $registeredCustomer->getRemainingBalance() - $previousBalancePayment
+                );
+            }
+
             $registeredCustomer->addOrder($order);
         } else {
             $guestUser = new \App\Entity\GuestUser();

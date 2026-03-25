@@ -61,6 +61,9 @@ class Order
     #[ORM\OneToMany(mappedBy: 'order', targetEntity: OrderItem::class, cascade: ['persist', 'remove'])]
     private Collection $items;
 
+    #[ORM\Column(nullable: true)]
+    private ?float $previousBalancePayment = null;
+
     public function __construct()
     {
         $this->items = new ArrayCollection();
@@ -124,6 +127,18 @@ class Order
     public function setCompany(?Company $company): self
     {
         $this->company = $company;
+        return $this;
+    }
+
+    public function getPreviousBalancePayment(): ?float
+    {
+        return $this->previousBalancePayment;
+    }
+
+    public function setPreviousBalancePayment(?float $previousBalancePayment): static
+    {
+        $this->previousBalancePayment = $previousBalancePayment;
+
         return $this;
     }
 }
