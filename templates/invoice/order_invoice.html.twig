@@ -230,16 +230,6 @@
                         <td class="meta-label">Date</td>
                         <td class="info-value">{{ order.createdAt|date('d/m/Y h:i A') }}</td>
                     </tr>
-                    <tr>
-                        <td class="meta-label">Status</td>
-                        <td>
-                            {% if order.changeDue < 0 %}
-                                <span class="status-badge status-pending">PENDING: PKR {{ (order.changeDue * -1)|number_format(2) }}</span>
-                            {% else %}
-                                <span class="status-badge status-paid">PAID IN FULL</span>
-                            {% endif %}
-                        </td>
-                    </tr>
                 </table>
             </td>
         </tr>
@@ -285,27 +275,14 @@
                 <td class="summary-label" style="color: #2d3436;">Grand Total</td>
                 <td class="summary-value">PKR {{ order.total|number_format(2) }}</td>
             </tr>
-            {% if order.previousBalancePayment > 0 %}
-            <tr>
-                <td class="summary-label" style="padding-top: 5px;">Payment towards Previous Balance</td>
-                <td class="summary-value text-emerald-500" style="padding-top: 5px;">PKR {{ order.previousBalancePayment|number_format(2) }}</td>
-            </tr>
-            {% endif %}
             <tr>
                 <td class="summary-label" style="padding-top: 10px;">Amount Paid</td>
                 <td class="summary-value" style="padding-top: 10px;">PKR {{ (order.amountTendered ?? 0)|number_format(2) }}</td>
             </tr>
-            {% if order.changeDue < 0 %}
-            <tr class="pending-row">
-                <td class="summary-label" style="color: #d63031;">Pending Amount</td>
-                <td class="summary-value">PKR {{ (order.changeDue * -1)|number_format(2) }}</td>
-            </tr>
-            {% else %}
             <tr>
                 <td class="summary-label">Change Due</td>
-                <td class="summary-value">PKR {{ (order.changeDue ?? 0)|number_format(2) }}</td>
+                <td class="summary-value">PKR {{ (order.changeDue > 0 ? order.changeDue : 0)|number_format(2) }}</td>
             </tr>
-            {% endif %}
         </table>
         <div style="clear: both;"></div>
     </div>
