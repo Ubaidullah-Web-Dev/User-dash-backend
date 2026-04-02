@@ -256,10 +256,18 @@
 
                     <td>
                         {{ item.description }}
-                        {% if loop.last and order.pending > 0 %}
-                        <div style="color:red; font-size:10px; margin-top:5px;">
-                            Pending: PKR {{ order.pending|number_format(2) }}
-                        </div>
+                        {% if loop.last %}
+                            {% if order.discountAmount > 0 %}
+                            <div style="color:green; font-size:10px; margin-top:5px;">
+                                Discount: {{ order.discountPercentage }}% (PKR {{ order.discountAmount|number_format(2) }})
+                            </div>
+                            {% endif %}
+                            
+                            {% if order.pending > 0 %}
+                            <div style="color:red; font-size:10px; margin-top:2px;">
+                                Pending: PKR {{ order.pending|number_format(2) }}
+                            </div>
+                            {% endif %}
                         {% endif %}
                     </td>
 
@@ -290,9 +298,18 @@
             <tr>
                 <td>Subtotal:</td>
                 <td class="text-right">
-                    PKR {{ totalSpent|number_format(2) }}
+                    PKR {{ subTotal|number_format(2) }}
                 </td>
             </tr>
+
+            {% if totalDiscount > 0 %}
+            <tr class="discount">
+                <td>Total Discount:</td>
+                <td class="text-right">
+                    - PKR {{ totalDiscount|number_format(2) }}
+                </td>
+            </tr>
+            {% endif %}
 
             <tr class="total">
                 <td>Grand Total:</td>
