@@ -4,148 +4,93 @@
 <head>
     <meta charset="UTF-8">
     <title>Invoice - {{ customer.name }}</title>
+
     <style>
         body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 30px;
+            padding: 0;
             font-size: 12px;
-            color: #2d3436;
-            background: #fff;
+            color: #333;
         }
 
-        /* Header Section */
-        .header-top {
-            display: table;
+        .container {
+            padding: 30px;
+        }
+
+        /* Header */
+        .header img {
             width: 100%;
-            margin-bottom: 20px;
         }
 
-        .header-left {
-            display: table-cell;
-            vertical-align: middle;
-        }
-
-        .brand-logo {
-            float: left;
-            margin-right: 15px;
-        }
-
-        .brand-name {
-            font-size: 24px;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin: 0;
-            line-height: 1;
-        }
-
-        .brand-tagline {
-            font-size: 10px;
-            color: #636e72;
-            letter-spacing: 1px;
-            margin-top: 5px;
-        }
-
-        /* Invoice Title Bar */
-        .invoice-title-container {
-            margin: 20px 0;
-            position: relative;
-            text-align: center;
-        }
-
-        .invoice-title-container::before,
-        .invoice-title-container::after {
-            content: "";
-            position: absolute;
-            top: 50%;
-            width: 38%;
-            height: 12px;
-            background-color: #ffc107;
-            transform: translateY(-50%);
-        }
-
-        .invoice-title-container::before {
-            left: 0;
-        }
-
-        .invoice-title-container::after {
-            right: 0;
-        }
-
+        /* Title */
         .invoice-title {
-            font-size: 32px;
+            text-align: right;
+            font-size: 36px;
             font-weight: bold;
-            text-transform: uppercase;
-            display: inline-block;
-            padding: 0 20px;
-            background: #fff;
-            position: relative;
-            z-index: 1;
-            letter-spacing: 2px;
+            color: #2e5aac;
         }
 
-        /* Info Section */
-        .info-section {
-            width: 100%;
-            margin-bottom: 30px;
-            border-collapse: collapse;
-        }
-
-        .info-section td {
-            vertical-align: top;
-            width: 50%;
-        }
-
-        .info-label {
-            font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-
-        .info-value {
-            color: #2d3436;
-            line-height: 1.4;
-        }
-
-        .meta-table {
+        /* Meta */
+        .invoice-meta {
             float: right;
-            border-collapse: collapse;
+            margin-top: 10px;
         }
 
-        .meta-table td {
-            padding: 2px 0;
+        .invoice-meta td {
+            padding: 3px 0;
             text-align: right;
         }
 
-        .meta-label {
-            font-weight: bold;
-            padding-right: 20px;
+        /* Separator */
+        .separator {
+            border-top: 1px solid #ccc;
+            margin: 20px 0;
         }
 
-        /* Items Table */
-        .items-table {
+        /* Section */
+        .section {
+            margin-top: 10px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        /* Bill To */
+        .bill-to {
+            line-height: 1.6;
+        }
+
+        /* Table */
+        .table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 30px;
+            margin-top: 20px;
         }
 
-        .items-table th {
-            background: #2d3436;
+        .table th {
+            background: #2e5aac;
             color: #fff;
             padding: 10px;
+            font-size: 12px;
             text-align: left;
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 11px;
         }
 
-        .items-table td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #dfe6e9;
+        .table td {
+            padding: 10px;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
         }
-
-        .items-table tr:nth-child(even) {
-            background-color: #f8f9fa;
+        
+        .table tr.order-start td {
+            border-top: 1px solid #ddd;
+        }
+        
+        .table tr.order-end td {
+            border-bottom: 1px solid #ddd;
         }
 
         .text-right {
@@ -156,246 +101,194 @@
             text-align: center;
         }
 
-        /* Summary Section */
-        .summary-container {
-            width: 100%;
-            border-collapse: collapse;
+        /* Summary Box */
+        .summary {
+            width: 320px;
+            float: right;
+            margin-top: 20px;
+            border: 1px solid #ddd;
         }
 
-        .summary-container td {
-            vertical-align: top;
+        .summary td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
         }
 
-        .footer-note {
-            width: 60%;
-            padding-top: 20px;
+        .summary tr:last-child td {
+            border-bottom: none;
         }
 
-        .summary-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .summary-table td {
-            padding: 5px 10px;
-            text-align: right;
-        }
-
-        .summary-row-total {
-            background: #ffc107;
+        /* Highlight total */
+        .summary .total {
+            background: #d69e2e;
+            color: white;
             font-weight: bold;
             font-size: 16px;
         }
 
-        .summary-row-total td {
-            padding: 10px;
+        /* Discount row styling */
+        .summary .discount {
+            background: #f8f9fa;
         }
 
-        /* Terms & Payment Info */
-        .details-box {
-            margin-top: 20px;
-            font-size: 10px;
-        }
-
-        .details-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-        }
-
-        /* Signature */
-        .signature-area {
-            text-align: right;
+        /* Footer */
+        .footer img {
+            width: 100%;
             margin-top: 40px;
         }
 
+        /* Signature */
+        .signature {
+            margin-top: 80px;
+        }
+
         .signature-line {
-            border-top: 1px solid #2d3436;
-            width: 150px;
-            display: inline-block;
+            width: 200px;
+            border-top: 1px solid #000;
             margin-bottom: 5px;
-        }
-
-        .signature-label {
-            font-weight: bold;
-        }
-
-        /* Contact Footer */
-        .contact-footer {
-            margin-top: 50px;
-            border-top: 2px solid #ffc107;
-            padding-top: 10px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 10px;
-        }
-
-        .contact-item {
-            display: inline-block;
-            padding: 0 15px;
-            border-right: 1px solid #dfe6e9;
-        }
-
-        .contact-item:last-child {
-            border-right: none;
         }
     </style>
 </head>
 
 <body>
-    <div style="text-align: center; margin: -30px -30px 20px -30px;">
-        <img src="{{ absolute_url(asset('images/invoice_header.png')) }}" alt="Header" style="width: 100%; display: block;">
+
+    <!-- HEADER -->
+    <div class="header">
+        <img src="{{ absolute_url(asset('images/invoice_header.png')) }}">
     </div>
 
-    <div class="header-top">
-        <div class="header-left">
-            {% if logo %}
-            <img src="{{ logo }}" alt="Logo" class="brand-logo" style="height: 50px;">
-            {% else %}
-            <div class="brand-logo"
-                style="width: 50px; height: 50px; background: #2d3436; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
-                <span style="font-size: 20px; font-weight: 900;">UH</span>
+    <div class="container">
+
+        <!-- TITLE -->
+        <div class="invoice-title">INVOICE</div>
+
+        <!-- META -->
+        <table class="invoice-meta">
+            <tr>
+                <td><strong>Invoice No:</strong></td>
+                <td>{{ periodLabel|default('INV-' ~ "now"|date("Ymd")) }}</td>
+            </tr>
+            <tr>
+                <td><strong>Date:</strong></td>
+                <td>{{ date|date('d-m-Y') }}</td>
+            </tr>
+            <tr>
+                <td><strong>Due Date:</strong></td>
+                <td>-</td>
+            </tr>
+        </table>
+
+        <div style="clear: both;"></div>
+
+        <!-- SEPARATOR (matches image 1) -->
+        <div class="separator"></div>
+
+        <!-- BILL TO -->
+        <div class="section">
+            <div class="section-title">Bill To:</div>
+            <div class="bill-to">
+                <strong>{{ customer.name }}</strong><br>
+                {{ customer.address|default('No Address Provided') }}<br>
+                {{ customer.city|default('N/A') }}<br>
+                Phone: {{ customer.phone }}
             </div>
-            {% endif %}
-            <h1 class="brand-name">Unique Healthcare</h1>
-            <div class="brand-tagline">Solutions for a Better Life</div>
         </div>
-    </div>
 
-    <div class="invoice-title-container">
-        <span class="invoice-title">INVOICE</span>
-    </div>
+        <!-- TABLE -->
+        <table class="table">
+            <thead>
+                <tr>
+                    <th width="5%">Sr</th>
+                    <th>Item Name</th>
+                    <th>Description</th>
+                    <th width="10%">Qty</th>
+                    <th width="15%">Unit Price</th>
+                    <th width="15%">Total</th>
+                </tr>
+            </thead>
 
-    <table class="info-section">
-        <tr>
-            <td>
-                <div style="margin-bottom: 8px;">
-                    <span class="info-label" style="text-transform: capitalize;">Invoice to:</span>
-                    <strong style="font-size: 14px; margin-left: 5px;">{{ customer.name|upper }}</strong>
-                </div>
-                <div class="info-value">
-                    <span style="font-weight: bold;">Address:</span> <span style="color: #636e72;">{{
-                        customer.address|default('No Address Provided') }}</span><br>
-                    <span style="font-weight: bold;">City:</span> <span style="color: #636e72;">{{
-                        customer.city|default('N/A') }}</span><br>
-                    <span style="font-weight: bold;">Phone:</span> <span style="color: #636e72;">{{ customer.phone
-                        }}</span>
-                </div>
-            </td>
-            <td>
-                <div style="float: right;">
-                    <table class="meta-table">
-                        <tr>
-                            <td class="meta-label">Invoice#</td>
-                            <td>{{ periodLabel|default('INV-' ~ "now"|date("Ymd")) }}</td>
-                        </tr>
-                        <tr>
-                            <td class="meta-label">Date</td>
-                            <td>{{ date|date('d / m / Y') }}</td>
-                        </tr>
-                    </table>
-                </div>
-            </td>
-        </tr>
-    </table>
+            <tbody>
+                {% set sr = 1 %}
+                {% for order in orders %}
+                    {% for item in order.items %}
+                    <tr class="{% if loop.first %}order-start{% endif %} {% if loop.last %}order-end{% endif %}">
+                        <td class="text-center">{% if loop.first %}{{ sr }}{% endif %}</td>
 
-    <table class="items-table">
-        <thead>
+                        <td>
+                            <strong>{{ item.name }}</strong><br>
+                            <span style="font-size:9px;color:#777;">(Order #{{ order.orderId }})</span>
+                        </td>
+
+                        <td>
+                            {{ item.description }}
+                            {% if loop.last and order.pending > 0 %}
+                            <div style="color:red; font-size:10px; margin-top:5px;">
+                                Pending: PKR {{ order.pending|number_format(2) }}
+                            </div>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-center">{{ item.quantity }}</td>
+
+                        <td class="text-right">
+                            PKR {{ item.price|number_format(2) }}
+                        </td>
+
+                        <td class="text-right">
+                            PKR {{ item.total|number_format(2) }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% set sr = sr + 1 %}
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">
+                        No activity recorded for this period.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- SUMMARY -->
+        <table class="summary">
             <tr>
-                <th width="5%" class="text-center">SL.</th>
-                <th>Item Description</th>
-                <th width="15%" class="text-right">Price</th>
-                <th width="10%" class="text-center">Qty.</th>
-                <th width="15%" class="text-right">Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for order in orders %}
-            <tr>
-                <td class="text-center">{{ loop.index }}</td>
-                <td>
-                    <div style="margin-bottom: 2px;">
-                        <strong>Order #{{ order.orderId }}</strong>
-                        <span style="font-size: 10px; color: #636e72; margin-left: 10px;">{{ order.date|date('d M Y')
-                            }}</span>
-                    </div>
-                    <div style="font-size: 10px; color: #636e72;">{{ order.products }}</div>
-                    {% if order.discountAmount > 0 %}
-                    <div style="font-size: 9px; color: #00b894; margin-top: 2px;">
-                        Discount Applied: -PKR {{ order.discountAmount|number_format(2) }} ({{ order.discountPercentage
-                        }}%)
-                    </div>
-                    {% endif %}
-                    {% if order.pending > 0 %}
-                    <div style="font-size: 9px; color: #d63031;">
-                        Pending: PKR {{ order.pending|number_format(2) }}
-                    </div>
-                    {% endif %}
-                </td>
-                <td class="text-right">PKR {{ order.total|number_format(2) }}</td>
-                <td class="text-center">1</td>
-                <td class="text-right">PKR {{ order.total|number_format(2) }}</td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="5" style="text-align: center; padding: 40px; color: #b2bec3; font-style: italic;">
-                    No activity recorded for this period.
+                <td>Subtotal:</td>
+                <td class="text-right">
+                    PKR {{ totalSpent|number_format(2) }}
                 </td>
             </tr>
-            {% endfor %}
-        </tbody>
-    </table>
 
-    <table class="summary-container">
-        <tr>
-            <td class="footer-note">
-                <div style="font-weight: bold; margin-bottom: 10px;">Thank you for your business</div>
+            <tr class="total">
+                <td>Grand Total:</td>
+                <td class="text-right">
+                    PKR {{ totalSpent|number_format(2) }}
+                </td>
+            </tr>
+        </table>
 
-                <div class="details-box">
-                    <div class="details-title">Terms & Conditions</div>
-                    <div style="color: #636e72;">
-                        Payment is due within 30 days. Please make checks payable to Unique Healthcare Solutions.
-                    </div>
-                </div>
+        <div style="clear: both;"></div>
 
-                <div class="details-box">
-                    <div class="details-title">Payment Info:</div>
-                    <div style="color: #636e72;">
-                        A/C Name: Unique Healthcare Solutions
-                    </div>
-                </div>
-            </td>
-            <td width="35%">
-                <table class="summary-table">
-                    <tr>
-                        <td class="meta-label">Sub Total:</td>
-                        <td>PKR {{ totalSpent|number_format(2) }}</td>
-                    </tr>
-                    <tr class="summary-row-total">
-                        <td class="meta-label">Total:</td>
-                        <td>PKR {{ totalSpent|number_format(2) }}</td>
-                    </tr>
-                </table>
+        <!-- BALANCE -->
+        {% if customerRemainingBalance is defined and customerRemainingBalance > 0 %}
+        <div style="margin-top: 10px; text-align: right; color: red; font-weight: bold;">
+            Outstanding Balance: PKR {{ customerRemainingBalance|number_format(2) }}
+        </div>
+        {% endif %}
 
-                {% if customerRemainingBalance is defined and customerRemainingBalance > 0 %}
-                <div style="margin-top: 10px; text-align: right; color: #d63031; font-weight: bold;">
-                    Outstanding Balance: PKR {{ customerRemainingBalance|number_format(2) }}
-                </div>
-                {% endif %}
-            </td>
-        </tr>
-    </table>
+        <!-- SIGNATURE -->
+        <div class="signature">
+            <div class="signature-line"></div>
+            Authorized Signature
+        </div>
 
-    <div class="contact-footer">
-        <span class="contact-item">Phone # : {{ customer.phone }}</span>
-        <span class="contact-item">Address : {{ customer.address|default('Your Company Address') }}</span>
-        <span class="contact-item">Website : https://apps.alphasoft360.org/unique-healthcare-solutions</span>
     </div>
 
-    <div style="margin: 40px -30px -30px -30px;">
-        <img src="{{ absolute_url(asset('images/invoice_footer.png')) }}" alt="Footer" style="width: 100%; display: block;">
+    <!-- FOOTER -->
+    <div class="footer">
+        <img src="{{ absolute_url(asset('images/invoice_footer.png')) }}">
     </div>
+
 </body>
 
 </html>
-l>

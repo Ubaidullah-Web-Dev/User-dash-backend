@@ -102,13 +102,15 @@ class LabInvoiceController extends AbstractController
                ->setParameter('start', $startDate)
                ->setParameter('end', $endDate);
             $periodLabel = $startDate->format('F Y');
-        } else {
+        } elseif ($period === 'yearly') {
             $startDate = new \DateTime(sprintf('%d-01-01 00:00:00', $year));
             $endDate = new \DateTime(sprintf('%d-12-31 23:59:59', $year));
             $qb->andWhere('o.createdAt BETWEEN :start AND :end')
                ->setParameter('start', $startDate)
                ->setParameter('end', $endDate);
             $periodLabel = (string)$year;
+        } else {
+            $periodLabel = 'All Time';
         }
 
         $orders = $qb->orderBy('o.createdAt', 'ASC')->getQuery()->getResult();
@@ -121,9 +123,16 @@ class LabInvoiceController extends AbstractController
             $totalSpent += $order->getTotal();
             $totalDiscount += ($order->getDiscountAmount() ?: 0);
             
-            $productNames = [];
+            $itemsData = [];
             foreach ($order->getItems() as $item) {
-                $productNames[] = $item->getProduct() ? $item->getProduct()->getName() : 'Unknown Product';
+                $product = $item->getProduct();
+                $itemsData[] = [
+                    'name' => $product ? $product->getName() : 'Unknown Product',
+                    'description' => $product ? $product->getDescription() : '',
+                    'quantity' => $item->getQuantity(),
+                    'price' => (float)$item->getPrice(),
+                    'total' => (float)($item->getQuantity() * $item->getPrice())
+                ];
             }
 
             $pendingAmount = $order->getChangeDue() < 0 ? abs($order->getChangeDue()) : 0;
@@ -131,7 +140,7 @@ class LabInvoiceController extends AbstractController
             $statementOrders[] = [
                 'date' => $order->getCreatedAt()->format('Y-m-d'),
                 'orderId' => $order->getId(),
-                'products' => implode(', ', $productNames),
+                'items' => $itemsData,
                 'total' => $order->getTotal(),
                 'discountPercentage' => $order->getDiscountPercentage() ?: 0,
                 'discountAmount' => $order->getDiscountAmount() ?: 0,
