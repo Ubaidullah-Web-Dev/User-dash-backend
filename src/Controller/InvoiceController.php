@@ -50,7 +50,7 @@ class InvoiceController extends AbstractController
 
         $logoPath = $this->getParameter('kernel.project_dir') . '/public/images/logo.png';
         $logoData = '';
-        if (extension_loaded('gd') && file_exists($logoPath)) {
+        if (file_exists($logoPath)) {
             $logoData = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
         }
 
@@ -108,7 +108,7 @@ class InvoiceController extends AbstractController
 
         $logoPath = $this->getParameter('kernel.project_dir') . '/public/images/logo.png';
         $logoData = '';
-        if (extension_loaded('gd') && file_exists($logoPath)) {
+        if (file_exists($logoPath)) {
             $logoData = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
         }
 

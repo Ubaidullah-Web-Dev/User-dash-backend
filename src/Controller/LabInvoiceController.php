@@ -307,7 +307,7 @@ class LabInvoiceController extends AbstractController
     private function getLogoData(): string
     {
         $logoPath = $this->getParameter('kernel.project_dir') . '/public/images/logo.png';
-        if (extension_loaded('gd') && file_exists($logoPath)) {
+        if (file_exists($logoPath)) {
             return 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
         }
         return '';
