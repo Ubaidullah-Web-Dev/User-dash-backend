@@ -1,195 +1,224 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <title>{{ poNumber }}</title>
-
     <style>
         body {
-            font-family: DejaVu Sans, Helvetica, Arial, sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 30px;
+            padding: 0;
             font-size: 12px;
             color: #333;
         }
 
-        .section {
-            margin-bottom: 25px;
+        .container {
+            padding: 30px;
         }
 
-        .divider {
-            height: 2px;
-            background: #0056b3;
-            margin: 20px 0;
+        /* Header/Footer Code Overrides */
+        .header {
+            margin-bottom: 20px;
         }
 
-        h1 {
-            margin: 0;
-            font-size: 26px;
-            letter-spacing: 3px;
+        .footer {
+            margin-top: 40px;
+            font-family: Arial, sans-serif;
+            page-break-inside: avoid;
         }
 
-        h2 {
-            margin: 0 0 5px 0;
-            color: #0056b3;
+        /* Title */
+        .invoice-title {
+            text-align: right;
+            font-size: 36px;
+            font-weight: bold;
+            color: #2e5aac;
+            font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+            text-transform: uppercase;
         }
 
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
+        /* Meta */
+        .invoice-meta {
+            float: right;
+            margin-top: 10px;
         }
 
-        .header-table td {
-            vertical-align: top;
-        }
-
-        .logo-box {
+        .invoice-meta td {
+            padding: 3px 0;
             text-align: right;
         }
 
-        .logo-styled {
-            display: inline-block;
-            padding: 8px 20px;
-            border: 2px solid #0056b3;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 18px;
-            letter-spacing: 2px;
+        /* Separator */
+        .separator {
+            border-top: 1px solid #ccc;
+            margin: 20px 0;
         }
 
+        /* Section */
+        .section {
+            margin-top: 10px;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #2e5aac;
+        }
+        
+        /* Grid */
+        .grid { display: table; width: 100%; table-layout: fixed; }
+        .col { display: table-cell; vertical-align: top; }
+        
         .box {
-            border: 1px solid #e0e0e0;
+            border: 1px solid #ddd;
             padding: 15px;
-            border-radius: 6px;
+            border-radius: 8px;
+            margin-right: 15px;
+            background-color: #f8f9fa;
         }
-
-        .box-title {
+        
+        .box h2 {
+            margin: 0 0 5px 0;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .box p {
+            margin: 0 0 3px 0;
             font-size: 11px;
-            font-weight: bold;
-            color: #777;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 4px;
+            color: #555;
         }
 
-        table {
+        /* Table */
+        .table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 20px;
         }
 
-        .info-table td {
-            padding: 6px 0;
-        }
-
-        .items-table th {
-            background: #0056b3;
+        .table th {
+            background: #2e5aac;
             color: #fff;
             padding: 10px;
+            font-size: 12px;
             text-align: left;
-            font-size: 11px;
             text-transform: uppercase;
         }
 
-        .items-table td {
+        .table td {
+            padding: 10px;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+
+        /* Summary Box */
+        .summary {
+            width: 320px;
+            float: right;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .summary td {
             padding: 10px;
             border-bottom: 1px solid #eee;
         }
 
-        .items-table tr:nth-child(even) {
-            background: #fafafa;
+        .summary tr:last-child td {
+            border-bottom: none;
         }
 
-        .text-right {
-            text-align: right;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .bold {
-            font-weight: bold;
-        }
-
-        .totals-table {
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .totals-table td {
-            padding: 8px;
-        }
-
-        .totals-table tr td:first-child {
-            text-align: right;
-            color: #555;
-        }
-
-        .totals-table tr td:last-child {
-            text-align: right;
-            width: 150px;
-        }
-
-        .total-row {
-            color: #0056b3;
+        .summary .total {
+            background: #d69e2e;
+            color: white;
             font-weight: bold;
             font-size: 16px;
         }
-
-        .balance-row {
-            background: #f2f2f2;
-            font-weight: bold;
-        }
-
+        
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 900; text-transform: uppercase; }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        
         .footer-note {
-            margin-top: 80px;
-            text-align: center;
-            font-size: 10px;
-            color: #999;
-            font-style: italic;
-            border-top: 1px solid #eee;
-            padding-top: 10px;
+            margin-top: 60px; text-align: center; color: #777; font-size: 10px; border-top: 1px solid #ddd; padding-top: 20px; font-weight: bold;
         }
     </style>
 </head>
-
 <body>
 
     <!-- HEADER -->
-    <div class="section">
-        <table class="header-table">
+    <div class="header">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr>
-                <td>
-                    <h1>{{ type == 'buyer' ? 'SUPPLY ORDER' : 'PURCHASE ORDER' }}</h1>
-                </td>
-                <td class="logo-box">
-                    {% if logo %}
-                        <img src="{{ logo }}" alt="Logo" style="height: 80px; width: auto;">
+                <td width="15%" valign="middle" align="center">
+                    {% if logo is defined and logo %}
+                    <img src="{{ logo }}" style="max-height: 80px; max-width: 100%;" alt="Unique Healthcare Solutions">
                     {% else %}
-                        <div class="logo-styled">
-                            <span style="color:#0056b3;">E</span>LECTRO
-                        </div>
+                    <div style="font-size: 24px; font-weight: bold; color: #c94b26;">UHS</div>
                     {% endif %}
+                </td>
+                <td width="85%" valign="middle" style="padding-left: 15px;">
+                    <div
+                        style="font-family: 'Times New Roman', Times, serif; font-size: 24px; font-weight: bold; margin-bottom: 5px; letter-spacing: 1px;">
+                        <span style="color: #c94b26;">UNIQUE</span>
+                        <span style="color: #1b887a;"> HEALTHCARE </span>
+                        <span style="color: #1b2a88;">SOLUTIONS</span>
+                    </div>
+                    <div style="background-color: #cda34f; height: 3px; width: 100%; margin-bottom: 8px;"></div>
+                    <table cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td
+                                style="background-color: #1b2a88; color: #ffffff; padding: 5px 15px; font-size: 13px; font-weight: bold; font-family: Arial, sans-serif;">
+                                EXCELLENT IN DIAGNOSTIC SERVICES
+                            </td>
+                        </tr>
+                    </table>
                 </td>
             </tr>
         </table>
     </div>
 
-    <div class="divider"></div>
+    <div class="container">
 
-    <!-- COMPANY + CUSTOMER INFO -->
-    <div class="section">
-        <table width="100%">
+        <!-- TITLE -->
+        <div class="invoice-title">{{ type == 'buyer' ? 'SUPPLY ORDER' : 'PURCHASE ORDER' }}</div>
+
+        <!-- META -->
+        <table class="invoice-meta">
             <tr>
-                <td width="50%">
+                <td><strong>Order Number:</strong></td>
+                <td style="color: #2e5aac; font-weight: bold;">#{{ poNumber }}</td>
+            </tr>
+            <tr>
+                <td><strong>Date:</strong></td>
+                <td>{{ date|date('M d, Y') }}</td>
+            </tr>
+            <tr>
+                <td><strong>Payment Terms:</strong></td>
+                <td>DUE UPON RECEIPT</td>
+            </tr>
+        </table>
+
+        <div style="clear: both;"></div>
+
+        <!-- SEPARATOR -->
+        <div class="separator"></div>
+
+        <div class="section">
+            <div class="grid">
+                <div class="col">
                     <div class="box">
-                        <div class="box-title">From</div>
+                        <div class="section-title" style="font-size: 12px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">From</div>
                         {% if type == 'seller' %}
                             <h2>UNIQUE HEALTHCARE SOLUTIONS</h2>
                             <p>Alphasoft360</p>
-                            <p>Sahwal, Punjab , Pakistan</p>
+                            <p>Sahiwal, Punjab, Pakistan</p>
                             <p>Email: billing@uniquehealthcare.com</p>
                         {% else %}
                             <h2>{{ vendor.name|upper }}</h2>
@@ -198,125 +227,170 @@
                             <p>Phone: {{ vendor.phone }}</p>
                         {% endif %}
                     </div>
-                </td>
-                <td width="50%">
-                    <div class="box">
-                        <div class="box-title">Ship To / Bill To</div>
+                </div>
+                <div class="col">
+                    <div class="box" style="margin-right: 0;">
+                        <div class="section-title" style="font-size: 12px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Ship To / Bill To</div>
                         {% if type == 'seller' %}
-                            <div class="bold">{{ customer.name|upper }}</div>
+                            <h2>{{ customer.name|upper }}</h2>
                             <p>{{ customer.address }}</p>
                             <p>Phone No: {{ customer.phone }}</p>
                             <p>Email: {{ customer.email }}</p>
                         {% else %}
-                            <div class="bold">UNIQUE HEALTHCARE SOLUTIONS</div>
+                            <h2>UNIQUE HEALTHCARE SOLUTIONS</h2>
                             <p>Alphasoft360</p>
-                            <p>Sahwal, Punjab , Pakistan</p>
+                            <p>Sahiwal, Punjab, Pakistan</p>
                             <p>Email: warehouse@uniquehealthcare.com</p>
                         {% endif %}
                     </div>
-                </td>
-            </tr>
-        </table>
-    </div>
+                </div>
+            </div>
+        </div>
 
-    <!-- ORDER INFO -->
-    <div class="section box">
-        <div class="box-title">Order Information</div>
-        <table class="info-table">
-            <tr>
-                <td>Order Number:</td>
-                <td class="bold text-right" style="color:#0056b3;">#{{ poNumber }}</td>
-            </tr>
-            <tr>
-                <td>Date:</td>
-                <td class="bold text-right">{{ date|date('M d, Y') }}</td>
-            </tr>
-            <tr>
-                <td>Payment Terms:</td>
-                <td class="bold text-right">DUE UPON RECEIPT</td>
-            </tr>
-        </table>
-    </div>
+        <div class="section">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th width="5%" class="text-center">#</th>
+                        <th>Product Description</th>
+                        <th width="10%" class="text-center">Qty</th>
+                        <th width="20%" class="text-right">Unit Price</th>
+                        <th width="20%" class="text-right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td class="text-center" style="border-top: 1px solid #ddd;">{{ loop.index }}</td>
+                        <td style="font-weight: bold; border-top: 1px solid #ddd;">{{ item.description }}</td>
+                        <td class="text-center" style="border-top: 1px solid #ddd;">{{ item.qty }}</td>
+                        <td class="text-right" style="border-top: 1px solid #ddd;">PKR {{ item.rate|number_format(2) }}</td>
+                        <td class="text-right" style="font-weight: bold; border-top: 1px solid #ddd;">PKR {{ item.amount|number_format(2) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-    <!-- ITEMS -->
-    <div class="section">
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th width="5%" class="text-center">#</th>
-                    <th>Product Description</th>
-                    <th width="10%" class="text-center">Qty</th>
-                    <th width="20%" class="text-right">Unit Price</th>
-                    <th width="20%" class="text-right">Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                <tr>
-                    <td class="text-center">{{ loop.index }}</td>
-                    <td class="bold">{{ item.description }}</td>
-                    <td class="text-center">{{ item.qty }}</td>
-                    <td class="text-right">PKR {{ item.rate|number_format(2) }}</td>
-                    <td class="text-right bold">PKR {{ item.amount|number_format(2) }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- TOTALS -->
-    <div class="section">
-        <table class="totals-table">
-            <tr class="subtotal-row">
-                <td>SUBTOTAL</td>
-                <td>PKR {{ subtotal|number_format(2) }}</td>
+        <!-- SUMMARY -->
+        <table class="summary">
+            <tr>
+                <td>Subtotal:</td>
+                <td class="text-right">PKR {{ subtotal|number_format(2) }}</td>
             </tr>
             {% if discountAmount is defined and discountAmount > 0 %}
             <tr>
-                <td style="font-size:10px;color:#666;">Discount ({{ discountPercentage }}%)</td>
-                <td style="font-size:10px;color:#666;">-PKR {{ discountAmount|number_format(2) }}</td>
+                <td>Discount ({{ discountPercentage }}%):</td>
+                <td class="text-right" style="color: #c0392b;">
+                    -PKR {{ discountAmount|number_format(2) }}
+                </td>
             </tr>
             {% endif %}
-            <tr>
-                <td>Tax (0%)</td>
-                <td>PKR 0.00</td>
+            <tr class="total">
+                <td>Total:</td>
+                <td class="text-right">PKR {{ total|number_format(2) }}</td>
             </tr>
-            <tr class="total-row">
-                <td>TOTAL</td>
-                <td>PKR {{ total|number_format(2) }}</td>
-            </tr>
+            
             {% if amountTendered is defined and amountTendered is not null %}
             <tr>
-                <td style="font-size:10px;color:#666;">Cash Tendered</td>
-                <td style="font-size:10px;color:#666;">PKR {{ amountTendered|number_format(2) }}</td>
+                <td>Cash Tendered:</td>
+                <td class="text-right">PKR {{ amountTendered|number_format(2) }}</td>
             </tr>
             <tr>
                 {% if changeDue < 0 %}
-                    <td style="font-size:10px;color:#d63031;font-weight:bold;">Pending Amount</td>
-                    <td style="font-size:10px;color:#d63031;font-weight:bold;">PKR {{ changeDue|abs|number_format(2) }}</td>
+                    <td style="color: #c0392b; font-weight: bold;">Pending Amount:</td>
+                    <td class="text-right" style="color: #c0392b; font-weight: bold;">PKR {{ changeDue|abs|number_format(2) }}</td>
                 {% else %}
-                    <td style="font-size:10px;color:#666;">Change Due</td>
-                    <td style="font-size:10px;color:#666;">PKR {{ changeDue|number_format(2) }}</td>
+                    <td>Change Due:</td>
+                    <td class="text-right">PKR {{ changeDue|number_format(2) }}</td>
                 {% endif %}
             </tr>
             {% endif %}
-            <tr class="balance-row">
-                <td>Status</td>
-                <td>
+            
+            <tr style="background-color: #f8f9fa;">
+                <td style="font-weight: bold; border-bottom: 1px solid #eee;">Status:</td>
+                <td class="text-right" style="border-bottom: 1px solid #eee;">
                     {% if changeDue is defined and changeDue < 0 %}
-                        <span style="color: #d63031;">PARTIALLY PAID</span>
+                        <span class="badge badge-danger">PARTIALLY PAID</span>
                     {% else %}
-                        PAID
+                        <span class="badge badge-success">PAID</span>
                     {% endif %}
                 </td>
             </tr>
         </table>
+        
+        <div style="clear: both;"></div>
+
+        <div class="footer-note">
+            Generated electronically by Unique Healthcare Solutions
+        </div>
+
     </div>
 
-    <div class="footer-note">
-        Generated electronically by Unique Healthcare Solutions
+    <!-- FOOTER -->
+    <div class="footer">
+        <div
+            style="background-color: #1b2a88; color: #ffffff; text-align: center; padding: 8px; font-size: 13px; font-weight: bold; margin-bottom: 12px; letter-spacing: 0.5px;">
+            WHOLESALE DISTRIBUTOR OF LAB DISPOSABLE ITEMS & DIAGNOSTIC REAGENTS
+        </div>
+
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;">
+            <tr>
+                <!-- Location -->
+                <td width="40%" valign="middle">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td width="24" valign="middle">
+                                <img src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%23E53935'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E"
+                                    alt="Location" width="20" height="20">
+                            </td>
+                            <td valign="middle"
+                                style="font-size: 11px; font-weight: bold; padding-left: 5px; color: #222; line-height: 1.3;">
+                                HALI ROAD TEHSIL CHOWK,<br>SAHIWAL PUNJAB PAKISTAN
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+
+                <!-- WhatsApp -->
+                <td width="25%" valign="middle">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td width="24" valign="middle">
+                                <img src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%2325D366'%3E%3Cpath d='M12 2.06c-5.5 0-9.96 4.45-9.96 9.94 0 1.76.46 3.48 1.34 5L1.87 22.5l5.65-1.48c1.46.8 3.1 1.22 4.81 1.22 5.5 0 9.96-4.45 9.96-9.94S17.5 2.06 12 2.06zm5.66 14.3c-.24.67-1.37 1.24-1.92 1.32-.51.08-1.17.26-3.32-.64-2.58-1.08-4.24-3.7-4.37-3.88-.13-.17-1.04-1.38-1.04-2.64 0-1.25.65-1.88.89-2.13.23-.25.51-.31.68-.31.17 0 .34 0 .49.01.17.01.38-.05.59.45.21.52.73 1.77.79 1.9.06.13.1.28.01.45-.08.17-.13.27-.26.43-.13.15-.27.33-.39.46-.14.14-.28.29-.12.57.16.27.72 1.18 1.55 1.91 1.07.95 1.96 1.25 2.23 1.38.28.13.44.11.6-.07.17-.18.73-.85.92-1.14.19-.29.38-.24.64-.15.26.1 1.63.77 1.91.91.28.14.47.21.54.33.07.12.07.72-.17 1.39z'/%3E%3C/svg%3E"
+                                    alt="WhatsApp" width="20" height="20">
+                            </td>
+                            <td valign="middle"
+                                style="font-size: 13px; font-weight: bold; padding-left: 5px; color: #222;">
+                                0312 7171837
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+
+                <!-- Email -->
+                <td width="35%" valign="middle" align="right">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td width="24" valign="middle">
+                                <img src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%23EA4335'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E"
+                                    alt="Email" width="20" height="20">
+                            </td>
+                            <td valign="middle"
+                                style="font-size: 12px; font-weight: bold; padding-left: 5px; color: #222;">
+                                uniquehealthcaresolution.swl@gmail.com
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <div
+            style="background-color: #cda34f; color: #000; text-align: center; padding: 6px; font-size: 11px; font-weight: bold;">
+            Laboratory, Radiology & Hospital Equipment, Biomedical Services & General Order Supplier
+        </div>
     </div>
 
 </body>
-
 </html>

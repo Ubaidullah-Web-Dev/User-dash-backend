@@ -4,152 +4,356 @@
     <meta charset="UTF-8">
     <title>Inventory Document - {{ documentNumber }}</title>
     <style>
-        body { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; margin: 0; padding: 40px; font-size: 11px; color: #222; line-height: 1.5; }
-        .header { margin-bottom: 30px; border-bottom: 2px solid #0ea5e9; padding-bottom: 20px; }
-        .header table { width: 100%; border-collapse: collapse; }
-        .title { font-size: 28px; font-weight: 900; color: #0ea5e9; text-transform: uppercase; letter-spacing: -1px; }
-        .doc-type { font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px; }
-        .meta { text-align: right; }
-        .meta-item { margin-bottom: 4px; }
-        .meta-label { font-weight: bold; color: #64748b; text-transform: uppercase; font-size: 8px; }
-        .meta-value { font-weight: 900; font-size: 12px; color: #0ea5e9; }
-        
-        .section { margin-bottom: 30px; }
-        .section-title { font-size: 9px; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 15px; }
-        
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .container {
+            padding: 30px;
+        }
+
+        /* Header/Footer Code Overrides */
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-family: Arial, sans-serif;
+            page-break-inside: avoid;
+        }
+
+        /* Title */
+        .invoice-title {
+            text-align: right;
+            font-size: 36px;
+            font-weight: bold;
+            color: #2e5aac;
+            font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+        }
+
+        .doc-type {
+            font-size: 12px;
+            font-weight: bold;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: right;
+            margin-top: -10px;
+            margin-bottom: 20px;
+        }
+
+        /* Meta */
+        .invoice-meta {
+            float: right;
+            margin-top: 10px;
+        }
+
+        .invoice-meta td {
+            padding: 3px 0;
+            text-align: right;
+        }
+
+        /* Separator */
+        .separator {
+            border-top: 1px solid #ccc;
+            margin: 20px 0;
+        }
+
+        /* Section */
+        .section {
+            margin-top: 10px;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        /* Grid */
         .grid { display: table; width: 100%; table-layout: fixed; }
         .col { display: table-cell; vertical-align: top; }
         
-        .info-card { background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-right: 10px; }
-        .info-label { font-size: 8px; font-weight: bold; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
-        .info-value { font-size: 11px; font-weight: bold; color: #1e293b; }
+        .info-card { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-right: 15px; }
+        .info-label { font-size: 10px; font-weight: bold; color: #777; text-transform: uppercase; margin-bottom: 4px; }
+        .info-value { font-size: 13px; font-weight: bold; color: #333; }
 
-        .items-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .items-table th { background: #0ea5e9; color: white; padding: 12px 15px; text-align: left; font-size: 9px; font-weight: 900; text-transform: uppercase; }
-        .items-table td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-        .items-table tr:nth-child(even) { background: #f8fafc; }
+        /* Table */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .table th {
+            background: #2e5aac;
+            color: #fff;
+            padding: 10px;
+            font-size: 12px;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        .table td {
+            padding: 10px;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+
+        /* Summary Box */
+        .summary {
+            width: 320px;
+            float: right;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .summary td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary tr:last-child td {
+            border-bottom: none;
+        }
+
+        .summary .total {
+            background: #d69e2e;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
         
-        .total-section { margin-top: 20px; text-align: right; }
-        .total-box { display: inline-block; background: #0ea5e9; color: white; padding: 15px 30px; border-radius: 12px; }
-        .total-label { font-size: 9px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; opacity: 0.8; }
-        .total-value { font-size: 20px; font-weight: 900; }
-
-        .footer { margin-top: 60px; text-align: center; color: #94a3b8; font-size: 9px; border-top: 1px solid #f1f5f9; padding-top: 20px; font-weight: 500; }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 8px; font-weight: 900; text-transform: uppercase; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 900; text-transform: uppercase; }
         .badge-success { background: #dcfce7; color: #166534; }
         .badge-info { background: #e0f2fe; color: #0369a1; }
+        
+        .footer-note {
+            margin-top: 60px; text-align: center; color: #777; font-size: 10px; border-top: 1px solid #ddd; padding-top: 20px; font-weight: bold;
+        }
     </style>
 </head>
 <body>
+
+    <!-- HEADER -->
     <div class="header">
-        <table>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr>
-                <td>
-                    {% if logo %}
-                        <img src="{{ logo }}" alt="Logo" style="height: 80px; margin-bottom: 15px;">
+                <td width="15%" valign="middle" align="center">
+                    {% if logo is defined and logo %}
+                    <img src="{{ logo }}" style="max-height: 80px; max-width: 100%;" alt="Unique Healthcare Solutions">
+                    {% else %}
+                    <div style="font-size: 24px; font-weight: bold; color: #c94b26;">UHS</div>
                     {% endif %}
-                    <div class="title">{{ documentTitle }}</div>
-                    <div class="doc-type">Laboratory Inventory Management System</div>
                 </td>
-                <td class="meta">
-                    <div class="meta-item">
-                        <span class="meta-label">Ref Number:</span><br/>
-                        <span class="meta-value">#{{ documentNumber }}</span>
+                <td width="85%" valign="middle" style="padding-left: 15px;">
+                    <div
+                        style="font-family: 'Times New Roman', Times, serif; font-size: 24px; font-weight: bold; margin-bottom: 5px; letter-spacing: 1px;">
+                        <span style="color: #c94b26;">UNIQUE</span>
+                        <span style="color: #1b887a;"> HEALTHCARE </span>
+                        <span style="color: #1b2a88;">SOLUTIONS</span>
                     </div>
-                    <div class="meta-item" style="margin-top: 10px;">
-                        <span class="meta-label">Date:</span><br/>
-                        <span class="meta-value" style="color: #64748b; font-size: 10px;">{{ date|date('d M Y, h:i A') }}</span>
-                    </div>
+                    <div style="background-color: #cda34f; height: 3px; width: 100%; margin-bottom: 8px;"></div>
+                    <table cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td
+                                style="background-color: #1b2a88; color: #ffffff; padding: 5px 15px; font-size: 13px; font-weight: bold; font-family: Arial, sans-serif;">
+                                EXCELLENT IN DIAGNOSTIC SERVICES
+                            </td>
+                        </tr>
+                    </table>
                 </td>
             </tr>
         </table>
     </div>
 
-    <div class="section">
-        <div class="section-title">Record Details</div>
-        <div class="grid">
-            <div class="col">
-                <div class="info-card">
-                    <div class="info-label">Action Performed By</div>
-                    <div class="info-value">Lab Administrator</div>
-                    <div style="margin-top: 10px;" class="info-label">Organization</div>
-                    <div class="info-value">Unique Healthcare Solutions</div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="info-card" style="margin-right: 0;">
-                    <div class="info-label">Action Type</div>
-                    <div class="info-value">
-                        <span class="badge {{ type == 'stock_in' ? 'badge-success' : 'badge-info' }}">
-                            {{ type == 'stock_in' ? 'STOCK REFILL' : (isEditing ? 'METADATA UPDATE' : 'REAGENT REGISTRATION') }}
-                        </span>
-                    </div>
-                    <div style="margin-top: 10px;" class="info-label">Status</div>
-                    <div class="info-value">Verified & Recorded</div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="container">
 
-    <div class="section">
-        <div class="section-title">Itemized Summary</div>
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th width="40%">Item / Reagent</th>
-                    <th width="20%">Category</th>
-                    <th width="20%" class="text-center">Details</th>
-                    <th width="20%" class="text-right">Value/Qty</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if type == 'reagent' %}
-                <tr>
-                    <td>
-                        <div style="font-weight: 900; font-size: 13px;">{{ reagent.name }}</div>
-                        <div style="color: #64748b; font-size: 9px; margin-top: 2px;">Batch: {{ reagent.batchNumber|default('N/A') }}</div>
-                    </td>
-                    <td>{{ reagent.categoryName|default('Uncategorized') }}</td>
-                    <td class="text-center">
-                        <div style="font-size: 9px; color: #64748b;">EXP: {{ reagent.expiryDate|default('N/A') }}</div>
-                        <div style="font-size: 9px; color: #64748b;">SIZE: {{ reagent.packSize|default('N/A') }}</div>
-                    </td>
-                    <td class="text-right">
-                        <div style="font-weight: 900; font-size: 13px;">{{ reagent.stock }} Units</div>
-                        <div style="color: #64748b; font-size: 9px;">@ PKR {{ reagent.price|number_format(2) }}</div>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td>
-                        <div style="font-weight: 900; font-size: 13px;">{{ stockIn.productName }}</div>
-                        <div style="color: #64748b; font-size: 9px; margin-top: 2px;">Supplier: {{ stockIn.supplier|default('N/A') }}</div>
-                    </td>
-                    <td>Added to Inventory</td>
-                    <td class="text-center">
-                        <div style="font-size: 9px; color: #64748b;">Rate: PKR {{ stockIn.unitPrice|number_format(2) }}</div>
-                    </td>
-                    <td class="text-right">
-                        <div style="font-weight: 900; font-size: 13px;">+{{ stockIn.quantity }} Units</div>
-                        <div style="color: #64748b; font-size: 9px;">Total Change</div>
-                    </td>
-                </tr>
-                {% endif %}
-            </tbody>
+        <!-- TITLE -->
+        <div class="invoice-title">{{ documentTitle }}</div>
+        <div class="doc-type">Laboratory Inventory Management System</div>
+
+        <!-- META -->
+        <table class="invoice-meta">
+            <tr>
+                <td><strong>Ref Number:</strong></td>
+                <td>#{{ documentNumber }}</td>
+            </tr>
+            <tr>
+                <td><strong>Date:</strong></td>
+                <td>{{ date|date('d M Y, h:i A') }}</td>
+            </tr>
         </table>
+
+        <div style="clear: both;"></div>
+
+        <!-- SEPARATOR -->
+        <div class="separator"></div>
+
+        <div class="section">
+            <div class="section-title">Record Details</div>
+            <div class="grid">
+                <div class="col">
+                    <div class="info-card">
+                        <div class="info-label">Action Performed By</div>
+                        <div class="info-value">Lab Administrator</div>
+                        <div style="margin-top: 10px;" class="info-label">Organization</div>
+                        <div class="info-value">Unique Healthcare Solutions</div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="info-card" style="margin-right: 0;">
+                        <div class="info-label">Action Type</div>
+                        <div class="info-value">
+                            <span class="badge {{ type == 'stock_in' ? 'badge-success' : 'badge-info' }}">
+                                {{ type == 'stock_in' ? 'STOCK REFILL' : (isEditing ? 'METADATA UPDATE' : 'REAGENT REGISTRATION') }}
+                            </span>
+                        </div>
+                        <div style="margin-top: 10px;" class="info-label">Status</div>
+                        <div class="info-value">Verified & Recorded</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Itemized Summary</div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th width="40%">Item / Reagent</th>
+                        <th width="20%">Category</th>
+                        <th width="20%" class="text-center">Details</th>
+                        <th width="20%" class="text-right">Value/Qty</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if type == 'reagent' %}
+                    <tr>
+                        <td>
+                            <div style="font-weight: bold; font-size: 14px;">{{ reagent.name }}</div>
+                            <div style="color: #777; font-size: 10px; margin-top: 2px;">Batch: {{ reagent.batchNumber|default('N/A') }}</div>
+                        </td>
+                        <td>{{ reagent.categoryName|default('Uncategorized') }}</td>
+                        <td class="text-center">
+                            <div style="font-size: 11px; color: #777;">EXP: {{ reagent.expiryDate|default('N/A') }}</div>
+                            <div style="font-size: 11px; color: #777;">SIZE: {{ reagent.packSize|default('N/A') }}</div>
+                        </td>
+                        <td class="text-right">
+                            <div style="font-weight: bold; font-size: 14px; color: #2e5aac;">{{ reagent.stock }} Units</div>
+                            <div style="color: #777; font-size: 10px;">@ PKR {{ reagent.price|number_format(2) }}</div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td>
+                            <div style="font-weight: bold; font-size: 14px;">{{ stockIn.productName }}</div>
+                            <div style="color: #777; font-size: 10px; margin-top: 2px;">Supplier: {{ stockIn.supplier|default('N/A') }}</div>
+                        </td>
+                        <td>Added to Inventory</td>
+                        <td class="text-center">
+                            <div style="font-size: 11px; color: #777;">Rate: PKR {{ stockIn.unitPrice|number_format(2) }}</div>
+                        </td>
+                        <td class="text-right">
+                            <div style="font-weight: bold; font-size: 14px; color: #27ae60;">+{{ stockIn.quantity }} Units</div>
+                            <div style="color: #777; font-size: 10px;">Total Change</div>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if type == 'stock_in' %}
+        <table class="summary">
+            <tr class="total">
+                <td>Entry Valuation:</td>
+                <td class="text-right">PKR {{ (stockIn.quantity * stockIn.unitPrice)|number_format(2) }}</td>
+            </tr>
+        </table>
+        <div style="clear: both;"></div>
+        {% endif %}
+
+        <div class="footer-note">
+            This is a system-generated document and serve as a formal record of inventory changes in the Unique Healthcare Solutions Management System. No physical signature required.
+        </div>
+        
     </div>
 
-    {% if type == 'stock_in' %}
-    <div class="total-section">
-        <div class="total-box">
-            <div class="total-label">Entry Valuation</div>
-            <div class="total-value">PKR {{ (stockIn.quantity * stockIn.unitPrice)|number_format(2) }}</div>
+    <!-- FOOTER -->
+    <div class="footer">
+        <div
+            style="background-color: #1b2a88; color: #ffffff; text-align: center; padding: 8px; font-size: 13px; font-weight: bold; margin-bottom: 12px; letter-spacing: 0.5px;">
+            WHOLESALE DISTRIBUTOR OF LAB DISPOSABLE ITEMS & DIAGNOSTIC REAGENTS
+        </div>
+
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;">
+            <tr>
+                <!-- Location -->
+                <td width="40%" valign="middle">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td width="24" valign="middle">
+                                <img src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%23E53935'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E"
+                                    alt="Location" width="20" height="20">
+                            </td>
+                            <td valign="middle"
+                                style="font-size: 11px; font-weight: bold; padding-left: 5px; color: #222; line-height: 1.3;">
+                                HALI ROAD TEHSIL CHOWK,<br>SAHIWAL PUNJAB PAKISTAN
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+
+                <!-- WhatsApp -->
+                <td width="25%" valign="middle">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td width="24" valign="middle">
+                                <img src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%2325D366'%3E%3Cpath d='M12 2.06c-5.5 0-9.96 4.45-9.96 9.94 0 1.76.46 3.48 1.34 5L1.87 22.5l5.65-1.48c1.46.8 3.1 1.22 4.81 1.22 5.5 0 9.96-4.45 9.96-9.94S17.5 2.06 12 2.06zm5.66 14.3c-.24.67-1.37 1.24-1.92 1.32-.51.08-1.17.26-3.32-.64-2.58-1.08-4.24-3.7-4.37-3.88-.13-.17-1.04-1.38-1.04-2.64 0-1.25.65-1.88.89-2.13.23-.25.51-.31.68-.31.17 0 .34 0 .49.01.17.01.38-.05.59.45.21.52.73 1.77.79 1.9.06.13.1.28.01.45-.08.17-.13.27-.26.43-.13.15-.27.33-.39.46-.14.14-.28.29-.12.57.16.27.72 1.18 1.55 1.91 1.07.95 1.96 1.25 2.23 1.38.28.13.44.11.6-.07.17-.18.73-.85.92-1.14.19-.29.38-.24.64-.15.26.1 1.63.77 1.91.91.28.14.47.21.54.33.07.12.07.72-.17 1.39z'/%3E%3C/svg%3E"
+                                    alt="WhatsApp" width="20" height="20">
+                            </td>
+                            <td valign="middle"
+                                style="font-size: 13px; font-weight: bold; padding-left: 5px; color: #222;">
+                                0312 7171837
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+
+                <!-- Email -->
+                <td width="35%" valign="middle" align="right">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td width="24" valign="middle">
+                                <img src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%23EA4335'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E"
+                                    alt="Email" width="20" height="20">
+                            </td>
+                            <td valign="middle"
+                                style="font-size: 12px; font-weight: bold; padding-left: 5px; color: #222;">
+                                uniquehealthcaresolution.swl@gmail.com
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <div
+            style="background-color: #cda34f; color: #000; text-align: center; padding: 6px; font-size: 11px; font-weight: bold;">
+            Laboratory, Radiology & Hospital Equipment, Biomedical Services & General Order Supplier
         </div>
     </div>
-    {% endif %}
 
-    <div class="footer">
-        This is a system-generated document and serve as a formal record of inventory changes in the Unique Healthcare Solutions Management System. No physical signature required.
-    </div>
 </body>
 </html>
