@@ -458,7 +458,7 @@ class AdminController extends AbstractController
             $product->setStock($product->getStock() - $quantity);
         }
 
-        $order->setTotal($total);
+        $order->setTotal($total - (float)($discountAmount ?? 0));
         $order->setAmountTendered($amountTendered);
         $order->setChangeDue($changeDue);
         $order->setDiscountPercentage($discountPercentage);
