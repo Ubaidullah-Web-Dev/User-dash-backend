@@ -41,12 +41,17 @@ security:
         - { path: ^/(?:[^/]+/)?api/register, roles: PUBLIC_ACCESS }
         - { path: ^/(?:[^/]+/)?api/forgot-password, roles: PUBLIC_ACCESS }
         - { path: ^/(?:[^/]+/)?api/reset-password, roles: PUBLIC_ACCESS }
-        # Moderator-accessible endpoints (Lab Sales POS + Dashboard)
-        - { path: ^/(?:[^/]+/)?api/admin/labs/dashboard, roles: ROLE_MODERATOR }
-        - { path: ^/(?:[^/]+/)?api/admin/products, roles: ROLE_MODERATOR }
-        - { path: ^/(?:[^/]+/)?api/admin/labs/customers, roles: ROLE_MODERATOR }
-        - { path: ^/(?:[^/]+/)?api/admin/labs/invoice, roles: ROLE_MODERATOR }
-        - { path: ^/(?:[^/]+/)?api/admin/orders/walk-in, roles: ROLE_MODERATOR }
+        # User-accessible endpoints (Lab Sales POS + Dashboard)
+        - { path: ^/(?:[^/]+/)?api/admin/labs/dashboard, roles: ROLE_USER }
+        - { path: ^/(?:[^/]+/)?api/admin/products, roles: ROLE_USER }
+        - { path: ^/(?:[^/]+/)?api/admin/labs/customers, roles: ROLE_USER }
+        - { path: ^/(?:[^/]+/)?api/admin/labs/invoice, roles: ROLE_USER }
+        - { path: ^/(?:[^/]+/)?api/admin/orders/walk-in, roles: ROLE_USER }
+        - { path: ^/(?:[^/]+/)?api/admin/categories, roles: ROLE_USER }
+        - { path: ^/(?:[^/]+/)?api/categories, roles: ROLE_USER }
+        - { path: ^/(?:[^/]+/)?api/admin/vendors, roles: ROLE_USER }
+        # Moderator-accessible endpoints
+        - { path: ^/(?:[^/]+/)?api/admin/labs/stock-in, roles: ROLE_MODERATOR }
         # General admin access (ROLE_ADMIN inherits ROLE_MODERATOR)
         - { path: ^/(?:[^/]+/)?api/admin, roles: ROLE_ADMIN }
         - { path: ^/(?:[^/]+/)?api/super-admin, roles: ROLE_SUPER_ADMIN }

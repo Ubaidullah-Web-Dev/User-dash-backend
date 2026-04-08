@@ -18,13 +18,11 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use App\Service\TenantContext;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 
 #[Route('/api/admin')]
-#[IsGranted('ROLE_ADMIN')]
 class VendorController extends AbstractController
 {
     #[Route('/vendors', name: 'admin_vendors_list', methods: ['GET'])]
