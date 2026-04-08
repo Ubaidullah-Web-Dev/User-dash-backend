@@ -7,6 +7,7 @@ use App\Entity\Order;
 use App\Entity\Product;
 use App\Entity\VendorOrder;
 use App\Entity\OrderItem;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -41,7 +42,8 @@ class LabInvoiceController extends AbstractController
                 'packSize' => $product->getPackSize(),
                 'stock' => $product->getStock(),
                 'price' => $product->getPrice()
-            ]
+            ],
+            'invoiceMaker' => ($this->getUser() instanceof User) ? $this->getUser()->getName() : 'System'
         ]);
 
         return $this->generatePdfResponse($html, sprintf('Reagent-%s.pdf', $product->getId()));
@@ -73,7 +75,8 @@ class LabInvoiceController extends AbstractController
                 'quantity' => $quantity,
                 'unitPrice' => $unitPrice,
                 'supplier' => $supplier
-            ]
+            ],
+            'invoiceMaker' => ($this->getUser() instanceof User) ? $this->getUser()->getName() : 'System'
         ]);
 
         return $this->generatePdfResponse($html, 'Stock-Entry.pdf');
@@ -177,7 +180,8 @@ class LabInvoiceController extends AbstractController
             'subTotal' => $totalSpent + $totalDiscount,
             'totalDiscount' => $totalDiscount,
             'statementNumber' => 'STMT-' . date('Ymd') . '-' . str_pad($customer->getId(), 4, '0', STR_PAD_LEFT),
-            'date' => new \DateTime()
+            'date' => new \DateTime(),
+            'invoiceMaker' => ($this->getUser() instanceof User) ? $this->getUser()->getName() : 'System'
         ]);
 
         return $this->generatePdfResponse($html, sprintf('Statement-%s-%s.pdf', $customer->getName(), $periodLabel));
@@ -199,7 +203,8 @@ class LabInvoiceController extends AbstractController
         $html = $this->renderView('invoice/order_invoice.html.twig', [
             'logo' => $this->getLogoData(),
             'order' => $order,
-            'date' => new \DateTime()
+            'date' => new \DateTime(),
+            'invoiceMaker' => ($this->getUser() instanceof User) ? $this->getUser()->getName() : 'System'
         ]);
 
         return $this->generatePdfResponse($html, sprintf('Invoice-%s.pdf', $order->getId()));
@@ -284,7 +289,8 @@ class LabInvoiceController extends AbstractController
             'stockRemoved' => $stockRemoved,
             'customerCount' => $customerCount,
             'totalPending' => $totalPending,
-            'dateGenerated' => new \DateTime()
+            'dateGenerated' => new \DateTime(),
+            'invoiceMaker' => ($this->getUser() instanceof User) ? $this->getUser()->getName() : 'System'
         ]);
 
         return $this->generatePdfResponse($html, sprintf('Lab-Summary-%s-%s.pdf', ucfirst($type), str_replace(' ', '-', $periodLabel)));

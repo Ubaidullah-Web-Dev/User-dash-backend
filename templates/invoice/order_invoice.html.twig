@@ -187,6 +187,10 @@
                 <td><strong>Date:</strong></td>
                 <td>{{ order.createdAt|date('d/m/Y h:i A') }}</td>
             </tr>
+            <tr>
+                <td><strong>Invoice Maker:</strong></td>
+                <td>{{ invoiceMaker|default('N/A') }}</td>
+            </tr>
         </table>
 
         <div style="clear: both;"></div>

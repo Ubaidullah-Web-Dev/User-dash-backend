@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Order;
+use App\Entity\User;
 use App\Repository\OrderRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Dompdf\Dompdf;
@@ -76,6 +77,7 @@ class InvoiceController extends AbstractController
             'changeDue' => $order->getChangeDue(),
             'remainingBalance' => $order->getRegisteredCustomer() ? $order->getRegisteredCustomer()->getRemainingBalance() : 0,
             'balance' => 0,
+            'invoiceMaker' => ($user instanceof User) ? $user->getName() : $user->getUserIdentifier(),
         ]);
 
         return $this->generatePdfResponse($html, sprintf('PO-%s.pdf', $order->getId()));
@@ -129,6 +131,7 @@ class InvoiceController extends AbstractController
             'total' => $itemsData[0]['amount'],
             'paid' => 0,
             'balance' => $itemsData[0]['amount'],
+            'invoiceMaker' => ($user instanceof User) ? $user->getName() : $user->getUserIdentifier(),
         ]);
 
         return $this->generatePdfResponse($html, sprintf('VO-%s.pdf', $vendorOrder->getId()));
