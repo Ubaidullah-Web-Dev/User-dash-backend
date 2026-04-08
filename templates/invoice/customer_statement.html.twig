@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Invoice - {{ customer.name }}</title>
+    <title>Ledger - {{ customer.name }}</title>
 
     <style>
         body {
@@ -182,12 +182,12 @@
 
         <!-- TITLE -->
         <div class="invoice-title" style="font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;">
-            INVOICE</div>
+            LEDGER</div>
 
         <!-- META -->
         <table class="invoice-meta">
             <tr>
-                <td><strong>Invoice No:</strong></td>
+                <td><strong>Ledger No:</strong></td>
                 <td>{{ statementNumber|default('STMT-' ~ "now"|date("Ymd")) }}</td>
             </tr>
             <tr>
