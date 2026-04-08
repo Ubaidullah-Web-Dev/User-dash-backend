@@ -242,6 +242,7 @@ class LabInvoiceController extends AbstractController
         $revenue = (float)($orderData['total'] ?? 0);
         $customerCount = (int)($orderData['customerCount'] ?? 0);
         $totalPending = (float)($orderData['totalPending'] ?? 0);
+        $receivedPayments = $revenue - $totalPending;
 
         // 2. Expenses & Stock Added (Vendor Orders received)
         $vendorOrders = $em->getRepository(VendorOrder::class)->createQueryBuilder('vo')
@@ -278,7 +279,7 @@ class LabInvoiceController extends AbstractController
             'reportType' => ucfirst($type),
             'revenue' => $revenue,
             'expenses' => $expenses,
-            'netIncome' => $revenue - $expenses,
+            'netIncome' => $receivedPayments - $expenses,
             'stockAdded' => $stockAdded,
             'stockRemoved' => $stockRemoved,
             'customerCount' => $customerCount,
