@@ -243,10 +243,15 @@
                     <td>
                         <strong>{{ item.product.name }}</strong><br>
                         <span style="font-size:9px;color:#777;">{{ item.product.category.name|default('General') }}</span>
+                        {% if item.discountPercentage > 0 %}
+                            <div style="font-size: 8px; color: #c0392b; font-weight: bold; margin-top: 2px;">
+                                Discount: {{ item.discountPercentage }}% (-PKR {{ item.discountAmount|number_format(2) }})
+                            </div>
+                        {% endif %}
                     </td>
                     <td class="text-right">PKR {{ item.price|number_format(2) }}</td>
                     <td class="text-center">{{ item.quantity }}</td>
-                    <td class="text-right"><strong>PKR {{ (item.price * item.quantity)|number_format(2) }}</strong></td>
+                    <td class="text-right"><strong>PKR {{ ((item.price * item.quantity) - (item.discountAmount ?? 0))|number_format(2) }}</strong></td>
                 </tr>
                 {% else %}
                 <tr class="order-start order-end">
@@ -266,7 +271,7 @@
             </tr>
             {% if order.discountAmount > 0 %}
             <tr>
-                <td>Discount ({{ order.discountPercentage }}%):</td>
+                <td>{{ order.discountPercentage ? 'Discount (' ~ order.discountPercentage ~ '%):' : 'Total Discount:' }}</td>
                 <td class="text-right" style="color: #c0392b;">
                     -PKR {{ order.discountAmount|number_format(2) }}
                 </td>

@@ -262,7 +262,14 @@
                     {% for item in items %}
                     <tr>
                         <td class="text-center" style="border-top: 1px solid #ddd;">{{ loop.index }}</td>
-                        <td style="font-weight: bold; border-top: 1px solid #ddd;">{{ item.description }}</td>
+                        <td style="font-weight: bold; border-top: 1px solid #ddd;">
+                            {{ item.description }}
+                            {% if item.discountPercentage is defined and item.discountPercentage > 0 %}
+                                <div style="font-size: 8px; color: #c0392b; font-weight: bold; margin-top: 2px;">
+                                    Discount: {{ item.discountPercentage }}% (-PKR {{ item.discountAmount|number_format(2) }})
+                                </div>
+                            {% endif %}
+                        </td>
                         <td class="text-center" style="border-top: 1px solid #ddd;">{{ item.qty }}</td>
                         <td class="text-right" style="border-top: 1px solid #ddd;">PKR {{ item.rate|number_format(2) }}</td>
                         <td class="text-right" style="font-weight: bold; border-top: 1px solid #ddd;">PKR {{ item.amount|number_format(2) }}</td>
@@ -280,7 +287,7 @@
             </tr>
             {% if discountAmount is defined and discountAmount > 0 %}
             <tr>
-                <td>Discount ({{ discountPercentage }}%):</td>
+                <td>{{ discountPercentage is defined and discountPercentage ? 'Discount (' ~ discountPercentage ~ '%):' : 'Total Discount:' }}</td>
                 <td class="text-right" style="color: #c0392b;">
                     -PKR {{ discountAmount|number_format(2) }}
                 </td>

@@ -131,7 +131,9 @@ class LabInvoiceController extends AbstractController
                     'description' => $product ? $product->getDescription() : '',
                     'quantity' => $item->getQuantity(),
                     'price' => (float)$item->getPrice(),
-                    'total' => (float)($item->getQuantity() * $item->getPrice())
+                    'discountPercentage' => (float)$item->getDiscountPercentage(),
+                    'discountAmount' => (float)$item->getDiscountAmount(),
+                    'total' => (float)($item->getQuantity() * $item->getPrice() - ($item->getDiscountAmount() ?: 0))
                 ];
             }
 

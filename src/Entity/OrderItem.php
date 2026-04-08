@@ -30,6 +30,12 @@ class OrderItem
     #[ORM\Column]
     private ?float $price = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?float $discountPercentage = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?float $discountAmount = null;
+
     public function getId(): ?int { return $this->id; }
 
     public function getOrder(): ?Order { return $this->order; }
@@ -57,6 +63,28 @@ class OrderItem
     {
         $this->company = $company;
 
+        return $this;
+    }
+
+    public function getDiscountPercentage(): ?float
+    {
+        return $this->discountPercentage;
+    }
+
+    public function setDiscountPercentage(?float $discountPercentage): self
+    {
+        $this->discountPercentage = $discountPercentage;
+        return $this;
+    }
+
+    public function getDiscountAmount(): ?float
+    {
+        return $this->discountAmount;
+    }
+
+    public function setDiscountAmount(?float $discountAmount): self
+    {
+        $this->discountAmount = $discountAmount;
         return $this;
     }
 }

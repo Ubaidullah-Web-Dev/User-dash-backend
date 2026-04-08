@@ -44,7 +44,9 @@ class InvoiceController extends AbstractController
                 'description' => $item->getProduct()->getName(),
                 'qty' => $item->getQuantity(),
                 'rate' => $item->getPrice(),
-                'amount' => $item->getPrice() * $item->getQuantity(),
+                'discountPercentage' => $item->getDiscountPercentage(),
+                'discountAmount' => $item->getDiscountAmount(),
+                'amount' => ($item->getPrice() * $item->getQuantity()) - ($item->getDiscountAmount() ?: 0),
             ];
         }
 
@@ -61,7 +63,6 @@ class InvoiceController extends AbstractController
             'date' => $order->getCreatedAt(),
             'customer' => [
                 'name' => $order->getCustomerName() ?? ($order->getRegisteredCustomer() ? $order->getRegisteredCustomer()->getName() : 'Walk-In Customer'),
-                'email' => $order->getRegisteredCustomer() ? $order->getRegisteredCustomer()->getEmail() : '',
                 'address' => $order->getAddress(),
                 'phone' => $order->getPhone(),
             ],

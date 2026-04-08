@@ -256,8 +256,14 @@
 
                     <td>
                         {{ item.description }}
+                        {% if item.discountPercentage > 0 %}
+                            <div style="color: #c0392b; font-size: 9px; margin-top: 2px; font-weight: bold;">
+                                Item Discount: {{ item.discountPercentage }}% (-PKR {{ item.discountAmount|number_format(2) }})
+                            </div>
+                        {% endif %}
+                        
                         {% if loop.last %}
-                            {% if order.discountAmount > 0 %}
+                            {% if order.discountAmount > 0 and not item.discountPercentage %}
                             <div style="color:green; font-size:10px; margin-top:5px;">
                                 Discount: {{ order.discountPercentage }}% (PKR {{ order.discountAmount|number_format(2) }})
                             </div>
