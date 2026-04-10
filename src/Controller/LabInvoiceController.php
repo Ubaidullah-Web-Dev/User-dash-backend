@@ -289,6 +289,17 @@ class LabInvoiceController extends AbstractController
             $expenses += ($vo->getQuantity() * $purchasePrice);
         }
 
+        // 2b. Lab Expenses
+        $labExpensesResult = $em->getRepository(LabExpense::class)->createQueryBuilder('le')
+            ->select('SUM(le.amount)')
+            ->where('le.expenseDate BETWEEN :start AND :end')
+            ->setParameter('start', $startDate)
+            ->setParameter('end', $endDate)
+            ->getQuery()
+            ->getSingleScalarResult();
+        
+        $labExpenses = (float)($labExpensesResult ?? 0);
+
         // 3. Stock Removed (Order Items)
         $stockRemoved = $em->getRepository(OrderItem::class)->createQueryBuilder('oi')
             ->join('oi.order', 'o')
@@ -306,7 +317,8 @@ class LabInvoiceController extends AbstractController
             'reportType' => ucfirst($type),
             'revenue' => $revenue,
             'expenses' => $expenses,
-            'netIncome' => $receivedPayments - $expenses,
+            'labExpenses' => $labExpenses,
+            'netIncome' => $receivedPayments - ($expenses + $labExpenses),
             'stockAdded' => $stockAdded,
             'stockRemoved' => $stockRemoved,
             'customerCount' => $customerCount,
