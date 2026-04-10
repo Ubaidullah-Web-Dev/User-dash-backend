@@ -8,6 +8,7 @@ use App\Entity\Product;
 use App\Entity\VendorOrder;
 use App\Entity\OrderItem;
 use App\Entity\User;
+use App\Entity\LabExpense;
 use Doctrine\ORM\EntityManagerInterface;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -19,6 +20,27 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/admin/labs/invoice')]
 class LabInvoiceController extends AbstractController
 {
+    #[Route('/expense/{id}', name: 'admin_lab_invoice_expense', methods: ['GET'])]
+    public function expenseInvoice(int $id, EntityManagerInterface $entityManager): Response
+    {
+        $expense = $entityManager->getRepository(LabExpense::class)->find($id);
+        if (!$expense) {
+            return $this->json(['message' => 'Expense not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $html = $this->renderView('invoice/expense_invoice.html.twig', [
+            'logo' => $this->getLogoData(),
+            'documentTitle' => 'Expense Receipt',
+            'documentNumber' => 'EXP-' . str_pad($expense->getId(), 6, '0', STR_PAD_LEFT),
+            'date' => new \DateTime(),
+            'expense' => $expense,
+            'companyName' => $expense->getCompany() ? $expense->getCompany()->getName() : 'Unknown Company',
+            'invoiceMaker' => ($this->getUser() instanceof User) ? $this->getUser()->getName() : 'System'
+        ]);
+
+        return $this->generatePdfResponse($html, sprintf('Expense-%s.pdf', $expense->getId()));
+    }
+
     #[Route('/reagent/{id}', name: 'admin_lab_invoice_reagent', methods: ['GET'])]
     public function reagentInvoice(int $id, EntityManagerInterface $entityManager): Response
     {
