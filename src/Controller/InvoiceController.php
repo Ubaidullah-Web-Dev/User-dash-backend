@@ -58,6 +58,7 @@ class InvoiceController extends AbstractController
         }
 
         $html = $this->renderView('invoice/invoice.html.twig', [
+            'showHeader' => $request->query->getBoolean('showHeader', true),
             'type' => 'seller',
             'logo' => $logoData,
             'poNumber' => str_pad($order->getId(), 6, '0', STR_PAD_LEFT),
@@ -116,6 +117,7 @@ class InvoiceController extends AbstractController
         }
 
         $html = $this->renderView('invoice/invoice.html.twig', [
+            'showHeader' => $request->query->getBoolean('showHeader', true),
             'type' => 'buyer',
             'logo' => $logoData,
             'poNumber' => 'VO-' . str_pad($vendorOrder->getId(), 3, '0', STR_PAD_LEFT),

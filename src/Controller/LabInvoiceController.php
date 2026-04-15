@@ -21,7 +21,7 @@ use Symfony\Component\Routing\Annotation\Route;
 class LabInvoiceController extends AbstractController
 {
     #[Route('/expense/{id}', name: 'admin_lab_invoice_expense', methods: ['GET'])]
-    public function expenseInvoice(int $id, EntityManagerInterface $entityManager): Response
+    public function expenseInvoice(int $id, Request $request, EntityManagerInterface $entityManager): Response
     {
         $expense = $entityManager->getRepository(LabExpense::class)->find($id);
         if (!$expense) {
@@ -29,6 +29,7 @@ class LabInvoiceController extends AbstractController
         }
 
         $html = $this->renderView('invoice/expense_invoice.html.twig', [
+            'showHeader' => $request->query->getBoolean('showHeader', true),
             'logo' => $this->getLogoData(),
             'documentTitle' => 'Expense Receipt',
             'documentNumber' => 'EXP-' . str_pad($expense->getId(), 6, '0', STR_PAD_LEFT),
@@ -42,7 +43,7 @@ class LabInvoiceController extends AbstractController
     }
 
     #[Route('/reagent/{id}', name: 'admin_lab_invoice_reagent', methods: ['GET'])]
-    public function reagentInvoice(int $id, EntityManagerInterface $entityManager): Response
+    public function reagentInvoice(int $id, Request $request, EntityManagerInterface $entityManager): Response
     {
         $product = $entityManager->getRepository(Product::class)->find($id);
         if (!$product) {
@@ -50,6 +51,7 @@ class LabInvoiceController extends AbstractController
         }
 
         $html = $this->renderView('invoice/inventory_invoice.html.twig', [
+            'showHeader' => $request->query->getBoolean('showHeader', true),
             'type' => 'reagent',
             'logo' => $this->getLogoData(),
             'isEditing' => true, // Assuming if we are here, it's either new or edit, we can use a generic term
@@ -87,6 +89,7 @@ class LabInvoiceController extends AbstractController
         $productName = $product ? $product->getName() : 'Unknown Product';
 
         $html = $this->renderView('invoice/inventory_invoice.html.twig', [
+            'showHeader' => $request->query->getBoolean('showHeader', true),
             'type' => 'stock_in',
             'logo' => $this->getLogoData(),
             'documentTitle' => 'Stock Entry Receipt',
@@ -186,6 +189,7 @@ class LabInvoiceController extends AbstractController
         ];
 
         $html = $this->renderView('invoice/customer_statement.html.twig', [
+            'showHeader' => $request->query->getBoolean('showHeader', true),
             'logo' => $this->getLogoData(),
             'company' => $companyData,
             'customer' => [
@@ -223,6 +227,7 @@ class LabInvoiceController extends AbstractController
         }
 
         $html = $this->renderView('invoice/order_invoice.html.twig', [
+            'showHeader' => $request->query->getBoolean('showHeader', true),
             'logo' => $this->getLogoData(),
             'order' => $order,
             'date' => new \DateTime(),
@@ -312,6 +317,7 @@ class LabInvoiceController extends AbstractController
         $stockRemoved = (int) ($stockRemoved ?? 0);
 
         $html = $this->renderView('invoice/summary_report.html.twig', [
+            'showHeader' => $request->query->getBoolean('showHeader', true),
             'logo' => $this->getLogoData(),
             'periodLabel' => $periodLabel,
             'reportType' => ucfirst($type),
