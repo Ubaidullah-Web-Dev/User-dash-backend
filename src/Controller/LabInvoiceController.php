@@ -113,8 +113,8 @@ class LabInvoiceController extends AbstractController
         }
 
         $period = $request->query->get('period', 'monthly'); // monthly or yearly
-        $year = (int)$request->query->get('year', date('Y'));
-        $month = (int)$request->query->get('month', date('n'));
+        $year = (int) $request->query->get('year', date('Y'));
+        $month = (int) $request->query->get('month', date('n'));
 
         $qb = $entityManager->getRepository(Order::class)->createQueryBuilder('o')
             ->where('o.registeredCustomer = :customer')
@@ -124,16 +124,16 @@ class LabInvoiceController extends AbstractController
             $startDate = new \DateTime(sprintf('%d-%d-01 00:00:00', $year, $month));
             $endDate = (clone $startDate)->modify('last day of this month')->setTime(23, 59, 59);
             $qb->andWhere('o.createdAt BETWEEN :start AND :end')
-               ->setParameter('start', $startDate)
-               ->setParameter('end', $endDate);
+                ->setParameter('start', $startDate)
+                ->setParameter('end', $endDate);
             $periodLabel = $startDate->format('F Y');
         } elseif ($period === 'yearly') {
             $startDate = new \DateTime(sprintf('%d-01-01 00:00:00', $year));
             $endDate = new \DateTime(sprintf('%d-12-31 23:59:59', $year));
             $qb->andWhere('o.createdAt BETWEEN :start AND :end')
-               ->setParameter('start', $startDate)
-               ->setParameter('end', $endDate);
-            $periodLabel = (string)$year;
+                ->setParameter('start', $startDate)
+                ->setParameter('end', $endDate);
+            $periodLabel = (string) $year;
         } else {
             $periodLabel = 'All Time';
         }
@@ -143,11 +143,11 @@ class LabInvoiceController extends AbstractController
         $statementOrders = [];
         $totalSpent = 0;
         $totalDiscount = 0;
-        
+
         foreach ($orders as $order) {
             $totalSpent += $order->getTotal();
             $totalDiscount += ($order->getDiscountAmount() ?: 0);
-            
+
             $itemsData = [];
             foreach ($order->getItems() as $item) {
                 $product = $item->getProduct();
@@ -155,10 +155,10 @@ class LabInvoiceController extends AbstractController
                     'name' => $product ? $product->getName() : 'Unknown Product',
                     'description' => $product ? $product->getDescription() : '',
                     'quantity' => $item->getQuantity(),
-                    'price' => (float)$item->getPrice(),
-                    'discountPercentage' => (float)$item->getDiscountPercentage(),
-                    'discountAmount' => (float)$item->getDiscountAmount(),
-                    'total' => (float)($item->getQuantity() * $item->getPrice() - ($item->getDiscountAmount() ?: 0))
+                    'price' => (float) $item->getPrice(),
+                    'discountPercentage' => (float) $item->getDiscountPercentage(),
+                    'discountAmount' => (float) $item->getDiscountAmount(),
+                    'total' => (float) ($item->getQuantity() * $item->getPrice() - ($item->getDiscountAmount() ?: 0))
                 ];
             }
 
@@ -178,7 +178,7 @@ class LabInvoiceController extends AbstractController
 
         $company = $customer->getCompany();
         $settings = $company ? $company->getSettingsJson() : [];
-        
+
         $companyData = [
             'name' => $company ? $company->getName() : 'Unique Healthcare Solutions',
             'phone' => $settings['phone'] ?? 'N/A',
@@ -237,8 +237,8 @@ class LabInvoiceController extends AbstractController
     {
         $type = $request->query->get('type', 'daily');
         $dateStr = $request->query->get('date', date('Y-m-d'));
-        $year = (int)$request->query->get('year', date('Y'));
-        $month = (int)$request->query->get('month', date('n'));
+        $year = (int) $request->query->get('year', date('Y'));
+        $month = (int) $request->query->get('month', date('n'));
 
         $startDate = new \DateTime();
         $endDate = new \DateTime();
@@ -254,7 +254,7 @@ class LabInvoiceController extends AbstractController
         } else { // yearly
             $startDate = new \DateTime(sprintf('%d-01-01 00:00:00', $year));
             $endDate = new \DateTime(sprintf('%d-12-31 23:59:59', $year));
-            $periodLabel = (string)$year;
+            $periodLabel = (string) $year;
         }
 
         // 1. Revenue, Customers & Pending
@@ -266,9 +266,9 @@ class LabInvoiceController extends AbstractController
             ->getQuery()
             ->getOneOrNullResult();
 
-        $revenue = (float)($orderData['total'] ?? 0);
-        $customerCount = (int)($orderData['customerCount'] ?? 0);
-        $totalPending = (float)($orderData['totalPending'] ?? 0);
+        $revenue = (float) ($orderData['total'] ?? 0);
+        $customerCount = (int) ($orderData['customerCount'] ?? 0);
+        $totalPending = (float) ($orderData['totalPending'] ?? 0);
         $receivedPayments = $revenue - $totalPending;
 
         // 2. Expenses & Stock Added (Vendor Orders received)
@@ -285,7 +285,7 @@ class LabInvoiceController extends AbstractController
         $stockAdded = 0;
         foreach ($vendorOrders as $vo) {
             $stockAdded += $vo->getQuantity();
-            $purchasePrice = (float)($vo->getProduct() ? $vo->getProduct()->getPurchasePrice() : 0);
+            $purchasePrice = (float) ($vo->getProduct() ? $vo->getProduct()->getPurchasePrice() : 0);
             $expenses += ($vo->getQuantity() * $purchasePrice);
         }
 
@@ -297,8 +297,8 @@ class LabInvoiceController extends AbstractController
             ->setParameter('end', $endDate)
             ->getQuery()
             ->getSingleScalarResult();
-        
-        $labExpenses = (float)($labExpensesResult ?? 0);
+
+        $labExpenses = (float) ($labExpensesResult ?? 0);
 
         // 3. Stock Removed (Order Items)
         $stockRemoved = $em->getRepository(OrderItem::class)->createQueryBuilder('oi')
@@ -309,7 +309,7 @@ class LabInvoiceController extends AbstractController
             ->setParameter('end', $endDate)
             ->getQuery()
             ->getSingleScalarResult();
-        $stockRemoved = (int)($stockRemoved ?? 0);
+        $stockRemoved = (int) ($stockRemoved ?? 0);
 
         $html = $this->renderView('invoice/summary_report.html.twig', [
             'logo' => $this->getLogoData(),

@@ -167,6 +167,129 @@ class LabAdminController extends AbstractController
         ]);
     }
 
+    #[Route('/invoices/{id}', name: 'admin_lab_invoices_get_single', methods: ['GET'])]
+    public function showInvoice(int $id, OrderRepository $orderRepo, TenantContext $tenantContext): JsonResponse
+    {
+        $order = $orderRepo->findOneBy(['id' => $id, 'company' => $tenantContext->getCurrentCompanyId()]);
+        if (!$order) {
+            return $this->json(['message' => 'Invoice not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json([
+            'id' => $order->getId(),
+            'customerName' => $order->getCustomerName(),
+            'phone' => $order->getPhone(),
+            'address' => $order->getAddress(),
+            'total' => (float)$order->getTotal(),
+            'amountTendered' => (float)$order->getAmountTendered(),
+            'changeDue' => (float)$order->getChangeDue(),
+            'discountAmount' => (float)$order->getDiscountAmount(),
+            'items' => array_map(fn(\App\Entity\OrderItem $item) => [
+                'id' => $item->getId(),
+                'productId' => $item->getProduct()->getId(),
+                'productName' => $item->getProduct()->getName(),
+                'quantity' => $item->getQuantity(),
+                'price' => (float)$item->getPrice(),
+                'discountPercentage' => (float)$item->getDiscountPercentage(),
+                'discountAmount' => (float)$item->getDiscountAmount(),
+            ], $order->getItems()->toArray())
+        ]);
+    }
+
+    #[Route('/invoices/{id}', name: 'admin_lab_invoices_update_single', methods: ['PUT'])]
+    public function updateInvoice(
+        int $id,
+        Request $request,
+        OrderRepository $orderRepo,
+        ProductRepository $productRepo,
+        EntityManagerInterface $em,
+        TenantContext $tenantContext
+    ): JsonResponse {
+        $order = $orderRepo->findOneBy(['id' => $id, 'company' => $tenantContext->getCurrentCompanyId()]);
+        if (!$order) {
+            return $this->json(['message' => 'Invoice not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $customer = $order->getRegisteredCustomer();
+        
+        // 1. Store old values for reconciliation
+        $oldTotal = (float)$order->getTotal();
+        $oldPending = $order->getChangeDue() < 0 ? abs($order->getChangeDue()) : 0;
+
+        // 2. Restore Stock for all current items
+        foreach ($order->getItems() as $item) {
+            $product = $item->getProduct();
+            $product->setStock($product->getStock() + $item->getQuantity());
+            $em->remove($item);
+        }
+        $order->getItems()->clear();
+
+        // 3. Apply Update Metadata
+        $order->setCustomerName($data['customerName'] ?? $order->getCustomerName());
+        $order->setPhone($data['phone'] ?? $order->getPhone());
+        $amountTendered = (float)($data['amountTendered'] ?? 0);
+        $order->setAmountTendered($amountTendered);
+
+        // 4. Add New Items and Deduct Stock
+        $newItems = $data['items'] ?? [];
+        $calculatedTotal = 0;
+        $calculatedDiscount = 0;
+
+        foreach ($newItems as $itemData) {
+            $product = $productRepo->find($itemData['productId']);
+            if (!$product) continue;
+
+            $quantity = (int)($itemData['quantity'] ?? 0);
+            $price = (float)($itemData['price'] ?? $product->getPrice());
+            $discountPercent = (float)($itemData['discountPercentage'] ?? 0);
+
+            $itemSubtotal = $price * $quantity;
+            $itemDiscount = ($itemSubtotal * $discountPercent) / 100;
+            
+            $orderItem = new \App\Entity\OrderItem();
+            $orderItem->setOrder($order);
+            $orderItem->setProduct($product);
+            $orderItem->setQuantity($quantity);
+            $orderItem->setPrice($price);
+            $orderItem->setDiscountPercentage($discountPercent);
+            $orderItem->setDiscountAmount($itemDiscount);
+            $orderItem->setCompany($order->getCompany());
+
+            $em->persist($orderItem);
+            $order->addItem($orderItem);
+
+            // Deduct new stock
+            $product->setStock($product->getStock() - $quantity);
+
+            $calculatedTotal += ($itemSubtotal - $itemDiscount);
+            $calculatedDiscount += $itemDiscount;
+        }
+
+        $order->setTotal($calculatedTotal);
+        $order->setDiscountAmount($calculatedDiscount);
+        $order->setChangeDue($amountTendered - $calculatedTotal);
+
+        // 5. Synchronize Registered Customer Balance
+        if ($customer) {
+            $newTotal = $order->getTotal();
+            $newPending = $order->getChangeDue() < 0 ? abs($order->getChangeDue()) : 0;
+
+            // Adjust total spent
+            $customer->setTotalSpent($customer->getTotalSpent() - $oldTotal + $newTotal);
+            
+            // Adjust remaining balance
+            $customer->setRemainingBalance($customer->getRemainingBalance() - $oldPending + $newPending);
+        }
+
+        $em->flush();
+
+        return $this->json([
+            'message' => 'Invoice updated and synchronized successfully',
+            'orderId' => $order->getId()
+        ]);
+    }
+
     #[Route('/customers', name: 'admin_lab_customers', methods: ['GET'])]
     public function listCustomers(Request $request, RegisteredCustomerRepository $customerRepo, EntityManagerInterface $em, TenantContext $tenantContext): JsonResponse
     {
