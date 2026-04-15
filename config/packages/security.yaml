@@ -9,7 +9,8 @@ security:
                 class: App\Entity\User
                 property: email
     role_hierarchy:
-        ROLE_SUPER_ADMIN: [ROLE_ADMIN]
+        ROLE_SUPER_ADMIN: [ROLE_ARCHITECTURAL]
+        ROLE_ARCHITECTURAL: [ROLE_ADMIN]
         ROLE_ADMIN:       [ROLE_MODERATOR]
         ROLE_MODERATOR:   [ROLE_USER]
 
