@@ -32,7 +32,7 @@ class LabAdminController extends AbstractController
         $lowStockCount = 0;
 
         foreach ($products as $product) {
-            $purchasePrice = (float)($product->getPurchasePrice() ?? 0);
+            $purchasePrice = (float) ($product->getPurchasePrice() ?? 0);
             $totalStockValue += ($product->getStock() * $purchasePrice);
             if ($product->getStock() < $product->getMinimumStock()) {
                 $lowStockCount++;
@@ -55,12 +55,12 @@ class LabAdminController extends AbstractController
         return $this->json([
             'totalProducts' => count($products),
             'stockValue' => $totalStockValue,
-            'todaySales' => (float)$todaySales,
+            'todaySales' => (float) $todaySales,
             'lowStockCount' => $lowStockCount,
             'recentSales' => array_map(fn(Order $o) => [
                 'id' => $o->getId(),
                 'customerName' => $o->getCustomerName(),
-                'total' => (float)$o->getTotal(),
+                'total' => (float) $o->getTotal(),
                 'createdAt' => $o->getCreatedAt()->format('Y-m-d H:i:s'),
             ], $recentSales),
         ]);
@@ -90,7 +90,7 @@ class LabAdminController extends AbstractController
 
         $product->setStock($product->getStock() + $quantity);
         if ($purchasePrice !== null) {
-            $product->setPurchasePrice((string)$purchasePrice);
+            $product->setPurchasePrice((string) $purchasePrice);
         }
         if ($supplier) {
             $product->setCompanyName($supplier);
@@ -127,7 +127,7 @@ class LabAdminController extends AbstractController
             ->setParameter('companyId', $companyId)
             ->getQuery()
             ->getResult();
-        
+
         $lowStock = array_map(fn(Product $p) => [
             'id' => $p->getId(),
             'name' => $p->getName(),
@@ -156,7 +156,7 @@ class LabAdminController extends AbstractController
                 'id' => $o->getId(),
                 'customerName' => $o->getCustomerName(),
                 'phone' => $o->getPhone(),
-                'totalAmount' => (string)$o->getTotal(),
+                'totalAmount' => (string) $o->getTotal(),
                 'pendingAmount' => $o->getChangeDue() < 0 ? abs($o->getChangeDue()) : 0,
                 'createdAt' => $o->getCreatedAt()->format('Y-m-d H:i:s'),
             ], $paginatedResponse->data),
@@ -180,18 +180,18 @@ class LabAdminController extends AbstractController
             'customerName' => $order->getCustomerName(),
             'phone' => $order->getPhone(),
             'address' => $order->getAddress(),
-            'total' => (float)$order->getTotal(),
-            'amountTendered' => (float)$order->getAmountTendered(),
-            'changeDue' => (float)$order->getChangeDue(),
-            'discountAmount' => (float)$order->getDiscountAmount(),
+            'total' => (float) $order->getTotal(),
+            'amountTendered' => (float) $order->getAmountTendered(),
+            'changeDue' => (float) $order->getChangeDue(),
+            'discountAmount' => (float) $order->getDiscountAmount(),
             'items' => array_map(fn(\App\Entity\OrderItem $item) => [
                 'id' => $item->getId(),
                 'productId' => $item->getProduct()->getId(),
                 'productName' => $item->getProduct()->getName(),
                 'quantity' => $item->getQuantity(),
-                'price' => (float)$item->getPrice(),
-                'discountPercentage' => (float)$item->getDiscountPercentage(),
-                'discountAmount' => (float)$item->getDiscountAmount(),
+                'price' => (float) $item->getPrice(),
+                'discountPercentage' => (float) $item->getDiscountPercentage(),
+                'discountAmount' => (float) $item->getDiscountAmount(),
             ], $order->getItems()->toArray())
         ]);
     }
@@ -212,9 +212,9 @@ class LabAdminController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
         $customer = $order->getRegisteredCustomer();
-        
+
         // 1. Store old values for reconciliation
-        $oldTotal = (float)$order->getTotal();
+        $oldTotal = (float) $order->getTotal();
         $oldPending = $order->getChangeDue() < 0 ? abs($order->getChangeDue()) : 0;
 
         // 2. Restore Stock for all current items
@@ -228,7 +228,7 @@ class LabAdminController extends AbstractController
         // 3. Apply Update Metadata
         $order->setCustomerName($data['customerName'] ?? $order->getCustomerName());
         $order->setPhone($data['phone'] ?? $order->getPhone());
-        $amountTendered = (float)($data['amountTendered'] ?? 0);
+        $amountTendered = (float) ($data['amountTendered'] ?? 0);
         $order->setAmountTendered($amountTendered);
 
         // 4. Add New Items and Deduct Stock
@@ -238,15 +238,16 @@ class LabAdminController extends AbstractController
 
         foreach ($newItems as $itemData) {
             $product = $productRepo->find($itemData['productId']);
-            if (!$product) continue;
+            if (!$product)
+                continue;
 
-            $quantity = (int)($itemData['quantity'] ?? 0);
-            $price = (float)($itemData['price'] ?? $product->getPrice());
-            $discountPercent = (float)($itemData['discountPercentage'] ?? 0);
+            $quantity = (int) ($itemData['quantity'] ?? 0);
+            $price = (float) ($itemData['price'] ?? $product->getPrice());
+            $discountPercent = (float) ($itemData['discountPercentage'] ?? 0);
 
             $itemSubtotal = $price * $quantity;
             $itemDiscount = ($itemSubtotal * $discountPercent) / 100;
-            
+
             $orderItem = new \App\Entity\OrderItem();
             $orderItem->setOrder($order);
             $orderItem->setProduct($product);
@@ -277,7 +278,7 @@ class LabAdminController extends AbstractController
 
             // Adjust total spent
             $customer->setTotalSpent($customer->getTotalSpent() - $oldTotal + $newTotal);
-            
+
             // Adjust remaining balance
             $customer->setRemainingBalance($customer->getRemainingBalance() - $oldPending + $newPending);
         }
@@ -295,7 +296,7 @@ class LabAdminController extends AbstractController
     {
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 10);
-        
+
         $filters = [
             'search' => $request->query->get('search', ''),
             'pending' => $request->query->get('pending')
@@ -304,7 +305,7 @@ class LabAdminController extends AbstractController
         $paginatedResponse = $customerRepo->getPaginatedCustomers($filters, $tenantContext->getCurrentCompanyId(), $page, $limit);
 
         // Calculate total discount for each customer from their orders
-        $customerData = array_map(function(RegisteredCustomer $c) use ($em) {
+        $customerData = array_map(function (RegisteredCustomer $c) use ($em) {
             $totalDiscount = $em->getRepository(Order::class)->createQueryBuilder('o')
                 ->select('SUM(o.discountAmount)')
                 ->where('o.registeredCustomer = :customer')
@@ -320,7 +321,7 @@ class LabAdminController extends AbstractController
                 'city' => $c->getCity(),
                 'address' => $c->getAddress(),
                 'totalSpent' => $c->getTotalSpent(),
-                'totalDiscount' => (float)($totalDiscount ?? 0),
+                'totalDiscount' => (float) ($totalDiscount ?? 0),
                 'remainingBalance' => $c->getRemainingBalance(),
             ];
         }, $paginatedResponse->data);
@@ -361,9 +362,9 @@ class LabAdminController extends AbstractController
             $em->persist($customer);
             $em->flush();
         } catch (UniqueConstraintViolationException $e) {
-             return $this->json(['message' => 'Phone number already in use.'], Response::HTTP_CONFLICT);
+            return $this->json(['message' => 'Phone number already in use.'], Response::HTTP_CONFLICT);
         } catch (\Exception $e) {
-             return $this->json(['message' => 'Failed to save customer record.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->json(['message' => 'Failed to save customer record.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return $this->json(['message' => 'Customer registered successfully', 'id' => $customer->getId()], Response::HTTP_CREATED);
@@ -398,7 +399,7 @@ class LabAdminController extends AbstractController
         }
 
         $data = json_decode($request->getContent(), true);
-        
+
         if (isset($data['phone']) && $data['phone'] !== $customer->getPhone()) {
             $existing = $customerRepo->findOneBy(['phone' => $data['phone']]);
             if ($existing) {
@@ -406,11 +407,16 @@ class LabAdminController extends AbstractController
             }
             $customer->setPhone($data['phone']);
         }
-        if (isset($data['name'])) $customer->setName($data['name']);
-        if (isset($data['labName'])) $customer->setLabName($data['labName']);
-        if (isset($data['city'])) $customer->setCity($data['city']);
-        if (isset($data['address'])) $customer->setAddress($data['address']);
-        if (isset($data['remainingBalance'])) $customer->setRemainingBalance((float)$data['remainingBalance']);
+        if (isset($data['name']))
+            $customer->setName($data['name']);
+        if (isset($data['labName']))
+            $customer->setLabName($data['labName']);
+        if (isset($data['city']))
+            $customer->setCity($data['city']);
+        if (isset($data['address']))
+            $customer->setAddress($data['address']);
+        if (isset($data['remainingBalance']))
+            $customer->setRemainingBalance((float) $data['remainingBalance']);
 
         $em->flush();
 
@@ -440,7 +446,7 @@ class LabAdminController extends AbstractController
         }
 
         $data = json_decode($request->getContent(), true);
-        $amount = (float)($data['amount'] ?? 0);
+        $amount = (float) ($data['amount'] ?? 0);
         $action = $data['action'] ?? 'add'; // 'add' or 'subtract'
 
         if ($amount < 0) {

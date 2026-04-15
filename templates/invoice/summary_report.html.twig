@@ -6,7 +6,7 @@
     <title>Intelligence Report - {{ periodLabel }}</title>
     <style>
         @page {
-            margin: 130px 30px 100px 30px;
+            margin: 130px 30px 140px 30px;
         }
 
         body {
@@ -105,8 +105,12 @@
         }
         .text-right { text-align: right; }
         
-        .footer-note {
-            margin-top: 40px; text-align: center; color: #777; font-size: 10px; font-weight: bold;
+        .last-page-footer {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            right: 0;
+            text-align: center;
         }
     </style>
 </head>
@@ -190,45 +194,17 @@
             </table>
         </div>
 
-        <!-- OPERATIONAL INSIGHTS -->
-        <div class="section">
-            <div class="section-title">Operational Insights</div>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th colspan="2">Analytical Metric</th>
-                        <th class="text-right">Quantifiable Value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td style="font-weight: bold; width: 30%;">Customer Footfall</td>
-                        <td>Total unique patient / customer interactions</td>
-                        <td class="text-right" style="font-weight: bold;">{{ customerCount }} Count</td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: bold;">Stock Influx</td>
-                        <td>New reagent / product units added to inventory</td>
-                        <td class="text-right positive" style="font-weight: bold;">+{{ stockAdded }} Units</td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: bold;">Stock Consumption</td>
-                        <td>Inventory units utilized for sales/orders</td>
-                        <td class="text-right negative" style="font-weight: bold;">-{{ stockRemoved }} Units</td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: bold;">Inventory Delta</td>
-                        <td>Net change in physical stock level</td>
-                        <td class="text-right" style="font-weight: bold; color: {{ (stockAdded - stockRemoved) >= 0 ? '#27ae60' : '#c0392b' }};">
-                            {{ (stockAdded - stockRemoved) >= 0 ? '+' : '' }}{{ stockAdded - stockRemoved }} Units
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    </div>
+
+    <div class="last-page-footer">
+        <div style="text-align: center; color: #777; font-size: 10px; font-weight: bold; margin-bottom: 20px;">
+            Unique Healthcare Solutions & Laboratory Information System<br>Thank you for your trust in our services!
         </div>
 
-        <div class="footer-note">
-            Unique Healthcare Solutions Management System • Confidential Administrative Document
+        <div style="text-align: right; padding-right: 50px;">
+            <div style="display: inline-block; width: 200px; border-top: 1px solid #000; margin-bottom: 5px; text-align: left;"></div>
+            <div style="text-align: right; font-weight: bold; width: 200px; float: right;">Authorized Signature</div>
+            <div style="clear: both;"></div>
         </div>
     </div>
 

@@ -54,7 +54,7 @@ class AdminController extends AbstractController
         $companyId = $tenantContext->getCurrentCompanyId();
 
         $paginatedResponse = $productRepo->getPaginatedFilterProducts($filters, $companyId, $page, $limit);
-        
+
         $formattedData = array_map(fn(Product $product) => ProductDTO::fromEntity($product), $paginatedResponse->data);
 
         return $this->json([
@@ -95,14 +95,13 @@ class AdminController extends AbstractController
 
     #[Route('/products/{id}', name: 'admin_product_edit', methods: ['PUT'])]
     public function editProduct(
-        Product $product, 
-        Request $request, 
+        Product $product,
+        Request $request,
         EntityManagerInterface $em,
         SerializerInterface $serializer,
         ValidatorInterface $validator,
         CategoryRepository $categoryRepo
-    ): JsonResponse
-    {
+    ): JsonResponse {
         try {
             /** @var ProductUpdateDTO $updateDto */
             $updateDto = $serializer->deserialize($request->getContent(), ProductUpdateDTO::class, 'json');
@@ -114,19 +113,31 @@ class AdminController extends AbstractController
         if (count($errors) > 0) {
             return $this->json(['message' => $errors[0]->getMessage()], Response::HTTP_BAD_REQUEST);
         }
-        
-        if ($updateDto->name !== null) $product->setName($updateDto->name);
-        if ($updateDto->description !== null) $product->setDescription($updateDto->description);
-        if ($updateDto->price !== null) $product->setPrice($updateDto->price);
-        if ($updateDto->stock !== null) $product->setStock($updateDto->stock);
-        if ($updateDto->isRecommended !== null) $product->setIsRecommended($updateDto->isRecommended);
-        if ($updateDto->companyName !== null) $product->setCompanyName($updateDto->companyName);
-        if ($updateDto->packSize !== null) $product->setPackSize($updateDto->packSize);
-        if ($updateDto->purchasePrice !== null) $product->setPurchasePrice($updateDto->purchasePrice);
-        if ($updateDto->expiryDate !== null) $product->setExpiryDate(new \DateTimeImmutable($updateDto->expiryDate));
-        if ($updateDto->batchNumber !== null) $product->setBatchNumber($updateDto->batchNumber);
-        if ($updateDto->minimumStock !== null) $product->setMinimumStock($updateDto->minimumStock);
-        if ($updateDto->unit !== null) $product->setUnit($updateDto->unit);
+
+        if ($updateDto->name !== null)
+            $product->setName($updateDto->name);
+        if ($updateDto->description !== null)
+            $product->setDescription($updateDto->description);
+        if ($updateDto->price !== null)
+            $product->setPrice($updateDto->price);
+        if ($updateDto->stock !== null)
+            $product->setStock($updateDto->stock);
+        if ($updateDto->isRecommended !== null)
+            $product->setIsRecommended($updateDto->isRecommended);
+        if ($updateDto->companyName !== null)
+            $product->setCompanyName($updateDto->companyName);
+        if ($updateDto->packSize !== null)
+            $product->setPackSize($updateDto->packSize);
+        if ($updateDto->purchasePrice !== null)
+            $product->setPurchasePrice($updateDto->purchasePrice);
+        if ($updateDto->expiryDate !== null)
+            $product->setExpiryDate(new \DateTimeImmutable($updateDto->expiryDate));
+        if ($updateDto->batchNumber !== null)
+            $product->setBatchNumber($updateDto->batchNumber);
+        if ($updateDto->minimumStock !== null)
+            $product->setMinimumStock($updateDto->minimumStock);
+        if ($updateDto->unit !== null)
+            $product->setUnit($updateDto->unit);
 
         if ($updateDto->categoryId !== null) {
             $category = $categoryRepo->find($updateDto->categoryId);
@@ -166,7 +177,7 @@ class AdminController extends AbstractController
         $this->updateCategoryFields($category, $data);
 
         $em->persist($category);
-        
+
         // Handle vendor association
         if ($vendorId) {
             $vendor = $vendorRepo->find($vendorId);
@@ -206,12 +217,12 @@ class AdminController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
         $this->updateCategoryFields($category, $data);
-        
+
         $vendorId = $data['vendorId'] ?? null;
         if ($vendorId !== null) {
             // Unlink current vendors if changing (simple logic: one category can have multiple vendors but here we might want to link/unlink specific ones)
             // User said "link it to a vendor", which implies a primary association or setting it on a specific vendor.
-            
+
             // First unlink vendors currently linked to this category for this company
             $currentVendors = $vendorRepo->findBy(['category' => $category]);
             foreach ($currentVendors as $v) {
@@ -315,11 +326,10 @@ class AdminController extends AbstractController
 
     #[Route('/categories/stats', name: 'admin_category_stats', methods: ['GET'])]
     public function listCategoriesWithStats(
-        CategoryRepository $categoryRepo, 
+        CategoryRepository $categoryRepo,
         Request $request,
         \App\Service\TenantContext $tenantContext
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $search = $request->query->get('search');
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 10);
@@ -367,7 +377,7 @@ class AdminController extends AbstractController
             $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $data['name'])));
             $category->setSlug($slug);
         }
-        
+
         if (isset($data['image'])) {
             $category->setImage($data['image']);
         }
@@ -387,18 +397,17 @@ class AdminController extends AbstractController
 
     #[Route('/orders/walk-in', name: 'admin_order_walk_in', methods: ['POST'])]
     public function walkInOrder(
-        Request $request, 
-        EntityManagerInterface $em, 
+        Request $request,
+        EntityManagerInterface $em,
         ProductRepository $productRepo,
         \App\Repository\RegisteredCustomerRepository $registeredCustomerRepo,
         TenantContext $tenantContext
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         $customerNameRaw = $data['customerName'] ?? null;
-        $customerName = trim((string)$customerNameRaw) !== '' ? trim((string)$customerNameRaw) : 'Walk-In Customer';
+        $customerName = trim((string) $customerNameRaw) !== '' ? trim((string) $customerNameRaw) : 'Walk-In Customer';
         $phoneRaw = $data['phone'] ?? null;
-        $phone = trim((string)$phoneRaw) !== '' ? trim((string)$phoneRaw) : null;
+        $phone = trim((string) $phoneRaw) !== '' ? trim((string) $phoneRaw) : null;
         $items = $data['items'] ?? [];
         $amountTendered = $data['amountTendered'] ?? null;
         $changeDue = $data['changeDue'] ?? null;
@@ -417,7 +426,7 @@ class AdminController extends AbstractController
         $order->setPhone($phone ?? 'N/A');
         $order->setAddress('In-Store POS');
         $order->setCompany($company);
-        
+
         $adminUser = $this->getUser();
         if (!$adminUser) {
             return $this->json(['message' => 'Unauthorized. Session expired.'], Response::HTTP_UNAUTHORIZED);
@@ -430,7 +439,7 @@ class AdminController extends AbstractController
         foreach ($items as $itemData) {
             $productId = $itemData['productId'] ?? null;
             $quantity = $itemData['quantity'] ?? 0;
-            $itemDiscountPercentage = (float)($itemData['discountPercentage'] ?? 0);
+            $itemDiscountPercentage = (float) ($itemData['discountPercentage'] ?? 0);
 
             if (!$productId || $quantity <= 0) {
                 return $this->json(['message' => 'Invalid product or quantity'], Response::HTTP_BAD_REQUEST);
@@ -447,7 +456,7 @@ class AdminController extends AbstractController
 
             $itemSubtotal = $product->getPrice() * $quantity;
             $itemDiscountAmount = ($itemSubtotal * $itemDiscountPercentage) / 100;
-            
+
             $total += $itemSubtotal;
             $totalDiscountAmount += $itemDiscountAmount;
 
@@ -458,7 +467,7 @@ class AdminController extends AbstractController
             $orderItem->setDiscountPercentage($itemDiscountPercentage);
             $orderItem->setDiscountAmount($itemDiscountAmount);
             $orderItem->setCompany($company);
-            
+
             $order->addItem($orderItem);
 
             // Deduct stock
@@ -470,8 +479,8 @@ class AdminController extends AbstractController
         $order->setChangeDue($changeDue);
         $order->setDiscountPercentage(null); // No longer a single percentage
         $order->setDiscountAmount($totalDiscountAmount);
-        
-        $previousBalancePayment = (float)($data['previousBalancePayment'] ?? 0);
+
+        $previousBalancePayment = (float) ($data['previousBalancePayment'] ?? 0);
         $order->setPreviousBalancePayment($previousBalancePayment);
 
         $registeredCustomerId = $data['registeredCustomerId'] ?? null;
@@ -482,7 +491,7 @@ class AdminController extends AbstractController
                 if ($changeDue < 0) {
                     $registeredCustomer->addRemainingBalance(abs($changeDue));
                 }
-                
+
                 // Subtract the previous balance payment
                 if ($previousBalancePayment > 0) {
                     $registeredCustomer->setRemainingBalance(
@@ -518,7 +527,7 @@ class AdminController extends AbstractController
             $guestUser->setName($customerName);
             $guestUser->setCompany($company);
             $em->persist($guestUser);
-            
+
             $guestUser->addOrder($order);
         }
 

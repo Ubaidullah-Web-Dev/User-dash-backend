@@ -6,7 +6,7 @@
     <title>Expense Receipt - {{ documentNumber }}</title>
     <style>
         @page {
-            margin: 130px 30px 100px 30px;
+            margin: 130px 30px 140px 30px;
         }
 
         body {
@@ -112,6 +112,14 @@
 
         .text-right { text-align: right; }
         .text-center { text-align: center; }
+
+        .last-page-footer {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            right: 0;
+            text-align: center;
+        }
 
         /* Summary Box */
         .summary {
@@ -242,8 +250,17 @@
         </table>
         
         <div style="clear: both;"></div>
-        <div class="footer-note">
-            System-generated formal record of business expenditure. No physical signature required.
+    </div>
+
+    <div class="last-page-footer">
+        <div style="text-align: center; color: #777; font-size: 10px; font-weight: bold; margin-bottom: 20px;">
+            Unique Healthcare Solutions & Laboratory Information System<br>Thank you for your trust in our services!
+        </div>
+
+        <div style="text-align: right; padding-right: 50px;">
+            <div style="display: inline-block; width: 200px; border-top: 1px solid #000; margin-bottom: 5px; text-align: left;"></div>
+            <div style="text-align: right; font-weight: bold; width: 200px; float: right;">Authorized Signature</div>
+            <div style="clear: both;"></div>
         </div>
     </div>
 
