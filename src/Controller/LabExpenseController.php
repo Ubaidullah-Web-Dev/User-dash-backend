@@ -21,8 +21,16 @@ class LabExpenseController extends AbstractController
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 10);
         $search = $request->query->get('search', '');
+        $startDate = $request->query->get('startDate', '');
+        $endDate = $request->query->get('endDate', '');
 
-        $paginatedResponse = $expenseRepo->getPaginatedExpenses(['search' => $search], $tenantContext->getCurrentCompanyId(), $page, $limit);
+        $filters = [
+            'search' => $search,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ];
+
+        $paginatedResponse = $expenseRepo->getPaginatedExpenses($filters, $tenantContext->getCurrentCompanyId(), $page, $limit);
 
         return $this->json([
             'data' => array_map(fn(LabExpense $e) => [

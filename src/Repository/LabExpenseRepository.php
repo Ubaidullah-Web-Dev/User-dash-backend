@@ -52,6 +52,18 @@ class LabExpenseRepository extends ServiceEntityRepository
                ->setParameter('search', '%' . $filters['search'] . '%');
         }
 
+        if (!empty($filters['startDate'])) {
+            $qb->andWhere('e.expenseDate >= :startDate')
+               ->setParameter('startDate', new \DateTime($filters['startDate']));
+        }
+
+        if (!empty($filters['endDate'])) {
+            $endDate = new \DateTime($filters['endDate']);
+            $endDate->setTime(23, 59, 59);
+            $qb->andWhere('e.expenseDate <= :endDate')
+               ->setParameter('endDate', $endDate);
+        }
+
         $qb->setFirstResult(($page - 1) * $limit)
            ->setMaxResults($limit);
 
