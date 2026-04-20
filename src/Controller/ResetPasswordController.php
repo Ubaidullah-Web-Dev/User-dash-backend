@@ -9,6 +9,7 @@ use App\DTO\VerifyCodeDTO;
 use App\DTO\ResetPasswordDTO;
 use App\Repository\UserRepository;
 use App\Repository\ResetPasswordTokenRepository;
+use App\Repository\CompanyRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -28,12 +29,23 @@ class ResetPasswordController extends AbstractController
     public function forgotPassword(
         Request $request,
         UserRepository $userRepository,
+        CompanyRepository $companyRepository,
         EntityManagerInterface $entityManager,
         MailerInterface $mailer,
         LoggerInterface $logger,
         SerializerInterface $serializer,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        ?string $companySlug = null
     ): JsonResponse {
+        $company = null;
+        if ($companySlug) {
+            $company = $companyRepository->findOneBy(['slug' => $companySlug]);
+        }
+
+        if ($companySlug && !$company) {
+            return $this->json(['message' => 'Company not found'], Response::HTTP_NOT_FOUND);
+        }
+
         try {
             /** @var ForgotPasswordDTO $forgotPasswordDto */
             $forgotPasswordDto = $serializer->deserialize($request->getContent(), ForgotPasswordDTO::class, 'json');
@@ -46,7 +58,7 @@ class ResetPasswordController extends AbstractController
             return $this->json(['message' => $errors[0]->getMessage()], Response::HTTP_BAD_REQUEST);
         }
 
-        $user = $userRepository->findOneBy(['email' => $forgotPasswordDto->email]);
+        $user = $userRepository->findOneBy(['email' => $forgotPasswordDto->email, 'company' => $company]);
 
         if (!$user) {
             return $this->json(['message' => 'No account found with this email. Please register first.'], Response::HTTP_NOT_FOUND);
@@ -63,6 +75,7 @@ class ResetPasswordController extends AbstractController
 
         $resetToken = new ResetPasswordToken();
         $resetToken->setUser($user);
+        $resetToken->setCompany($company);
         $resetToken->setToken($code); // Using token field for the 6-digit code
         $resetToken->setExpiresAt(new \DateTimeImmutable('+15 minutes')); // OTPs expire faster
 
@@ -88,9 +101,16 @@ class ResetPasswordController extends AbstractController
         Request $request,
         ResetPasswordTokenRepository $tokenRepository,
         UserRepository $userRepository,
+        CompanyRepository $companyRepository,
         SerializerInterface $serializer,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        ?string $companySlug = null
     ): JsonResponse {
+        $company = null;
+        if ($companySlug) {
+            $company = $companyRepository->findOneBy(['slug' => $companySlug]);
+        }
+
         try {
             /** @var VerifyCodeDTO $verifyCodeDto */
             $verifyCodeDto = $serializer->deserialize($request->getContent(), VerifyCodeDTO::class, 'json');
@@ -103,12 +123,12 @@ class ResetPasswordController extends AbstractController
             return $this->json(['message' => $errors[0]->getMessage()], Response::HTTP_BAD_REQUEST);
         }
 
-        $user = $userRepository->findOneBy(['email' => $verifyCodeDto->email]);
+        $user = $userRepository->findOneBy(['email' => $verifyCodeDto->email, 'company' => $company]);
         if (!$user) {
             return $this->json(['message' => 'Invalid request'], Response::HTTP_BAD_REQUEST);
         }
 
-        $resetToken = $tokenRepository->findOneBy(['token' => $verifyCodeDto->code, 'user' => $user]);
+        $resetToken = $tokenRepository->findOneBy(['token' => $verifyCodeDto->code, 'user' => $user, 'company' => $company]);
 
         if (!$resetToken || $resetToken->getExpiresAt() < new \DateTimeImmutable()) {
             return $this->json(['message' => 'Invalid or expired code'], Response::HTTP_BAD_REQUEST);
@@ -122,11 +142,18 @@ class ResetPasswordController extends AbstractController
         Request $request,
         ResetPasswordTokenRepository $tokenRepository,
         UserRepository $userRepository,
+        CompanyRepository $companyRepository,
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher,
         SerializerInterface $serializer,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        ?string $companySlug = null
     ): JsonResponse {
+        $company = null;
+        if ($companySlug) {
+            $company = $companyRepository->findOneBy(['slug' => $companySlug]);
+        }
+
         try {
             /** @var ResetPasswordDTO $resetPasswordDto */
             $resetPasswordDto = $serializer->deserialize($request->getContent(), ResetPasswordDTO::class, 'json');
@@ -139,12 +166,12 @@ class ResetPasswordController extends AbstractController
             return $this->json(['message' => $errors[0]->getMessage()], Response::HTTP_BAD_REQUEST);
         }
 
-        $user = $userRepository->findOneBy(['email' => $resetPasswordDto->email]);
+        $user = $userRepository->findOneBy(['email' => $resetPasswordDto->email, 'company' => $company]);
         if (!$user) {
             return $this->json(['message' => 'Invalid request'], Response::HTTP_BAD_REQUEST);
         }
 
-        $resetToken = $tokenRepository->findOneBy(['token' => $resetPasswordDto->code, 'user' => $user]);
+        $resetToken = $tokenRepository->findOneBy(['token' => $resetPasswordDto->code, 'user' => $user, 'company' => $company]);
 
         if (!$resetToken || $resetToken->getExpiresAt() < new \DateTimeImmutable()) {
             return $this->json(['message' => 'Invalid or expired code'], Response::HTTP_BAD_REQUEST);
