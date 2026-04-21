@@ -46,7 +46,7 @@ class AdminController extends AbstractController
             'id' => $request->query->get('id'),
             'minPrice' => $request->query->get('minPrice'),
             'maxPrice' => $request->query->get('maxPrice'),
-            'status' => $request->query->get('status', 'all'),
+            'status' => $request->query->get('status', 'active'),
         ];
 
         $page = $request->query->getInt('page', 1);
@@ -75,10 +75,36 @@ class AdminController extends AbstractController
     #[Route('/products/{id}', name: 'admin_product_delete', methods: ['DELETE'])]
     public function deleteProduct(Product $product, EntityManagerInterface $em): JsonResponse
     {
+        $product->setIsActive(false);
+        $em->flush();
+
+        return $this->json(['message' => 'Product moved to recovery.']);
+    }
+
+    #[Route('/products/{id}/restore', name: 'admin_product_restore', methods: ['PATCH'])]
+    public function restoreProduct(Product $product, EntityManagerInterface $em): JsonResponse
+    {
+        $product->setIsActive(true);
+        $em->flush();
+
+        return $this->json(['message' => 'Product restored successfully']);
+    }
+
+    #[Route('/products/{id}/permanent', name: 'admin_product_permanent_delete', methods: ['DELETE'])]
+    public function permanentDeleteProduct(Product $product, EntityManagerInterface $em): JsonResponse
+    {
+        // Check if there are any order items for this product
+        $orderItemRepo = $em->getRepository(\App\Entity\OrderItem::class);
+        $orderItemCount = $orderItemRepo->count(['product' => $product]);
+
+        if ($orderItemCount > 0) {
+            return $this->json(['message' => 'Product has associated orders and cannot be permanently deleted.'], Response::HTTP_BAD_REQUEST);
+        }
+
         $em->remove($product);
         $em->flush();
 
-        return $this->json(['message' => 'Product deleted by admin']);
+        return $this->json(['message' => 'Product permanently deleted']);
     }
 
     #[Route('/products/{id}/toggle-active', name: 'admin_product_toggle_active', methods: ['PATCH'])]
@@ -450,6 +476,10 @@ class AdminController extends AbstractController
                 return $this->json(['message' => "Product ID $productId not found or access denied"], Response::HTTP_BAD_REQUEST);
             }
 
+            if (!$product->isActive()) {
+                return $this->json(['message' => sprintf('Product %s is disabled and cannot be sold.', $product->getName())], Response::HTTP_BAD_REQUEST);
+            }
+
             if ($product->getStock() < $quantity) {
                 return $this->json(['message' => sprintf('Insufficient stock for %s. Only %d units available.', $product->getName(), $product->getStock())], Response::HTTP_BAD_REQUEST);
             }
@@ -487,6 +517,9 @@ class AdminController extends AbstractController
         if ($registeredCustomerId) {
             $registeredCustomer = $registeredCustomerRepo->findOneBy(['id' => $registeredCustomerId, 'company' => $companyId]);
             if ($registeredCustomer) {
+                if (!$registeredCustomer->isActive()) {
+                    return $this->json(['message' => 'The selected customer is disabled and cannot make new orders.'], Response::HTTP_BAD_REQUEST);
+                }
                 // If change is negative, customer underpaid. Add to outstanding balance.
                 if ($changeDue < 0) {
                     $registeredCustomer->addRemainingBalance(abs($changeDue));

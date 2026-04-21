@@ -49,6 +49,12 @@ class RegisteredCustomerRepository extends ServiceEntityRepository implements Pa
             }
         }
 
+        if (isset($filters['status']) && $filters['status'] !== 'all') {
+            $isActive = $filters['status'] === 'active';
+            $qb->andWhere('c.isActive = :isActive')
+                ->setParameter('isActive', $isActive);
+        }
+
         return $this->paginate($qb, $page, $limit);
     }
 }

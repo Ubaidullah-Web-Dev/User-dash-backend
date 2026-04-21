@@ -299,7 +299,8 @@ class LabAdminController extends AbstractController
 
         $filters = [
             'search' => $request->query->get('search', ''),
-            'pending' => $request->query->get('pending')
+            'pending' => $request->query->get('pending'),
+            'status' => $request->query->get('status', 'active')
         ];
 
         $paginatedResponse = $customerRepo->getPaginatedCustomers($filters, $tenantContext->getCurrentCompanyId(), $page, $limit);
@@ -323,6 +324,7 @@ class LabAdminController extends AbstractController
                 'totalSpent' => $c->getTotalSpent(),
                 'totalDiscount' => (float) ($totalDiscount ?? 0),
                 'remainingBalance' => $c->getRemainingBalance(),
+                'isActive' => $c->isActive(),
             ];
         }, $paginatedResponse->data);
 
@@ -431,10 +433,63 @@ class LabAdminController extends AbstractController
             return $this->json(['message' => 'Customer not found or access denied'], Response::HTTP_NOT_FOUND);
         }
 
+        $customer->setIsActive(false);
+        $em->flush();
+
+        return $this->json(['message' => 'Customer moved to recovery.']);
+    }
+
+    #[Route('/customers/{id}/restore', name: 'admin_lab_customers_restore', methods: ['PATCH'])]
+    public function restoreCustomer(int $id, RegisteredCustomerRepository $customerRepo, EntityManagerInterface $em, TenantContext $tenantContext): JsonResponse
+    {
+        $customer = $customerRepo->findOneBy(['id' => $id, 'company' => $tenantContext->getCurrentCompanyId()]);
+        if (!$customer) {
+            return $this->json(['message' => 'Customer not found or access denied'], Response::HTTP_NOT_FOUND);
+        }
+
+        $customer->setIsActive(true);
+        $em->flush();
+
+        return $this->json(['message' => 'Customer restored successfully']);
+    }
+
+    #[Route('/customers/{id}/permanent', name: 'admin_lab_customers_permanent_delete', methods: ['DELETE'])]
+    public function permanentDeleteCustomer(int $id, RegisteredCustomerRepository $customerRepo, EntityManagerInterface $em, TenantContext $tenantContext): JsonResponse
+    {
+        $customer = $customerRepo->findOneBy(['id' => $id, 'company' => $tenantContext->getCurrentCompanyId()]);
+        if (!$customer) {
+            return $this->json(['message' => 'Customer not found or access denied'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Check if there are any orders for this customer
+        $orderRepo = $em->getRepository(\App\Entity\Order::class);
+        $orderCount = $orderRepo->count(['registeredCustomer' => $customer]);
+
+        if ($orderCount > 0) {
+            return $this->json(['message' => 'Customer has associated orders and cannot be permanently deleted.'], Response::HTTP_BAD_REQUEST);
+        }
+
         $em->remove($customer);
         $em->flush();
 
-        return $this->json(['message' => 'Customer deleted successfully']);
+        return $this->json(['message' => 'Customer permanently deleted']);
+    }
+
+    #[Route('/customers/{id}/toggle-active', name: 'admin_lab_customers_toggle_active', methods: ['PATCH'])]
+    public function toggleCustomerActive(int $id, RegisteredCustomerRepository $customerRepo, EntityManagerInterface $em, TenantContext $tenantContext): JsonResponse
+    {
+        $customer = $customerRepo->findOneBy(['id' => $id, 'company' => $tenantContext->getCurrentCompanyId()]);
+        if (!$customer) {
+            return $this->json(['message' => 'Customer not found or access denied'], Response::HTTP_NOT_FOUND);
+        }
+
+        $customer->setIsActive(!$customer->isActive());
+        $em->flush();
+
+        return $this->json([
+            'message' => 'Customer status updated',
+            'isActive' => $customer->isActive()
+        ]);
     }
 
     #[Route('/customers/{id}/adjust-balance', name: 'admin_lab_customers_adjust_balance', methods: ['POST'])]

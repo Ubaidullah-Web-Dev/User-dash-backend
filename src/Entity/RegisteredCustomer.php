@@ -40,6 +40,9 @@ class RegisteredCustomer
     #[ORM\Column]
     private float $remainingBalance = 0.0;
 
+    #[ORM\Column]
+    private bool $isActive = true;
+
     #[ORM\Column(type: 'datetime')]
     private ?\DateTimeInterface $createdAt = null;
 
@@ -78,6 +81,9 @@ class RegisteredCustomer
     public function addRemainingBalance(float $amount): self { $this->remainingBalance += $amount; return $this; }
 
     public function getCreatedAt(): ?\DateTimeInterface { return $this->createdAt; }
+
+    public function isActive(): bool { return $this->isActive; }
+    public function setIsActive(bool $isActive): self { $this->isActive = $isActive; return $this; }
 
     /** @return Collection<int, Order> */
     public function getOrders(): Collection { return $this->orders; }
