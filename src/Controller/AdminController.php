@@ -530,6 +530,30 @@ class AdminController extends AbstractController
                     $registeredCustomer->setRemainingBalance(
                         $registeredCustomer->getRemainingBalance() - $previousBalancePayment
                     );
+                    
+                    // Distribute previous balance payment to unpaid orders
+                    $paymentToDistribute = $previousBalancePayment;
+                    $unpaidOrders = $em->getRepository(\App\Entity\Order::class)->createQueryBuilder('o')
+                        ->where('o.registeredCustomer = :customer')
+                        ->andWhere('o.changeDue < 0')
+                        ->setParameter('customer', $registeredCustomer)
+                        ->orderBy('o.createdAt', 'ASC')
+                        ->getQuery()
+                        ->getResult();
+
+                    foreach ($unpaidOrders as $unpaidOrder) {
+                        $orderPending = abs($unpaidOrder->getChangeDue());
+                        if ($paymentToDistribute >= $orderPending) {
+                            $unpaidOrder->setChangeDue(0);
+                            $unpaidOrder->setAmountTendered($unpaidOrder->getAmountTendered() + $orderPending);
+                            $paymentToDistribute -= $orderPending;
+                        } else {
+                            $unpaidOrder->setChangeDue(-($orderPending - $paymentToDistribute));
+                            $unpaidOrder->setAmountTendered($unpaidOrder->getAmountTendered() + $paymentToDistribute);
+                            $paymentToDistribute = 0;
+                            break;
+                        }
+                    }
                 }
 
                 $registeredCustomer->addOrder($order);
@@ -552,6 +576,30 @@ class AdminController extends AbstractController
                 $registeredCustomer->setRemainingBalance(
                     $registeredCustomer->getRemainingBalance() - $previousBalancePayment
                 );
+                
+                // Distribute previous balance payment to unpaid orders
+                $paymentToDistribute = $previousBalancePayment;
+                $unpaidOrders = $em->getRepository(\App\Entity\Order::class)->createQueryBuilder('o')
+                    ->where('o.registeredCustomer = :customer')
+                    ->andWhere('o.changeDue < 0')
+                    ->setParameter('customer', $registeredCustomer)
+                    ->orderBy('o.createdAt', 'ASC')
+                    ->getQuery()
+                    ->getResult();
+
+                foreach ($unpaidOrders as $unpaidOrder) {
+                    $orderPending = abs($unpaidOrder->getChangeDue());
+                    if ($paymentToDistribute >= $orderPending) {
+                        $unpaidOrder->setChangeDue(0);
+                        $unpaidOrder->setAmountTendered($unpaidOrder->getAmountTendered() + $orderPending);
+                        $paymentToDistribute -= $orderPending;
+                    } else {
+                        $unpaidOrder->setChangeDue(-($orderPending - $paymentToDistribute));
+                        $unpaidOrder->setAmountTendered($unpaidOrder->getAmountTendered() + $paymentToDistribute);
+                        $paymentToDistribute = 0;
+                        break;
+                    }
+                }
             }
 
             $registeredCustomer->addOrder($order);

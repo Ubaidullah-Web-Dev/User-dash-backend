@@ -417,8 +417,44 @@ class LabAdminController extends AbstractController
             $customer->setCity($data['city']);
         if (isset($data['address']))
             $customer->setAddress($data['address']);
-        if (isset($data['remainingBalance']))
-            $customer->setRemainingBalance((float) $data['remainingBalance']);
+        if (isset($data['remainingBalance'])) {
+            $oldBalance = $customer->getRemainingBalance();
+            $newBalance = (float) $data['remainingBalance'];
+            $paymentAmount = $oldBalance - $newBalance;
+            
+            $customer->setRemainingBalance($newBalance);
+
+            if ($paymentAmount > 0) {
+                // Distribute payment to oldest unpaid orders
+                $unpaidOrders = $em->getRepository(\App\Entity\Order::class)->createQueryBuilder('o')
+                    ->where('o.registeredCustomer = :customer')
+                    ->andWhere('o.changeDue < 0')
+                    ->setParameter('customer', $customer)
+                    ->orderBy('o.createdAt', 'ASC')
+                    ->getQuery()
+                    ->getResult();
+
+                foreach ($unpaidOrders as $order) {
+                    $orderPending = abs($order->getChangeDue());
+                    if ($paymentAmount >= $orderPending) {
+                        $order->setChangeDue(0);
+                        $order->setAmountTendered($order->getAmountTendered() + $orderPending);
+                        $paymentAmount -= $orderPending;
+                    } else {
+                        $order->setChangeDue(-($orderPending - $paymentAmount));
+                        $order->setAmountTendered($order->getAmountTendered() + $paymentAmount);
+                        $paymentAmount = 0;
+                        break;
+                    }
+                }
+            } elseif ($paymentAmount < 0) {
+                 $increaseAmount = abs($paymentAmount);
+                 $latestOrder = $em->getRepository(\App\Entity\Order::class)->findOneBy(['registeredCustomer' => $customer], ['createdAt' => 'DESC']);
+                 if ($latestOrder) {
+                     $latestOrder->setChangeDue($latestOrder->getChangeDue() - $increaseAmount);
+                 }
+            }
+        }
 
         $em->flush();
 
@@ -510,8 +546,41 @@ class LabAdminController extends AbstractController
 
         if ($action === 'subtract') {
             $customer->setRemainingBalance($customer->getRemainingBalance() - $amount);
+            $paymentAmount = $amount;
         } else {
             $customer->setRemainingBalance($customer->getRemainingBalance() + $amount);
+            $paymentAmount = -$amount;
+        }
+
+        if ($paymentAmount > 0) {
+            // Distribute payment to oldest unpaid orders
+            $unpaidOrders = $em->getRepository(\App\Entity\Order::class)->createQueryBuilder('o')
+                ->where('o.registeredCustomer = :customer')
+                ->andWhere('o.changeDue < 0')
+                ->setParameter('customer', $customer)
+                ->orderBy('o.createdAt', 'ASC')
+                ->getQuery()
+                ->getResult();
+
+            foreach ($unpaidOrders as $order) {
+                $orderPending = abs($order->getChangeDue());
+                if ($paymentAmount >= $orderPending) {
+                    $order->setChangeDue(0);
+                    $order->setAmountTendered($order->getAmountTendered() + $orderPending);
+                    $paymentAmount -= $orderPending;
+                } else {
+                    $order->setChangeDue(-($orderPending - $paymentAmount));
+                    $order->setAmountTendered($order->getAmountTendered() + $paymentAmount);
+                    $paymentAmount = 0;
+                    break;
+                }
+            }
+        } elseif ($paymentAmount < 0) {
+             $increaseAmount = abs($paymentAmount);
+             $latestOrder = $em->getRepository(\App\Entity\Order::class)->findOneBy(['registeredCustomer' => $customer], ['createdAt' => 'DESC']);
+             if ($latestOrder) {
+                 $latestOrder->setChangeDue($latestOrder->getChangeDue() - $increaseAmount);
+             }
         }
 
         $em->flush();
