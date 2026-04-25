@@ -184,6 +184,7 @@ class LabAdminController extends AbstractController
             'amountTendered' => (float) $order->getAmountTendered(),
             'changeDue' => (float) $order->getChangeDue(),
             'discountAmount' => (float) $order->getDiscountAmount(),
+            'customerBalance' => $order->getRegisteredCustomer() ? (float) $order->getRegisteredCustomer()->getRemainingBalance() : 0,
             'items' => array_map(fn(\App\Entity\OrderItem $item) => [
                 'id' => $item->getId(),
                 'productId' => $item->getProduct()->getId(),
