@@ -194,7 +194,7 @@
         <!-- TRANSACTIONS TABLE -->
         <table class="table">
             <thead>
-                <tr><th width="5%">Sr</th><th>Item Name</th><th>Description</th><th width="10%">Qty</th><th width="15%">Unit Price</th><th width="15%">Total</th></tr>
+                <tr><th width="5%">Sr</th><th>Item Name</th><th>Description</th><th width="8%">Qty</th><th width="12%">Unit Price</th><th width="12%">Total</th><th width="12%">Paid Date</th><th width="12%">Paid</th></tr>
             </thead>
             <tbody>
                 {% set sr = 1 %}
@@ -214,11 +214,13 @@
                         <td class="text-center">{{ item.quantity }}</td>
                         <td class="text-right">PKR {{ item.price|number_format(2) }}</td>
                         <td class="text-right">PKR {{ item.total|number_format(2) }}</td>
+                        <td class="text-center">{% if loop.last and order.paidAt %}{{ order.paidAt|date('d-m-Y') }}{% endif %}</td>
+                        <td class="text-right">{% if loop.last %}PKR {{ order.amountTendered|number_format(2) }}{% endif %}</td>
                     </tr>
                     {% endfor %}
                     {% set sr = sr + 1 %}
                 {% else %}
-                    <tr><td colspan="6" class="text-center">No activity recorded.</td></tr>
+                    <tr><td colspan="8" class="text-center">No activity recorded.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

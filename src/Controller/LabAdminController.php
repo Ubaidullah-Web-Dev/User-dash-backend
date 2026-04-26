@@ -440,10 +440,12 @@ class LabAdminController extends AbstractController
                     if ($paymentAmount >= $orderPending) {
                         $order->setChangeDue(0);
                         $order->setAmountTendered($order->getAmountTendered() + $orderPending);
+                        $order->setPaidAt(new \DateTime());
                         $paymentAmount -= $orderPending;
                     } else {
                         $order->setChangeDue(-($orderPending - $paymentAmount));
                         $order->setAmountTendered($order->getAmountTendered() + $paymentAmount);
+                        $order->setPaidAt(new \DateTime());
                         $paymentAmount = 0;
                         break;
                     }
@@ -568,10 +570,12 @@ class LabAdminController extends AbstractController
                 if ($paymentAmount >= $orderPending) {
                     $order->setChangeDue(0);
                     $order->setAmountTendered($order->getAmountTendered() + $orderPending);
+                    $order->setPaidAt(new \DateTime());
                     $paymentAmount -= $orderPending;
                 } else {
                     $order->setChangeDue(-($orderPending - $paymentAmount));
                     $order->setAmountTendered($order->getAmountTendered() + $paymentAmount);
+                    $order->setPaidAt(new \DateTime());
                     $paymentAmount = 0;
                     break;
                 }

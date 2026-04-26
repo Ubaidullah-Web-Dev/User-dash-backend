@@ -175,7 +175,8 @@ class LabInvoiceController extends AbstractController
                 'discountPercentage' => $order->getDiscountPercentage() ?: 0,
                 'discountAmount' => $order->getDiscountAmount() ?: 0,
                 'amountTendered' => $order->getAmountTendered() ?: $order->getTotal(),
-                'pending' => $pendingAmount
+                'pending' => $pendingAmount,
+                'paidAt' => $order->getPaidAt() ? $order->getPaidAt()->format('Y-m-d') : ($order->getAmountTendered() > 0 ? $order->getCreatedAt()->format('Y-m-d') : null)
             ];
         }
 

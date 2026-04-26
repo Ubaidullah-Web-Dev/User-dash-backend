@@ -64,6 +64,9 @@ class Order
     #[ORM\Column(nullable: true)]
     private ?float $previousBalancePayment = null;
 
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $paidAt = null;
+
     public function __construct()
     {
         $this->items = new ArrayCollection();
@@ -138,6 +141,18 @@ class Order
     public function setPreviousBalancePayment(?float $previousBalancePayment): static
     {
         $this->previousBalancePayment = $previousBalancePayment;
+
+        return $this;
+    }
+
+    public function getPaidAt(): ?\DateTimeInterface
+    {
+        return $this->paidAt;
+    }
+
+    public function setPaidAt(?\DateTimeInterface $paidAt): static
+    {
+        $this->paidAt = $paidAt;
 
         return $this;
     }
