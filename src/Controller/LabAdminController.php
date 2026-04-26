@@ -292,6 +292,52 @@ class LabAdminController extends AbstractController
         ]);
     }
 
+    #[Route('/invoices/{id}/pay', name: 'admin_lab_invoices_pay', methods: ['POST'])]
+    public function payInvoice(
+        int $id,
+        Request $request,
+        OrderRepository $orderRepo,
+        EntityManagerInterface $em,
+        TenantContext $tenantContext
+    ): JsonResponse {
+        $order = $orderRepo->findOneBy(['id' => $id, 'company' => $tenantContext->getCurrentCompanyId()]);
+        if (!$order) {
+            return $this->json(['message' => 'Invoice not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $paymentAmount = (float) ($data['amount'] ?? 0);
+
+        if ($paymentAmount <= 0) {
+            return $this->json(['message' => 'Invalid payment amount'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $orderPending = $order->getChangeDue() < 0 ? abs($order->getChangeDue()) : 0;
+        if ($orderPending <= 0) {
+            return $this->json(['message' => 'This invoice is already fully paid'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $actualPayment = min($paymentAmount, $orderPending);
+        
+        $order->setAmountTendered($order->getAmountTendered() + $actualPayment);
+        $order->setChangeDue($order->getChangeDue() + $actualPayment);
+        $order->setPaidAt(new \DateTime());
+
+        $customer = $order->getRegisteredCustomer();
+        if ($customer) {
+            $customer->setRemainingBalance($customer->getRemainingBalance() - $actualPayment);
+        }
+
+        $em->flush();
+
+        return $this->json([
+            'message' => 'Payment recorded successfully',
+            'orderId' => $order->getId(),
+            'amountPaid' => $actualPayment,
+            'newPending' => $order->getChangeDue() < 0 ? abs($order->getChangeDue()) : 0
+        ]);
+    }
+
     #[Route('/customers', name: 'admin_lab_customers', methods: ['GET'])]
     public function listCustomers(Request $request, RegisteredCustomerRepository $customerRepo, EntityManagerInterface $em, TenantContext $tenantContext): JsonResponse
     {
