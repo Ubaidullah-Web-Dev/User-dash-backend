@@ -14,6 +14,9 @@ class DatabaseBackupController extends AbstractController
     #[Route('/backup', name: 'admin_database_backup', methods: ['GET'])]
     public function backup(): Response
     {
+        // Prevent PHP from timing out for large databases
+        set_time_limit(0);
+
         // Enforce that only authorized admins can access this endpoint
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
