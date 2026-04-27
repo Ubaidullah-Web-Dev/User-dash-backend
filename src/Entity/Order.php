@@ -67,6 +67,9 @@ class Order
     #[ORM\Column(type: 'datetime', nullable: true)]
     private ?\DateTimeInterface $paidAt = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $remarks = null;
+
     public function __construct()
     {
         $this->items = new ArrayCollection();
@@ -154,6 +157,16 @@ class Order
     {
         $this->paidAt = $paidAt;
 
+        return $this;
+    }
+    public function getRemarks(): ?string
+    {
+        return $this->remarks;
+    }
+
+    public function setRemarks(?string $remarks): self
+    {
+        $this->remarks = $remarks;
         return $this;
     }
 }

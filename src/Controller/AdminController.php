@@ -439,6 +439,7 @@ class AdminController extends AbstractController
         $changeDue = $data['changeDue'] ?? null;
         $discountPercentage = $data['discountPercentage'] ?? null;
         $discountAmount = $data['discountAmount'] ?? null;
+        $remarks = $data['remarks'] ?? null;
 
         if (empty($items)) {
             return $this->json(['message' => 'Sale must contain at least one item'], Response::HTTP_BAD_REQUEST);
@@ -452,6 +453,7 @@ class AdminController extends AbstractController
         $order->setPhone($phone ?? 'N/A');
         $order->setAddress('In-Store POS');
         $order->setCompany($company);
+        $order->setRemarks($remarks);
 
         $adminUser = $this->getUser();
         if (!$adminUser) {

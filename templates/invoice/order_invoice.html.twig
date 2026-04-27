@@ -170,6 +170,7 @@
                         {% else %}
                         <tr><td><strong>Type:</strong></td><td style="padding-left: 10px;">WALK-IN CUSTOMER</td></tr>
                         {% endif %}
+                        {% if order.remarks %}<tr><td><strong>Remarks:</strong></td><td style="padding-left: 10px; font-weight: bold; color: #c94b26;">{{ order.remarks|upper }}</td></tr>{% endif %}
                     </table>
                 </td>
 
