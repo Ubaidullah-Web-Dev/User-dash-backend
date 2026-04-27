@@ -14,6 +14,8 @@ roles:
     ROLE_MODERATOR:
         permissions:
             - POST_VIEW
+            - POST_CREATE
+            - POST_EDIT_OWN
             - POST_EDIT_ALL
     
     ROLE_ARCHITECTURAL:
@@ -21,6 +23,12 @@ roles:
             - USER_VIEW
             - USER_EDIT_ROLE
             - USER_DELETE
+
+    ROLE_EMPLOYEE:
+        permissions:
+            - POST_VIEW
+            - POST_CREATE
+            - POST_EDIT_OWN
 
     ROLE_SUPER_ADMIN:
         permissions:

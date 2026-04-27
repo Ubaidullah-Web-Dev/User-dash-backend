@@ -12,7 +12,9 @@ security:
         ROLE_SUPER_ADMIN: [ROLE_ARCHITECTURAL]
         ROLE_ARCHITECTURAL: [ROLE_ADMIN]
         ROLE_ADMIN:       [ROLE_MODERATOR]
-        ROLE_MODERATOR:   [ROLE_USER]
+        ROLE_MODERATOR:   [ROLE_EMPLOYEE]
+        ROLE_EMPLOYEE:    [ROLE_USER]
+        ROLE_USER:        []
 
     firewalls:
         dev:
@@ -43,18 +45,25 @@ security:
         - { path: ^/(?:[^/]+/)?api/forgot-password, roles: PUBLIC_ACCESS }
         - { path: ^/(?:[^/]+/)?api/reset-password, roles: PUBLIC_ACCESS }
         # User-accessible endpoints (Lab Sales POS + Dashboard)
-        - { path: ^/(?:[^/]+/)?api/admin/labs/dashboard, roles: ROLE_USER }
-        - { path: ^/(?:[^/]+/)?api/admin/products, roles: ROLE_USER }
-        - { path: ^/(?:[^/]+/)?api/admin/labs/customers, roles: ROLE_USER }
-        - { path: ^/(?:[^/]+/)?api/admin/labs/invoice, roles: ROLE_USER }
-        - { path: ^/(?:[^/]+/)?api/admin/orders/walk-in, roles: ROLE_USER }
-        - { path: ^/(?:[^/]+/)?api/admin/categories, roles: ROLE_USER }
-        - { path: ^/(?:[^/]+/)?api/categories, roles: ROLE_USER }
-        - { path: ^/(?:[^/]+/)?api/admin/vendors, roles: ROLE_USER }
-        # Moderator-accessible endpoints
+        # Restricted to ROLE_EMPLOYEE and ROLE_ADMIN (ROLE_ADMIN inherits ROLE_EMPLOYEE)
+        - { path: ^/(?:[^/]+/)?api/admin/labs/dashboard, roles: ROLE_EMPLOYEE }
+        - { path: ^/(?:[^/]+/)?api/admin/products, roles: ROLE_EMPLOYEE }
+        - { path: ^/(?:[^/]+/)?api/admin/labs/customers, roles: ROLE_EMPLOYEE }
+        - { path: ^/(?:[^/]+/)?api/admin/labs/invoice, roles: ROLE_EMPLOYEE }
+        - { path: ^/(?:[^/]+/)?api/admin/labs/invoices, roles: ROLE_EMPLOYEE }
+        - { path: ^/(?:[^/]+/)?api/admin/orders/walk-in, roles: ROLE_EMPLOYEE }
+        
+        # General admin access (ROLE_ADMIN inherits ROLE_MODERATOR and ROLE_EMPLOYEE)
+        - { path: ^/(?:[^/]+/)?api/admin/categories, roles: ROLE_ADMIN }
+        - { path: ^/(?:[^/]+/)?api/admin/vendors, roles: ROLE_ADMIN }
         - { path: ^/(?:[^/]+/)?api/admin/labs/stock-in, roles: ROLE_MODERATOR }
-        # General admin access (ROLE_ADMIN inherits ROLE_MODERATOR)
+        
+        # Catch-all for other admin endpoints
         - { path: ^/(?:[^/]+/)?api/admin, roles: ROLE_ADMIN }
+        
+        # Public-facing categories (Still accessible by ROLE_USER/Customers)
+        - { path: ^/(?:[^/]+/)?api/categories, roles: ROLE_USER }
+        
         - { path: ^/(?:[^/]+/)?api/super-admin, roles: ROLE_SUPER_ADMIN }
 
 when@test:
