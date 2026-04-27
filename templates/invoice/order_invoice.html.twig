@@ -164,6 +164,7 @@
                         {% if order.registeredCustomer %}
                         <tr><td style="padding-bottom: 2px;"><strong>Name:</strong></td><td style="padding-left: 10px;">{{ order.registeredCustomer.name|upper }}</td></tr>
                         <tr><td style="padding-bottom: 2px;"><strong>Phone:</strong></td><td style="padding-left: 10px;">{{ order.registeredCustomer.phone }}</td></tr>
+                        {% if order.registeredCustomer.address %}<tr><td style="padding-bottom: 2px;"><strong>Address:</strong></td><td style="padding-left: 10px;">{{ order.registeredCustomer.address|upper }}</td></tr>{% endif %}
                         {% if order.registeredCustomer.labName %}<tr><td><strong>Lab:</strong></td><td style="padding-left: 10px; color: #d69e2e;">{{ order.registeredCustomer.labName }}</td></tr>{% endif %}
                         {% elseif order.guestUser %}
                         <tr><td><strong>Name:</strong></td><td style="padding-left: 10px;">{{ order.guestUser.name|upper }} (GUEST)</td></tr>
@@ -196,7 +197,14 @@
             <tbody>
                 {% for item in order.items %}
                 <tr class="{% if loop.first %}order-start{% endif %} {% if loop.last %}order-end{% endif %}">
-                    <td><strong>{{ item.product.name }}</strong><br><span style="font-size:9px;color:#777;">{{ item.product.category.name|default('General') }}</span></td>
+                    <td>
+                        <strong>{{ item.product.name }}</strong><br>
+                        <span style="font-size:9px;color:#777;">
+                            {{ item.product.category.name|default('General') }}
+                            {% if item.product.companyName %} | {{ item.product.companyName }}{% endif %}
+                            {% if item.product.packSize %} | {{ item.product.packSize }}{% endif %}
+                        </span>
+                    </td>
                     <td class="text-right">PKR {{ item.price|number_format(0) }}</td>
                     <td class="text-center">{{ item.quantity }}</td>
                     <td class="text-right" style="color: #c0392b;">{% if item.discountAmount > 0 %}-PKR {{ item.discountAmount|number_format(0) }}{% else %}—{% endif %}</td>
