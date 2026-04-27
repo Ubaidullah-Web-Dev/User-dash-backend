@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\CashRecovery;
 use App\Entity\RegisteredCustomer;
+use App\Entity\Order;
 use App\Repository\RegisteredCustomerRepository;
 use App\Service\TenantContext;
 use Doctrine\ORM\EntityManagerInterface;
