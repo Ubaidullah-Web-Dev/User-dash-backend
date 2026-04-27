@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Invoice - #{{ order.id }}</title>
+    <title>Payment Receipt - #RECOV-{{ recovery.id }}</title>
     <style>
         @page {
             margin: 130px 30px 140px 30px;
@@ -86,19 +86,7 @@
 
         .table td {
             padding: 10px;
-            border-left: 1px solid #ddd;
-            border-right: 1px solid #ddd;
-        }
-
-        .table tr.order-start td { border-top: 1px solid #ddd; }
-        .table tr.order-end td { border-bottom: 1px solid #ddd; }
-
-        .last-page-footer {
-            position: absolute;
-            bottom: 40px;
-            left: 0;
-            right: 0;
-            text-align: center;
+            border: 1px solid #ddd;
         }
 
         .text-right { text-align: right; }
@@ -123,7 +111,7 @@
             background: #d69e2e;
             color: white;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 18px;
         }
     </style>
 </head>
@@ -159,28 +147,21 @@
             <tr>
                 <!-- Left Column: Customer Info -->
                 <td width="55%" valign="top">
-                    <div class="section-title">Customer / Patient:</div>
+                    <div class="section-title">Received From:</div>
                     <table class="info-table" cellpadding="0" cellspacing="0" border="0">
-                        {% if order.registeredCustomer %}
-                        <tr><td style="padding-bottom: 2px;"><strong>Name:</strong></td><td style="padding-left: 10px;">{{ order.registeredCustomer.name|upper }}</td></tr>
-                        <tr><td style="padding-bottom: 2px;"><strong>Phone:</strong></td><td style="padding-left: 10px;">{{ order.registeredCustomer.phone }}</td></tr>
-                        {% if order.registeredCustomer.labName %}<tr><td><strong>Lab:</strong></td><td style="padding-left: 10px; color: #d69e2e;">{{ order.registeredCustomer.labName }}</td></tr>{% endif %}
-                        {% elseif order.guestUser %}
-                        <tr><td><strong>Name:</strong></td><td style="padding-left: 10px;">{{ order.guestUser.name|upper }} (GUEST)</td></tr>
-                        {% else %}
-                        <tr><td><strong>Type:</strong></td><td style="padding-left: 10px;">WALK-IN CUSTOMER</td></tr>
-                        {% endif %}
-                        {% if order.remarks %}<tr><td><strong>Remarks:</strong></td><td style="padding-left: 10px; font-weight: bold; color: #c94b26;">{{ order.remarks|upper }}</td></tr>{% endif %}
+                        <tr><td style="padding-bottom: 2px;"><strong>Name:</strong></td><td style="padding-left: 10px;">{{ recovery.registeredCustomer.name|upper }}</td></tr>
+                        <tr><td style="padding-bottom: 2px;"><strong>Phone:</strong></td><td style="padding-left: 10px;">{{ recovery.registeredCustomer.phone }}</td></tr>
+                        {% if recovery.registeredCustomer.labName %}<tr><td><strong>Lab:</strong></td><td style="padding-left: 10px; color: #d69e2e;">{{ recovery.registeredCustomer.labName }}</td></tr>{% endif %}
                     </table>
                 </td>
 
-                <!-- Right Column: Invoice Meta -->
+                <!-- Right Column: Receipt Meta -->
                 <td width="45%" valign="top" align="right">
-                    <div class="invoice-title">Order Invoice</div>
+                    <div class="invoice-title">Payment Receipt</div>
                     <table class="invoice-meta" align="right">
-                        <tr><td><strong>Invoice No:</strong></td><td style="padding-left: 15px;">#INV-{{ "%05d"|format(order.id) }}</td></tr>
-                        <tr><td><strong>Date:</strong></td><td style="padding-left: 15px;">{{ order.createdAt|date('d/m/Y h:i A') }}</td></tr>
-                        <tr><td><strong>Maker:</strong></td><td style="padding-left: 15px;">{{ invoiceMaker|default('N/A') }}</td></tr>
+                        <tr><td><strong>Receipt No:</strong></td><td style="padding-left: 15px;">#RECOV-{{ "%05d"|format(recovery.id) }}</td></tr>
+                        <tr><td><strong>Date:</strong></td><td style="padding-left: 15px;">{{ recovery.createdAt|date('d/m/Y h:i A') }}</td></tr>
+                        <tr><td><strong>Collector:</strong></td><td style="padding-left: 15px;">{{ invoiceMaker|default('N/A') }}</td></tr>
                     </table>
                 </td>
             </tr>
@@ -188,52 +169,42 @@
 
         <div class="separator"></div>
 
-        <!-- PRODUCTS TABLE -->
+        <!-- PAYMENT TABLE -->
         <table class="table">
             <thead>
-                <tr><th>Description</th><th width="15%" class="text-right">Price</th><th width="10%" class="text-center">Qty</th><th width="15%" class="text-right">Discount</th><th width="15%" class="text-right">Total</th></tr>
+                <tr>
+                    <th>Description</th>
+                    <th width="30%" class="text-right">Amount Paid</th>
+                </tr>
             </thead>
             <tbody>
-                {% for item in order.items %}
-                <tr class="{% if loop.first %}order-start{% endif %} {% if loop.last %}order-end{% endif %}">
-                    <td><strong>{{ item.product.name }}</strong><br><span style="font-size:9px;color:#777;">{{ item.product.category.name|default('General') }}</span></td>
-                    <td class="text-right">PKR {{ item.price|number_format(0) }}</td>
-                    <td class="text-center">{{ item.quantity }}</td>
-                    <td class="text-right" style="color: #c0392b;">{% if item.discountAmount > 0 %}-PKR {{ item.discountAmount|number_format(0) }}{% else %}—{% endif %}</td>
-                    <td class="text-right"><strong>PKR {{ ((item.price * item.quantity) - (item.discountAmount ?? 0))|number_format(0) }}</strong></td>
+                <tr>
+                    <td>
+                        <strong>CASH RECOVERY / PENDING BALANCE PAYMENT</strong><br>
+                        <span style="font-size:9px;color:#777;">{{ recovery.remarks|default('Partial payment against outstanding balance') }}</span>
+                    </td>
+                    <td class="text-right" style="font-size: 14px; font-weight: bold;">PKR {{ recovery.amount|number_format(0) }}</td>
                 </tr>
-                {% else %}
-                <tr><td colspan="5" class="text-center">No items found.</td></tr>
-                {% endfor %}
             </tbody>
         </table>
 
         <!-- SUMMARY -->
         <table class="summary">
-            <tr><td>Subtotal:</td><td class="text-right">PKR {{ (order.total + (order.discountAmount ?? 0))|number_format(0) }}</td></tr>
-            {% if order.discountAmount > 0 %}
-            <tr><td>{{ order.discountPercentage ? 'Discount (' ~ order.discountPercentage ~ '%):' : 'Total Discount:' }}</td><td class="text-right" style="color: #c0392b;">-PKR {{ order.discountAmount|number_format(0) }}</td></tr>
-            {% endif %}
-            <tr class="total"><td>Grand Total:</td><td class="text-right">PKR {{ order.total|number_format(0) }}</td></tr>
-            <tr><td>Amount Paid:</td><td class="text-right">PKR {{ (order.amountTendered ?? 0)|number_format(0) }}</td></tr>
-            <tr><td>Balance Due:</td><td class="text-right">
-                {% if order.changeDue < 0 %}<span style="color: #c0392b; font-weight: bold;">PKR {{ order.changeDue|abs|number_format(0) }}</span>{% else %}PKR {{ order.changeDue|number_format(0) }}{% endif %}
-            </td></tr>
+            <tr class="total">
+                <td>Net Received:</td>
+                <td class="text-right">PKR {{ recovery.amount|number_format(0) }}</td>
+            </tr>
+            <tr>
+                <td>New Outstanding Balance:</td>
+                <td class="text-right" style="color: #c0392b; font-weight: bold;">PKR {{ recovery.registeredCustomer.remainingBalance|number_format(0) }}</td>
+            </tr>
         </table>
         <div style="clear: both;"></div>
 
-    </div>
-
-    <div class="last-page-footer">
-        <div style="text-align: center; color: #777; font-size: 10px; font-weight: bold; margin-bottom: 20px;">
-            Unique Healthcare Solutions & Laboratory Information System<br>Thank you for your trust in our services!
+        <div style="margin-top: 50px; text-align: center; color: #777; font-size: 10px; font-style: italic;">
+            Note: This is a computer generated receipt and does not require a physical signature for validity.
         </div>
 
-        <div style="text-align: right; padding-right: 50px;">
-            <div style="display: inline-block; width: 200px; border-top: 1px solid #000; margin-bottom: 5px; text-align: left;"></div>
-            <div style="text-align: right; font-weight: bold; width: 200px; float: right;">Authorized Signature</div>
-            <div style="clear: both;"></div>
-        </div>
     </div>
 
     <!-- FOOTER -->

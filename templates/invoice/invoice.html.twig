@@ -254,12 +254,12 @@
                     <td style="font-weight: bold;">
                         {{ item.description }}
                         {% if item.discountPercentage is defined and item.discountPercentage > 0 %}
-                        <div style="font-size: 8px; color: #c0392b; font-weight: bold;">Disc: {{ item.discountPercentage }}% (-PKR {{ item.discountAmount|number_format(2) }})</div>
+                        <div style="font-size: 8px; color: #c0392b; font-weight: bold;">Disc: {{ item.discountPercentage }}% (-PKR {{ item.discountAmount|number_format(0) }})</div>
                         {% endif %}
                     </td>
                     <td class="text-center">{{ item.qty }}</td>
-                    <td class="text-right">PKR {{ item.rate|number_format(2) }}</td>
-                    <td class="text-right" style="font-weight: bold;">PKR {{ item.amount|number_format(2) }}</td>
+                    <td class="text-right">PKR {{ item.rate|number_format(0) }}</td>
+                    <td class="text-right" style="font-weight: bold;">PKR {{ item.amount|number_format(0) }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -267,21 +267,21 @@
 
         <!-- SUMMARY -->
         <table class="summary">
-            <tr><td>Subtotal:</td><td class="text-right">PKR {{ subtotal|number_format(2) }}</td></tr>
+            <tr><td>Subtotal:</td><td class="text-right">PKR {{ subtotal|number_format(0) }}</td></tr>
             {% if discountAmount is defined and discountAmount > 0 %}
-            <tr><td>{{ discountPercentage is defined and discountPercentage ? 'Discount (' ~ discountPercentage ~ '%):' : 'Total Discount:' }}</td><td class="text-right" style="color: #c0392b;">-PKR {{ discountAmount|number_format(2) }}</td></tr>
+            <tr><td>{{ discountPercentage is defined and discountPercentage ? 'Discount (' ~ discountPercentage ~ '%):' : 'Total Discount:' }}</td><td class="text-right" style="color: #c0392b;">-PKR {{ discountAmount|number_format(0) }}</td></tr>
             {% endif %}
-            <tr class="total"><td>Total Amount:</td><td class="text-right">PKR {{ total|number_format(2) }}</td></tr>
+            <tr class="total"><td>Total Amount:</td><td class="text-right">PKR {{ total|number_format(0) }}</td></tr>
             
             {% if amountTendered is defined and amountTendered is not null and changeDue is defined %}
-            <tr><td>Cash Paid:</td><td class="text-right">PKR {{ amountTendered|number_format(2) }}</td></tr>
+            <tr><td>Cash Paid:</td><td class="text-right">PKR {{ amountTendered|number_format(0) }}</td></tr>
             <tr>
                 {% if changeDue < 0 %}
                 <td style="color: #c0392b; font-weight: bold;">Outstanding:</td>
-                <td class="text-right" style="color: #c0392b; font-weight: bold;">PKR {{ changeDue|abs|number_format(2) }}</td>
+                <td class="text-right" style="color: #c0392b; font-weight: bold;">PKR {{ changeDue|abs|number_format(0) }}</td>
                 {% else %}
                 <td>Change Due:</td>
-                <td class="text-right">PKR {{ changeDue|number_format(2) }}</td>
+                <td class="text-right">PKR {{ changeDue|number_format(0) }}</td>
                 {% endif %}
             </tr>
             <tr style="background-color: #f8f9fa;">

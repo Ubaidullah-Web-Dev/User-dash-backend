@@ -173,22 +173,22 @@
                 <tr>
                     <td class="stat-card">
                         <div class="stat-label">Gross Revenue</div>
-                        <div class="stat-value">PKR {{ revenue|number_format(2) }}</div>
+                        <div class="stat-value">PKR {{ revenue|number_format(0) }}</div>
                     </td>
                     <td class="stat-card">
                         <div class="stat-label">Lab Expenses</div>
-                        <div class="stat-value negative">-{{ labExpenses|number_format(2) }}</div>
+                        <div class="stat-value negative">-{{ labExpenses|number_format(0) }}</div>
                     </td>
                     <td class="stat-card">
                         <div class="stat-label">Net Income</div>
                         <div class="stat-value {{ netIncome >= 0 ? 'positive' : 'negative' }}">
-                            {{ netIncome >= 0 ? '+' : '' }}{{ netIncome|number_format(2) }}
+                            {{ netIncome >= 0 ? '+' : '' }}{{ netIncome|number_format(0) }}
                         </div>
                         <div style="font-size: 7px; color: #888; margin-top: 3px;">CASH BASIS</div>
                     </td>
                     <td class="stat-card" style="border-top: 3px solid #c0392b;">
                         <div class="stat-label">Total Pending</div>
-                        <div class="stat-value negative">{{ totalPending|number_format(2) }}</div>
+                        <div class="stat-value negative">{{ totalPending|number_format(0) }}</div>
                     </td>
                 </tr>
             </table>

@@ -9,9 +9,11 @@ use App\Entity\VendorOrder;
 use App\Entity\OrderItem;
 use App\Entity\User;
 use App\Entity\LabExpense;
+use App\Entity\CashRecovery;
 use Doctrine\ORM\EntityManagerInterface;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use App\Service\TenantContext;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -143,12 +145,27 @@ class LabInvoiceController extends AbstractController
 
         $orders = $qb->orderBy('o.createdAt', 'ASC')->getQuery()->getResult();
 
-        $statementOrders = [];
+        // Fetch Cash Recoveries
+        $crQb = $entityManager->getRepository(CashRecovery::class)->createQueryBuilder('cr')
+            ->where('cr.registeredCustomer = :customer')
+            ->setParameter('customer', $customer);
+
+        if ($period === 'monthly' || $period === 'yearly') {
+            $crQb->andWhere('cr.createdAt BETWEEN :start AND :end')
+                ->setParameter('start', $startDate)
+                ->setParameter('end', $endDate);
+        }
+
+        $recoveries = $crQb->orderBy('cr.createdAt', 'ASC')->getQuery()->getResult();
+
+        $statementItems = [];
         $totalSpent = 0;
         $totalDiscount = 0;
+        $totalPaid = 0;
 
         foreach ($orders as $order) {
             $totalSpent += $order->getTotal();
+            $totalPaid += $order->getAmountTendered() ?: 0;
             $totalDiscount += ($order->getDiscountAmount() ?: 0);
 
             $itemsData = [];
@@ -158,27 +175,51 @@ class LabInvoiceController extends AbstractController
                     'name' => $product ? $product->getName() : 'Unknown Product',
                     'description' => $product ? $product->getDescription() : '',
                     'quantity' => $item->getQuantity(),
-                    'price' => (float) $item->getPrice(),
-                    'discountPercentage' => (float) $item->getDiscountPercentage(),
-                    'discountAmount' => (float) $item->getDiscountAmount(),
-                    'total' => (float) ($item->getQuantity() * $item->getPrice() - ($item->getDiscountAmount() ?: 0))
+                    'price' => round((float) $item->getPrice()),
+                    'discountPercentage' => round((float) $item->getDiscountPercentage()),
+                    'discountAmount' => round((float) $item->getDiscountAmount()),
+                    'total' => round((float) ($item->getQuantity() * $item->getPrice() - ($item->getDiscountAmount() ?: 0)))
                 ];
             }
 
-            $pendingAmount = $order->getChangeDue() < 0 ? abs($order->getChangeDue()) : 0;
+            $pendingAmount = $order->getChangeDue() < 0 ? round(abs($order->getChangeDue())) : 0;
 
-            $statementOrders[] = [
-                'date' => $order->getCreatedAt()->format('Y-m-d'),
+            $statementItems[] = [
+                'type' => 'order',
+                'date' => $order->getCreatedAt(),
                 'orderId' => $order->getId(),
                 'items' => $itemsData,
-                'total' => $order->getTotal(),
-                'discountPercentage' => $order->getDiscountPercentage() ?: 0,
-                'discountAmount' => $order->getDiscountAmount() ?: 0,
-                'amountTendered' => $order->getAmountTendered() ?: 0,
+                'total' => round($order->getTotal()),
+                'discountPercentage' => round($order->getDiscountPercentage() ?: 0),
+                'discountAmount' => round($order->getDiscountAmount() ?: 0),
+                'amountTendered' => round($order->getAmountTendered() ?: 0),
                 'pending' => $pendingAmount,
                 'remarks' => $order->getRemarks(),
-                'paidAt' => $order->getPaidAt() ? $order->getPaidAt()->format('Y-m-d') : ($order->getAmountTendered() > 0 ? $order->getCreatedAt()->format('Y-m-d') : null)
+                'paidAt' => $order->getPaidAt() ?: ($order->getAmountTendered() > 0 ? $order->getCreatedAt() : null)
             ];
+        }
+
+        foreach ($recoveries as $recovery) {
+            $totalPaid += $recovery->getAmount();
+            $statementItems[] = [
+                'type' => 'recovery',
+                'date' => $recovery->getCreatedAt(),
+                'recoveryId' => $recovery->getId(),
+                'amount' => round($recovery->getAmount()),
+                'remarks' => $recovery->getRemarks() ?: 'Cash Recovery Payment',
+                'paidAt' => $recovery->getCreatedAt()
+            ];
+        }
+
+        // Sort everything by date
+        usort($statementItems, function($a, $b) {
+            return $a['date'] <=> $b['date'];
+        });
+
+        // Convert dates to strings for template compatibility
+        foreach ($statementItems as &$item) {
+            $item['date'] = $item['date']->format('Y-m-d');
+            if ($item['paidAt']) $item['paidAt'] = $item['paidAt']->format('Y-m-d');
         }
 
         $company = $customer->getCompany();
@@ -201,18 +242,20 @@ class LabInvoiceController extends AbstractController
                 'city' => $customer->getCity(),
                 'address' => $customer->getAddress()
             ],
-            'customerRemainingBalance' => $customer->getRemainingBalance(),
+            'customerRemainingBalance' => round($customer->getRemainingBalance()),
             'periodLabel' => $periodLabel,
-            'orders' => $statementOrders,
-            'totalSpent' => $totalSpent,
-            'subTotal' => $totalSpent + $totalDiscount,
-            'totalDiscount' => $totalDiscount,
+            'orders' => $statementItems,
+            'totalSpent' => round($totalSpent),
+            'totalPaid' => round($totalPaid),
+            'subTotal' => round($totalSpent + $totalDiscount),
+            'totalDiscount' => round($totalDiscount),
             'statementNumber' => 'STMT-' . date('Ymd') . '-' . str_pad($customer->getId(), 4, '0', STR_PAD_LEFT),
             'date' => new \DateTime(),
             'invoiceMaker' => ($this->getUser() instanceof User) ? $this->getUser()->getName() : 'System'
         ]);
 
-        return $this->generatePdfResponse($html, sprintf('Statement-%s-%s.pdf', $customer->getName(), $periodLabel));
+        $disposition = $request->query->getBoolean('preview', false) ? 'inline' : 'attachment';
+        return $this->generatePdfResponse($html, sprintf('Statement-%s-%s.pdf', $customer->getName(), $periodLabel), $disposition);
     }
 
     #[Route('/download', name: 'admin_lab_invoice_download', methods: ['GET'])]
@@ -236,11 +279,32 @@ class LabInvoiceController extends AbstractController
             'invoiceMaker' => ($this->getUser() instanceof User) ? $this->getUser()->getName() : 'System'
         ]);
 
-        return $this->generatePdfResponse($html, sprintf('Invoice-%s.pdf', $order->getId()));
+        $disposition = $request->query->getBoolean('preview', false) ? 'inline' : 'attachment';
+        return $this->generatePdfResponse($html, sprintf('Invoice-%s.pdf', $order->getId()), $disposition);
+    }
+
+    #[Route('/recovery/{id}', name: 'admin_lab_invoice_recovery', methods: ['GET'])]
+    public function recoveryReceipt(int $id, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $recovery = $entityManager->getRepository(CashRecovery::class)->find($id);
+        if (!$recovery) {
+            return $this->json(['message' => 'Recovery record not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $html = $this->renderView('invoice/cash_recovery_invoice.html.twig', [
+            'showHeader' => $request->query->getBoolean('showHeader', true),
+            'logo' => $this->getLogoData(),
+            'recovery' => $recovery,
+            'date' => new \DateTime(),
+            'invoiceMaker' => ($this->getUser() instanceof User) ? $this->getUser()->getName() : 'System'
+        ]);
+
+        $disposition = $request->query->getBoolean('preview', false) ? 'inline' : 'attachment';
+        return $this->generatePdfResponse($html, sprintf('Recovery-%s.pdf', $recovery->getId()), $disposition);
     }
 
     #[Route('/summary', name: 'admin_lab_invoice_summary', methods: ['GET'])]
-    public function summaryReport(Request $request, EntityManagerInterface $em): Response
+    public function summaryReport(Request $request, EntityManagerInterface $em, TenantContext $tenantContext): Response
     {
         $type = $request->query->get('type', 'daily');
         $dateStr = $request->query->get('date', date('Y-m-d'));
@@ -264,27 +328,39 @@ class LabInvoiceController extends AbstractController
             $periodLabel = (string) $year;
         }
 
-        // 1. Revenue, Customers & Pending
+        // 1. Revenue & Customers from Orders in Period
         $orderData = $em->getRepository(Order::class)->createQueryBuilder('o')
-            ->select('SUM(o.total) as total, COUNT(o.id) as customerCount, SUM(CASE WHEN o.changeDue < 0 THEN ABS(o.changeDue) ELSE 0 END) as totalPending')
+            ->select('SUM(o.total) as total, COUNT(o.id) as customerCount')
             ->where('o.createdAt BETWEEN :start AND :end')
+            ->andWhere('o.company = :company')
             ->setParameter('start', $startDate)
             ->setParameter('end', $endDate)
+            ->setParameter('company', $tenantContext->getCurrentCompanyId())
             ->getQuery()
             ->getOneOrNullResult();
 
-        $revenue = (float) ($orderData['total'] ?? 0);
+        $revenue = round((float) ($orderData['total'] ?? 0));
         $customerCount = (int) ($orderData['customerCount'] ?? 0);
-        $totalPending = (float) ($orderData['totalPending'] ?? 0);
-        $receivedPayments = $revenue - $totalPending;
+
+        // 2. Total Pending: Sum of all RegisteredCustomer balances (Global)
+        $totalPending = round((float) $em->getRepository(RegisteredCustomer::class)->createQueryBuilder('rc')
+            ->select('SUM(rc.remainingBalance)')
+            ->where('rc.company = :company')
+            ->setParameter('company', $tenantContext->getCurrentCompanyId())
+            ->getQuery()
+            ->getSingleScalarResult());
+
+        $receivedPayments = $revenue - $totalPending; 
 
         // 2. Expenses & Stock Added (Vendor Orders received)
         $vendorOrders = $em->getRepository(VendorOrder::class)->createQueryBuilder('vo')
             ->where('vo.status = :status')
             ->andWhere('vo.receivedAt BETWEEN :start AND :end')
+            ->andWhere('vo.company = :company')
             ->setParameter('status', 'received')
             ->setParameter('start', $startDate)
             ->setParameter('end', $endDate)
+            ->setParameter('company', $tenantContext->getCurrentCompanyId())
             ->getQuery()
             ->getResult();
 
@@ -295,25 +371,30 @@ class LabInvoiceController extends AbstractController
             $purchasePrice = (float) ($vo->getProduct() ? $vo->getProduct()->getPurchasePrice() : 0);
             $expenses += ($vo->getQuantity() * $purchasePrice);
         }
+        $expenses = round($expenses);
 
         // 2b. Lab Expenses
         $labExpensesResult = $em->getRepository(LabExpense::class)->createQueryBuilder('le')
             ->select('SUM(le.amount)')
             ->where('le.expenseDate BETWEEN :start AND :end')
+            ->andWhere('le.company = :company')
             ->setParameter('start', $startDate)
             ->setParameter('end', $endDate)
+            ->setParameter('company', $tenantContext->getCurrentCompanyId())
             ->getQuery()
             ->getSingleScalarResult();
 
-        $labExpenses = (float) ($labExpensesResult ?? 0);
+        $labExpenses = round((float) ($labExpensesResult ?? 0));
 
         // 3. Stock Removed (Order Items)
         $stockRemoved = $em->getRepository(OrderItem::class)->createQueryBuilder('oi')
             ->join('oi.order', 'o')
             ->select('SUM(oi.quantity)')
             ->where('o.createdAt BETWEEN :start AND :end')
+            ->andWhere('o.company = :company')
             ->setParameter('start', $startDate)
             ->setParameter('end', $endDate)
+            ->setParameter('company', $tenantContext->getCurrentCompanyId())
             ->getQuery()
             ->getSingleScalarResult();
         $stockRemoved = (int) ($stockRemoved ?? 0);
@@ -338,7 +419,7 @@ class LabInvoiceController extends AbstractController
         return $this->generatePdfResponse($html, sprintf('Lab-Summary-%s-%s.pdf', ucfirst($type), str_replace(' ', '-', $periodLabel)));
     }
 
-    private function generatePdfResponse(string $html, string $filename): Response
+    private function generatePdfResponse(string $html, string $filename, string $disposition = 'attachment'): Response
     {
         $options = new Options();
         $options->set('defaultFont', 'Helvetica');
@@ -351,7 +432,7 @@ class LabInvoiceController extends AbstractController
 
         return new Response($dompdf->output(), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
+            'Content-Disposition' => sprintf('%s; filename="%s"', $disposition, $filename),
         ]);
     }
 

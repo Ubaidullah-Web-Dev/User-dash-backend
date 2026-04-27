@@ -54,13 +54,13 @@ class LabAdminController extends AbstractController
 
         return $this->json([
             'totalProducts' => count($products),
-            'stockValue' => $totalStockValue,
-            'todaySales' => (float) $todaySales,
+            'stockValue' => round($totalStockValue),
+            'todaySales' => round((float) $todaySales),
             'lowStockCount' => $lowStockCount,
             'recentSales' => array_map(fn(Order $o) => [
                 'id' => $o->getId(),
                 'customerName' => $o->getCustomerName(),
-                'total' => (float) $o->getTotal(),
+                'total' => round((float) $o->getTotal()),
                 'createdAt' => $o->getCreatedAt()->format('Y-m-d H:i:s'),
             ], $recentSales),
         ]);
@@ -156,8 +156,8 @@ class LabAdminController extends AbstractController
                 'id' => $o->getId(),
                 'customerName' => $o->getCustomerName(),
                 'phone' => $o->getPhone(),
-                'totalAmount' => (string) $o->getTotal(),
-                'pendingAmount' => $o->getChangeDue() < 0 ? abs($o->getChangeDue()) : 0,
+                'totalAmount' => round((float) $o->getTotal()),
+                'pendingAmount' => round($o->getChangeDue() < 0 ? abs($o->getChangeDue()) : 0),
                 'createdAt' => $o->getCreatedAt()->format('Y-m-d H:i:s'),
             ], $paginatedResponse->data),
             'total' => $paginatedResponse->total,
@@ -180,19 +180,19 @@ class LabAdminController extends AbstractController
             'customerName' => $order->getCustomerName(),
             'phone' => $order->getPhone(),
             'address' => $order->getAddress(),
-            'total' => (float) $order->getTotal(),
-            'amountTendered' => (float) $order->getAmountTendered(),
-            'changeDue' => (float) $order->getChangeDue(),
-            'discountAmount' => (float) $order->getDiscountAmount(),
-            'customerBalance' => $order->getRegisteredCustomer() ? (float) $order->getRegisteredCustomer()->getRemainingBalance() : 0,
+            'total' => round((float) $order->getTotal()),
+            'amountTendered' => round((float) $order->getAmountTendered()),
+            'changeDue' => round((float) $order->getChangeDue()),
+            'discountAmount' => round((float) $order->getDiscountAmount()),
+            'customerBalance' => $order->getRegisteredCustomer() ? round((float) $order->getRegisteredCustomer()->getRemainingBalance()) : 0,
             'items' => array_map(fn(\App\Entity\OrderItem $item) => [
                 'id' => $item->getId(),
                 'productId' => $item->getProduct()->getId(),
                 'productName' => $item->getProduct()->getName(),
                 'quantity' => $item->getQuantity(),
-                'price' => (float) $item->getPrice(),
-                'discountPercentage' => (float) $item->getDiscountPercentage(),
-                'discountAmount' => (float) $item->getDiscountAmount(),
+                'price' => round((float) $item->getPrice()),
+                'discountPercentage' => round((float) $item->getDiscountPercentage()),
+                'discountAmount' => round((float) $item->getDiscountAmount()),
             ], $order->getItems()->toArray())
         ]);
     }
@@ -317,7 +317,11 @@ class LabAdminController extends AbstractController
             return $this->json(['message' => 'This invoice is already fully paid'], Response::HTTP_BAD_REQUEST);
         }
 
-        $actualPayment = min($paymentAmount, $orderPending);
+        if ($paymentAmount > $orderPending) {
+            return $this->json(['message' => 'Payment amount exceeds invoice pending balance. Maximum: PKR ' . $orderPending], Response::HTTP_BAD_REQUEST);
+        }
+
+        $actualPayment = $paymentAmount;
         
         $order->setAmountTendered($order->getAmountTendered() + $actualPayment);
         $order->setChangeDue($order->getChangeDue() + $actualPayment);
@@ -368,9 +372,9 @@ class LabAdminController extends AbstractController
                 'labName' => $c->getLabName(),
                 'city' => $c->getCity(),
                 'address' => $c->getAddress(),
-                'totalSpent' => $c->getTotalSpent(),
-                'totalDiscount' => (float) ($totalDiscount ?? 0),
-                'remainingBalance' => $c->getRemainingBalance(),
+                'totalSpent' => round($c->getTotalSpent()),
+                'totalDiscount' => round((float) ($totalDiscount ?? 0)),
+                'remainingBalance' => round($c->getRemainingBalance()),
                 'isActive' => $c->isActive(),
             ];
         }, $paginatedResponse->data);
@@ -467,8 +471,12 @@ class LabAdminController extends AbstractController
         if (isset($data['remainingBalance'])) {
             $oldBalance = $customer->getRemainingBalance();
             $newBalance = (float) $data['remainingBalance'];
-            $paymentAmount = $oldBalance - $newBalance;
             
+            if ($newBalance < 0) {
+                return $this->json(['message' => 'Customer balance cannot be negative (no overpayments allowed).'], Response::HTTP_BAD_REQUEST);
+            }
+            
+            $paymentAmount = $oldBalance - $newBalance;
             $customer->setRemainingBalance($newBalance);
 
             if ($paymentAmount > 0) {
@@ -594,6 +602,9 @@ class LabAdminController extends AbstractController
         }
 
         if ($action === 'subtract') {
+            if ($amount > $customer->getRemainingBalance()) {
+                return $this->json(['message' => 'Adjustment amount exceeds customer pending balance. Maximum: PKR ' . $customer->getRemainingBalance()], Response::HTTP_BAD_REQUEST);
+            }
             $customer->setRemainingBalance($customer->getRemainingBalance() - $amount);
             $paymentAmount = $amount;
         } else {

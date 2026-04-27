@@ -236,7 +236,7 @@
                     </td>
                     <td>{{ expense.category }}</td>
                     <td class="text-center">{{ expense.expenseDate|date('d-M-Y') }}</td>
-                    <td class="text-right" style="font-weight: bold; font-size: 13px; color: #2e5aac;">PKR {{ expense.amount|number_format(2) }}</td>
+                    <td class="text-right" style="font-weight: bold; font-size: 13px; color: #2e5aac;">PKR {{ expense.amount|number_format(0) }}</td>
                 </tr>
             </tbody>
         </table>
@@ -245,7 +245,7 @@
         <table class="summary">
             <tr class="total">
                 <td>Total Valuation:</td>
-                <td class="text-right">PKR {{ expense.amount|number_format(2) }}</td>
+                <td class="text-right">PKR {{ expense.amount|number_format(0) }}</td>
             </tr>
         </table>
         

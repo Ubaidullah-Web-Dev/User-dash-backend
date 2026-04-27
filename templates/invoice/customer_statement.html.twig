@@ -198,28 +198,44 @@
             </thead>
             <tbody>
                 {% set sr = 1 %}
-                {% for order in orders %}
-                    {% for item in order.items %}
-                    <tr class="{% if loop.first %}order-start{% endif %} {% if loop.last %}order-end{% endif %}">
-                        <td class="text-center">{% if loop.first %}{{ sr }}{% endif %}</td>
-                        <td><strong>{{ item.name }}</strong><br><span style="font-size:9px;color:#777;">(Order #{{ order.orderId }} - {{ order.date|date('d-m-Y') }})</span></td>
-                        <td>
-                            {{ item.description }}
-                            {% if item.discountPercentage > 0 %}<div style="color: #c0392b; font-size: 9px; font-weight: bold;">-{{ item.discountPercentage }}% (PKR {{ item.discountAmount|number_format(2) }})</div>{% endif %}
-                            {% if loop.last %}
-                                {% if order.remarks %}<div style="color: #333; font-weight: bold; margin-bottom: 3px;">{{ order.remarks }}</div>{% endif %}
-                                {% if order.discountAmount > 0 and not item.discountPercentage %}<div style="color:green; font-size:10px;">Disc: {{ order.discountPercentage }}% (PKR {{ order.discountAmount|number_format(2) }})</div>{% endif %}
-                                {% if order.pending > 0 %}<div style="color:red; font-size:10px;">Pending: PKR {{ order.pending|number_format(2) }}</div>{% endif %}
-                            {% endif %}
-                        </td>
-                        <td class="text-center">{{ item.quantity }}</td>
-                        <td class="text-right">{% if loop.last %}PKR {{ order.amountTendered|number_format(2) }}{% endif %}</td>
-                        <td class="text-center">{% if loop.last and order.paidAt %}{{ order.paidAt|date('d-m-Y') }}{% endif %}</td>
-                        <td class="text-right">PKR {{ item.price|number_format(2) }}</td>
-                        <td class="text-right">PKR {{ item.total|number_format(2) }}</td>
-                    </tr>
-                    {% endfor %}
-                    {% set sr = sr + 1 %}
+                {% for item in orders %}
+                    {% if item.type == 'order' %}
+                        {% for orderItem in item.items %}
+                        <tr class="{% if loop.first %}order-start{% endif %} {% if loop.last %}order-end{% endif %}">
+                            <td class="text-center">{% if loop.first %}{{ sr }}{% endif %}</td>
+                            <td><strong>{{ orderItem.name }}</strong><br><span style="font-size:9px;color:#777;">(Order #{{ item.orderId }} - {{ item.date|date('d-m-Y') }})</span></td>
+                            <td>
+                                {{ orderItem.description }}
+                                {% if orderItem.discountPercentage > 0 %}<div style="color: #c0392b; font-size: 9px; font-weight: bold;">-{{ orderItem.discountPercentage }}% (PKR {{ orderItem.discountAmount|number_format(0) }})</div>{% endif %}
+                                {% if loop.last %}
+                                    {% if item.remarks %}<div style="color: #333; font-weight: bold; margin-bottom: 3px;">{{ item.remarks }}</div>{% endif %}
+                                    {% if item.discountAmount > 0 and not orderItem.discountPercentage %}<div style="color:green; font-size:10px;">Disc: {{ item.discountPercentage }}% (PKR {{ item.discountAmount|number_format(0) }})</div>{% endif %}
+                                    {% if item.pending > 0 %}<div style="color:red; font-size:10px;">Pending: PKR {{ item.pending|number_format(0) }}</div>{% endif %}
+                                {% endif %}
+                            </td>
+                            <td class="text-center">{{ orderItem.quantity }}</td>
+                            <td class="text-right">{% if loop.last %}PKR {{ item.amountTendered|number_format(0) }}{% endif %}</td>
+                            <td class="text-center">{% if loop.last and item.paidAt %}{{ item.paidAt|date('d-m-Y') }}{% endif %}</td>
+                            <td class="text-right">PKR {{ orderItem.price|number_format(0) }}</td>
+                            <td class="text-right">PKR {{ orderItem.total|number_format(0) }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% set sr = sr + 1 %}
+                    {% else %}
+                        <tr class="order-start order-end" style="background-color: #fcf8e3;">
+                            <td class="text-center">{{ sr }}</td>
+                            <td><strong style="color: #c94b26;">CASH RECOVERY</strong><br><span style="font-size:9px;color:#777;">(Payment #{{ item.recoveryId }} - {{ item.date|date('d-m-Y') }})</span></td>
+                            <td colspan="2">
+                                <div style="font-weight: bold; color: #2e5aac;">{{ item.remarks }}</div>
+                                <div style="font-size: 9px; color: #777;">Partial payment toward outstanding balance</div>
+                            </td>
+                            <td class="text-right"><strong>PKR {{ item.amount|number_format(0) }}</strong></td>
+                            <td class="text-center">{{ item.paidAt|date('d-m-Y') }}</td>
+                            <td class="text-right">—</td>
+                            <td class="text-right" style="color: green; font-weight: bold;">- PKR {{ item.amount|number_format(0) }}</td>
+                        </tr>
+                        {% set sr = sr + 1 %}
+                    {% endif %}
                 {% else %}
                     <tr><td colspan="8" class="text-center">No activity recorded.</td></tr>
                 {% endfor %}
@@ -228,14 +244,14 @@
 
         <!-- SUMMARY -->
         <table class="summary">
-            <tr><td>Subtotal:</td><td class="text-right">PKR {{ subTotal|number_format(2) }}</td></tr>
-            {% if totalDiscount > 0 %}<tr class="discount"><td>Total Discount:</td><td class="text-right">- PKR {{ totalDiscount|number_format(2) }}</td></tr>{% endif %}
-            <tr class="total"><td>Grand Total:</td><td class="text-right">PKR {{ totalSpent|number_format(2) }}</td></tr>
+            <tr><td>Subtotal:</td><td class="text-right">PKR {{ subTotal|number_format(0) }}</td></tr>
+            {% if totalDiscount > 0 %}<tr class="discount"><td>Total Discount:</td><td class="text-right">- PKR {{ totalDiscount|number_format(0) }}</td></tr>{% endif %}
+            <tr class="total"><td>Grand Total:</td><td class="text-right">PKR {{ totalSpent|number_format(0) }}</td></tr>
         </table>
         <div style="clear: both;"></div>
 
         {% if customerRemainingBalance is defined and customerRemainingBalance > 0 %}
-            <div style="margin-top: 10px; text-align: right; color: red; font-weight: bold;">Outstanding Balance: PKR {{ customerRemainingBalance|number_format(2) }}</div>
+            <div style="margin-top: 10px; text-align: right; color: red; font-weight: bold;">Outstanding Balance: PKR {{ customerRemainingBalance|number_format(0) }}</div>
         {% endif %}
 
     </div>

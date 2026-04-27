@@ -248,7 +248,7 @@
                     </td>
                     <td class="text-right">
                         <div style="font-weight: bold; font-size: 13px; color: #2e5aac;">{{ reagent.stock }} Units</div>
-                        <div style="color: #666; font-size: 9px;">@ PKR {{ reagent.price|number_format(2) }}</div>
+                        <div style="color: #666; font-size: 9px;">@ PKR {{ reagent.price|number_format(0) }}</div>
                     </td>
                 </tr>
                 {% else %}
@@ -259,7 +259,7 @@
                     </td>
                     <td>Added to Inventory</td>
                     <td class="text-center">
-                        <div style="font-size: 10px; color: #555;">Rate: PKR {{ stockIn.unitPrice|number_format(2) }}</div>
+                        <div style="font-size: 10px; color: #555;">Rate: PKR {{ stockIn.unitPrice|number_format(0) }}</div>
                     </td>
                     <td class="text-right">
                         <div style="font-weight: bold; font-size: 13px; color: #27ae60;">+{{ stockIn.quantity }} Units</div>
@@ -274,7 +274,7 @@
         <table class="summary">
             <tr class="total">
                 <td>Entry Valuation:</td>
-                <td class="text-right">PKR {{ (stockIn.quantity * stockIn.unitPrice)|number_format(2) }}</td>
+                <td class="text-right">PKR {{ (stockIn.quantity * stockIn.unitPrice)|number_format(0) }}</td>
             </tr>
         </table>
         <div style="clear: both;"></div>

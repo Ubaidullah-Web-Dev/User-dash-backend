@@ -37,7 +37,7 @@ class LabExpenseController extends AbstractController
                 'id' => $e->getId(),
                 'title' => $e->getTitle(),
                 'description' => $e->getDescription(),
-                'amount' => (string)$e->getAmount(),
+                'amount' => (string)round((float)$e->getAmount()),
                 'expenseDate' => $e->getExpenseDate()->format('Y-m-d'),
                 'category' => $e->getCategory(),
                 'createdAt' => $e->getCreatedAt()->format('Y-m-d H:i:s'),
@@ -62,7 +62,7 @@ class LabExpenseController extends AbstractController
         $expense->setCompany($tenantContext->getCurrentCompany());
         $expense->setTitle($data['title']);
         $expense->setDescription($data['description'] ?? null);
-        $expense->setAmount((string)$data['amount']);
+        $expense->setAmount((string)round((float)$data['amount']));
         
         $dateStr = $data['expenseDate'] ?? date('Y-m-d');
         $expense->setExpenseDate(new \DateTimeImmutable($dateStr));
