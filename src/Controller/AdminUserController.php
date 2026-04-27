@@ -12,6 +12,10 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Entity\User;
+use App\DTO\AdminCreateUserDTO;
 
 #[Route('/api/admin')]
 class AdminUserController extends AbstractController
@@ -121,5 +125,70 @@ class AdminUserController extends AbstractController
         $entityManager->flush();
 
         return $this->json(['message' => 'User database entry purged successfully']);
+    }
+
+    #[Route('/users', name: 'admin_user_create', methods: ['POST'])]
+    public function createUser(
+        Request $request,
+        UserPasswordHasherInterface $passwordHasher,
+        EntityManagerInterface $entityManager,
+        ValidatorInterface $validator,
+        SerializerInterface $serializer,
+        \App\Service\TenantContext $tenantContext
+    ): JsonResponse {
+        $this->denyAccessUnlessGranted('USER_CREATE');
+
+        try {
+            /** @var AdminCreateUserDTO $createUserDto */
+            $createUserDto = $serializer->deserialize($request->getContent(), AdminCreateUserDTO::class, 'json');
+        } catch (\Exception $e) {
+            return $this->json(['message' => 'Invalid JSON input'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (!$createUserDto) {
+            return $this->json(['message' => 'Invalid JSON input'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $errors = $validator->validate($createUserDto);
+        if (count($errors) > 0) {
+            return $this->json(['message' => $errors[0]->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
+
+        $existingUser = $entityManager->getRepository(User::class)->findOneBy(['email' => $createUserDto->email]);
+        if ($existingUser) {
+            return $this->json(['message' => 'Email already in use'], Response::HTTP_CONFLICT);
+        }
+
+        $user = new User();
+        $user->setEmail($createUserDto->email);
+        $user->setName($createUserDto->name);
+        
+        $roles = $createUserDto->roles ?? ['ROLE_USER'];
+        if (!in_array('ROLE_USER', $roles)) {
+            $roles[] = 'ROLE_USER';
+        }
+        $user->setRoles(array_unique($roles));
+        
+        $hashedPassword = $passwordHasher->hashPassword($user, $createUserDto->password);
+        $user->setPassword($hashedPassword);
+
+        // Set the company from the context (resolved from URL slug)
+        $company = $tenantContext->getCurrentCompany();
+        if (!$company) {
+            return $this->json(['message' => 'Could not determine company context'], Response::HTTP_BAD_REQUEST);
+        }
+        $user->setCompany($company);
+
+        try {
+            $entityManager->persist($user);
+            $entityManager->flush();
+        } catch (\Exception $e) {
+            return $this->json(['message' => 'User creation failed'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return $this->json([
+            'message' => 'User created successfully',
+            'user' => UserDTO::fromEntity($user)
+        ], Response::HTTP_CREATED);
     }
 }
