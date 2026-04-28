@@ -128,17 +128,21 @@ class LabInvoiceController extends AbstractController
         if ($period === 'monthly') {
             $startDate = new \DateTime(sprintf('%d-%d-01 00:00:00', $year, $month));
             $endDate = (clone $startDate)->modify('last day of this month')->setTime(23, 59, 59);
-            $qb->andWhere('o.createdAt BETWEEN :start AND :end')
-                ->setParameter('start', $startDate)
-                ->setParameter('end', $endDate);
             $periodLabel = $startDate->format('F Y');
         } elseif ($period === 'yearly') {
             $startDate = new \DateTime(sprintf('%d-01-01 00:00:00', $year));
             $endDate = new \DateTime(sprintf('%d-12-31 23:59:59', $year));
+            $periodLabel = (string) $year;
+        } elseif ($period === 'custom') {
+            $startStr = $request->query->get('startDate');
+            $endStr = $request->query->get('endDate');
+            $startDate = new \DateTime($startStr ? $startStr . ' 00:00:00' : 'today 00:00:00');
+            $endDate = new \DateTime($endStr ? $endStr . ' 23:59:59' : 'today 23:59:59');
+            $periodLabel = $startDate->format('d M Y') . ' to ' . $endDate->format('d M Y');
+            
             $qb->andWhere('o.createdAt BETWEEN :start AND :end')
                 ->setParameter('start', $startDate)
                 ->setParameter('end', $endDate);
-            $periodLabel = (string) $year;
         } else {
             $periodLabel = 'All Time';
         }
@@ -150,7 +154,7 @@ class LabInvoiceController extends AbstractController
             ->where('cr.registeredCustomer = :customer')
             ->setParameter('customer', $customer);
 
-        if ($period === 'monthly' || $period === 'yearly') {
+        if ($period === 'monthly' || $period === 'yearly' || $period === 'custom') {
             $crQb->andWhere('cr.createdAt BETWEEN :start AND :end')
                 ->setParameter('start', $startDate)
                 ->setParameter('end', $endDate);
@@ -322,10 +326,16 @@ class LabInvoiceController extends AbstractController
             $startDate = new \DateTime(sprintf('%d-%d-01 00:00:00', $year, $month));
             $endDate = (clone $startDate)->modify('last day of this month')->setTime(23, 59, 59);
             $periodLabel = $startDate->format('F Y');
-        } else { // yearly
+        } elseif ($type === 'yearly') {
             $startDate = new \DateTime(sprintf('%d-01-01 00:00:00', $year));
             $endDate = new \DateTime(sprintf('%d-12-31 23:59:59', $year));
             $periodLabel = (string) $year;
+        } else { // custom
+            $startStr = $request->query->get('startDate');
+            $endStr = $request->query->get('endDate');
+            $startDate = new \DateTime($startStr ? $startStr . ' 00:00:00' : 'today 00:00:00');
+            $endDate = new \DateTime($endStr ? $endStr . ' 23:59:59' : 'today 23:59:59');
+            $periodLabel = $startDate->format('d M Y') . ' to ' . $endDate->format('d M Y');
         }
 
         // 1. Revenue & Customers from Orders in Period
