@@ -247,12 +247,12 @@
             <tr><td>Subtotal:</td><td class="text-right">PKR {{ subTotal|number_format(0) }}</td></tr>
             {% if totalDiscount > 0 %}<tr class="discount"><td>Total Discount:</td><td class="text-right">- PKR {{ totalDiscount|number_format(0) }}</td></tr>{% endif %}
             <tr class="total"><td>Grand Total:</td><td class="text-right">PKR {{ totalSpent|number_format(0) }}</td></tr>
+            <tr><td>Total Paid:</td><td class="text-right">PKR {{ totalPaid|number_format(0) }}</td></tr>
+            {% if customerRemainingBalance is defined and customerRemainingBalance > 0 %}
+            <tr style="color: #c0392b; font-weight: bold;"><td>Outstanding Balance:</td><td class="text-right">PKR {{ customerRemainingBalance|number_format(0) }}</td></tr>
+            {% endif %}
         </table>
         <div style="clear: both;"></div>
-
-        {% if customerRemainingBalance is defined and customerRemainingBalance > 0 %}
-            <div style="margin-top: 10px; text-align: right; color: red; font-weight: bold;">Outstanding Balance: PKR {{ customerRemainingBalance|number_format(0) }}</div>
-        {% endif %}
 
     </div>
 
