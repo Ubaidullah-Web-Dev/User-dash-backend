@@ -96,7 +96,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
         $roles[] = 'ROLE_USER';
 
         return array_unique($roles);
@@ -129,8 +128,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function eraseCredentials(): void
     {
-        // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
+
     }
 
     public function getName(): ?string
@@ -166,7 +164,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function removeProduct(Product $product): static
     {
         if ($this->products->removeElement($product)) {
-            // set the owning side to null (unless already changed)
             if ($product->getUser() === $this) {
                 $product->setUser(null);
             }
@@ -196,7 +193,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function removeCartItem(CartItem $cartItem): static
     {
         if ($this->cartItems->removeElement($cartItem)) {
-            // set the owning side to null (unless already changed)
             if ($cartItem->getUser() === $this) {
                 $cartItem->setUser(null);
             }

@@ -127,7 +127,7 @@ class MarketplaceController extends AbstractController
             try {
                 $product->setExpiryDate(new \DateTimeImmutable($dto->expiryDate));
             } catch (\Exception $e) {
-                // Do not set if invalid
+                
             }
         }
 

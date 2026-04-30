@@ -14,10 +14,8 @@ class DatabaseBackupController extends AbstractController
     #[Route('/backup', name: 'admin_database_backup', methods: ['GET'])]
     public function backup(): Response
     {
-        // Prevent PHP from timing out for large databases
         set_time_limit(0);
 
-        // Enforce that only authorized admins can access this endpoint
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         $databaseUrl = $_ENV['DATABASE_URL'] ?? null;
@@ -43,8 +41,6 @@ class DatabaseBackupController extends AbstractController
         $fileName = 'backup_' . $dbName . '_' . date('Y-m-d_H-i-s') . '.sql';
 
         $response = new StreamedResponse(function () use ($dbUser, $dbPass, $dbHost, $dbPort, $dbName) {
-            // --no-tablespaces: Avoids issues on systems where the user lacks PROCESS privileges
-            // --single-transaction: Ensures consistent backup for InnoDB without locking tables
             $command = sprintf(
                 'mysqldump --no-tablespaces --single-transaction -h %s -P %s -u %s -p%s %s',
                 escapeshellarg($dbHost),
@@ -55,9 +51,9 @@ class DatabaseBackupController extends AbstractController
             );
 
             $descriptorspec = [
-                0 => ["pipe", "r"],  // stdin
-                1 => ["pipe", "w"],  // stdout
-                2 => ["pipe", "w"]   // stderr
+                0 => ["pipe", "r"],  
+                1 => ["pipe", "w"],  
+                2 => ["pipe", "w"]   
             ];
 
             $process = proc_open($command, $descriptorspec, $pipes);
@@ -65,7 +61,6 @@ class DatabaseBackupController extends AbstractController
             if (is_resource($process)) {
                 fclose($pipes[0]);
 
-                // Stream the output directly to the response
                 while (!feof($pipes[1])) {
                     echo fread($pipes[1], 1024 * 8);
                     flush();

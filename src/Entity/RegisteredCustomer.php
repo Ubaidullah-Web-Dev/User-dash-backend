@@ -101,7 +101,6 @@ class RegisteredCustomer
     public function removeOrder(Order $order): self
     {
         if ($this->orders->removeElement($order)) {
-            // set the owning side to null (unless already changed)
             if ($order->getRegisteredCustomer() === $this) {
                 $order->setRegisteredCustomer(null);
             }

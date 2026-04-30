@@ -21,7 +21,6 @@ trait PaginationTrait
         $qb->setFirstResult(($page - 1) * $limit)
            ->setMaxResults($limit);
 
-        // Use Doctrine Paginator for accurate total counts, especially helpful with joins
         $paginator = new Paginator($qb);
         $total = count($paginator);
         $pages = (int) ceil($total / $limit);

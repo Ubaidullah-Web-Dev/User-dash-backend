@@ -64,10 +64,8 @@ class ResetPasswordController extends AbstractController
             return $this->json(['message' => 'No account found with this email. Please register first.'], Response::HTTP_NOT_FOUND);
         }
 
-        // Generate 6-digit numeric code
         $code = (string) random_int(100000, 999999);
 
-        // Remove old tokens for this user
         $oldTokens = $entityManager->getRepository(ResetPasswordToken::class)->findBy(['user' => $user]);
         foreach ($oldTokens as $oldToken) {
             $entityManager->remove($oldToken);
@@ -76,13 +74,11 @@ class ResetPasswordController extends AbstractController
         $resetToken = new ResetPasswordToken();
         $resetToken->setUser($user);
         $resetToken->setCompany($company);
-        $resetToken->setToken($code); // Using token field for the 6-digit code
-        $resetToken->setExpiresAt(new \DateTimeImmutable('+15 minutes')); // OTPs expire faster
+        $resetToken->setToken($code); 
+        $resetToken->setExpiresAt(new \DateTimeImmutable('+15 minutes')); 
 
         $entityManager->persist($resetToken);
         $entityManager->flush();
-
-        // Send email (via SMTP)
         $emailMessage = (new Email())
             ->from('ubaidullah.web.dev@gmail.com')
             ->to($user->getEmail())
@@ -179,8 +175,6 @@ class ResetPasswordController extends AbstractController
 
         $hashedPassword = $passwordHasher->hashPassword($user, $resetPasswordDto->password);
         $user->setPassword($hashedPassword);
-
-        // Explicitly persist and flush
         $entityManager->persist($user);
         $entityManager->remove($resetToken);
         $entityManager->flush();

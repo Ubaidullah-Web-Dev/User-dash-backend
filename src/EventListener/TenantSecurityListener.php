@@ -27,7 +27,6 @@ class TenantSecurityListener
         $request = $event->getRequest();
         $companySlug = $request->attributes->get('companySlug');
         
-        // If there's no company resolved, or it's a super-admin route, skip
         if (!$companySlug || $request->attributes->get('_route') === 'super_admin') {
             return;
         }
@@ -36,15 +35,13 @@ class TenantSecurityListener
         $user = $this->security->getUser();
 
         if (!$user) {
-            return; // Security firewall will handle unauthorized access
+            return;
         }
 
-        // Super admins have global access
         if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
             return;
         }
 
-        // For regular admins and users, check if they belong to the current tenant
         $currentCompany = $this->tenantContext->getCurrentCompany();
         
         if ($currentCompany && $user->getCompany() && $user->getCompany()->getId() !== $currentCompany->getId()) {

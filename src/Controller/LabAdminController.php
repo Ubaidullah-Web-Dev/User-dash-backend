@@ -109,7 +109,6 @@ class LabAdminController extends AbstractController
     ): JsonResponse {
         $companyId = $tenantContext->getCurrentCompanyId();
 
-        // Daily Sales for the last 30 days
         $dailySales = $orderRepo->createQueryBuilder('o')
             ->select("SUBSTRING(o.createdAt, 1, 10) as date, SUM(o.total) as total, SUM(CASE WHEN o.changeDue < 0 THEN ABS(o.changeDue) ELSE 0 END) as pending")
             ->where('o.company = :companyId')
@@ -120,7 +119,6 @@ class LabAdminController extends AbstractController
             ->getQuery()
             ->getResult();
 
-        // Low stock products
         $lowStockProducts = $productRepo->createQueryBuilder('p')
             ->where('p.stock < p.minimumStock')
             ->andWhere('p.company = :companyId')
@@ -214,11 +212,9 @@ class LabAdminController extends AbstractController
         $data = json_decode($request->getContent(), true);
         $customer = $order->getRegisteredCustomer();
 
-        // 1. Store old values for reconciliation
         $oldTotal = (float) $order->getTotal();
         $oldPending = $order->getChangeDue() < 0 ? abs($order->getChangeDue()) : 0;
 
-        // 2. Restore Stock for all current items
         foreach ($order->getItems() as $item) {
             $product = $item->getProduct();
             $product->setStock($product->getStock() + $item->getQuantity());
@@ -226,13 +222,10 @@ class LabAdminController extends AbstractController
         }
         $order->getItems()->clear();
 
-        // 3. Apply Update Metadata
         $order->setCustomerName($data['customerName'] ?? $order->getCustomerName());
         $order->setPhone($data['phone'] ?? $order->getPhone());
         $amountTendered = (float) ($data['amountTendered'] ?? 0);
         $order->setAmountTendered($amountTendered);
-
-        // 4. Add New Items and Deduct Stock
         $newItems = $data['items'] ?? [];
         $calculatedTotal = 0;
         $calculatedDiscount = 0;
@@ -260,8 +253,6 @@ class LabAdminController extends AbstractController
 
             $em->persist($orderItem);
             $order->addItem($orderItem);
-
-            // Deduct new stock
             $product->setStock($product->getStock() - $quantity);
 
             $calculatedTotal += ($itemSubtotal - $itemDiscount);
@@ -272,15 +263,10 @@ class LabAdminController extends AbstractController
         $order->setDiscountAmount($calculatedDiscount);
         $order->setChangeDue($amountTendered - $calculatedTotal);
 
-        // 5. Synchronize Registered Customer Balance
         if ($customer) {
             $newTotal = $order->getTotal();
             $newPending = $order->getChangeDue() < 0 ? abs($order->getChangeDue()) : 0;
-
-            // Adjust total spent
             $customer->setTotalSpent($customer->getTotalSpent() - $oldTotal + $newTotal);
-
-            // Adjust remaining balance
             $customer->setRemainingBalance($customer->getRemainingBalance() - $oldPending + $newPending);
         }
 
@@ -356,7 +342,6 @@ class LabAdminController extends AbstractController
 
         $paginatedResponse = $customerRepo->getPaginatedCustomers($filters, $tenantContext->getCurrentCompanyId(), $page, $limit);
 
-        // Calculate total discount for each customer from their orders
         $customerData = array_map(function (RegisteredCustomer $c) use ($em) {
             $totalDiscount = $em->getRepository(Order::class)->createQueryBuilder('o')
                 ->select('SUM(o.discountAmount)')
@@ -480,7 +465,6 @@ class LabAdminController extends AbstractController
             $customer->setRemainingBalance($newBalance);
 
             if ($paymentAmount > 0) {
-                // Distribute payment to oldest unpaid orders
                 $unpaidOrders = $em->getRepository(\App\Entity\Order::class)->createQueryBuilder('o')
                     ->where('o.registeredCustomer = :customer')
                     ->andWhere('o.changeDue < 0')
@@ -554,7 +538,6 @@ class LabAdminController extends AbstractController
             return $this->json(['message' => 'Customer not found or access denied'], Response::HTTP_NOT_FOUND);
         }
 
-        // Check if there are any orders for this customer
         $orderRepo = $em->getRepository(\App\Entity\Order::class);
         $orderCount = $orderRepo->count(['registeredCustomer' => $customer]);
 
@@ -595,7 +578,7 @@ class LabAdminController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
         $amount = (float) ($data['amount'] ?? 0);
-        $action = $data['action'] ?? 'add'; // 'add' or 'subtract'
+        $action = $data['action'] ?? 'add';
 
         if ($amount < 0) {
             return $this->json(['message' => 'Amount must be positive'], Response::HTTP_BAD_REQUEST);
@@ -613,7 +596,6 @@ class LabAdminController extends AbstractController
         }
 
         if ($paymentAmount > 0) {
-            // Distribute payment to oldest unpaid orders
             $unpaidOrders = $em->getRepository(\App\Entity\Order::class)->createQueryBuilder('o')
                 ->where('o.registeredCustomer = :customer')
                 ->andWhere('o.changeDue < 0')

@@ -39,7 +39,6 @@ class CashRecoveryController extends AbstractController
 
         $paginatedResponse = $customerRepo->getPaginatedCustomers($filters, (int)$companyId, $page, $limit);
 
-        // Map entities to plain arrays to avoid serialization issues (like circular references)
         $customers = array_map(function(RegisteredCustomer $c) {
             return [
                 'id' => $c->getId(),
@@ -96,7 +95,6 @@ class CashRecoveryController extends AbstractController
 
         $customer->setRemainingBalance($customer->getRemainingBalance() - $amount);
 
-        // Distribute payment to oldest unpaid orders to keep historical reports accurate
         $paymentRemaining = $amount;
         $unpaidOrders = $em->getRepository(Order::class)->createQueryBuilder('o')
             ->where('o.registeredCustomer = :customer')

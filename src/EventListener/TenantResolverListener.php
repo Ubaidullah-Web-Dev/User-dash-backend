@@ -33,21 +33,17 @@ class TenantResolverListener
 
         $slug = $segments[0];
 
-        // Special handling for reserved prefixes
         if ($slug === 'super-admin') {
-            return; // No filter for super-admin
+            return; 
         }
 
         if ($slug === 'api') {
-            // Check if it's a super-admin api call
             if (isset($segments[1]) && $segments[1] === 'super-admin') {
-                return; // No filter for super-admin api
+                return; 
             }
-            // Otherwise, default to the main company for root api calls
             $slug = 'unique-healthcare-solutions';
         }
 
-        // Skip internal Symfony routes
         if (in_array($slug, ['_profiler', '_wdt'])) {
             return;
         }
@@ -55,7 +51,6 @@ class TenantResolverListener
         $company = $this->companyRepository->findOneBy(['slug' => $slug]);
 
         if (!$company) {
-            // Default to Unique Healthcare Solutions for root api calls
             $company = $this->companyRepository->findOneBy(['slug' => 'unique-healthcare-solutions']);
         }
 

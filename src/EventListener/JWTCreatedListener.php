@@ -34,7 +34,6 @@ class JWTCreatedListener
         $content = json_decode($request->getContent(), true);
 
         if (isset($content['remember_me']) && $content['remember_me'] === true) {
-            // Set expiration to 1 year
             $expiration = new \DateTime('+1 year');
             $payload['exp'] = $expiration->getTimestamp();
         }

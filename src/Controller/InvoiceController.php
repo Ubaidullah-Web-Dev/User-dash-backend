@@ -34,7 +34,6 @@ class InvoiceController extends AbstractController
             return $this->json(['message' => 'Order not found'], Response::HTTP_NOT_FOUND);
         }
 
-        // Check if admin or owner
         if (!$this->isGranted('ROLE_ADMIN') && $order->getUser() !== $user) {
             return $this->json(['message' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
         }

@@ -28,7 +28,7 @@ class ProductCreateDTO
 
     public ?float $purchasePrice = null;
 
-    public ?string $expiryDate = null; // Y-m-d format
+    public ?string $expiryDate = null; 
 
     public ?string $batchNumber = null;
 

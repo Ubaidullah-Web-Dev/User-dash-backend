@@ -100,7 +100,6 @@ class SuperAdminController extends AbstractController
             return $this->json(['message' => 'Company not found'], Response::HTTP_NOT_FOUND);
         }
 
-        // Check if it's the default company
         if ($company->getId() === 1) {
             return $this->json(['message' => 'Cannot delete default company'], Response::HTTP_BAD_REQUEST);
         }
@@ -165,7 +164,6 @@ class SuperAdminController extends AbstractController
     #[Route('/public/settings', name: 'public_get_settings', methods: ['GET'])]
     public function getPublicSettings(EntityManagerInterface $entityManager): JsonResponse
     {
-        // Add keys that are allowed to be public
         $publicKeys = ['show_alphasoft_banner'];
         
         $data = [];
@@ -188,7 +186,6 @@ class SuperAdminController extends AbstractController
             return $this->json(['message' => 'Missing email, password or name'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Find the system company (ID 1)
         $company = $entityManager->getRepository(\App\Entity\Company::class)->find(1);
         if (!$company) {
             return $this->json(['message' => 'System company not found'], Response::HTTP_INTERNAL_SERVER_ERROR);

@@ -71,7 +71,6 @@ class PostController extends AbstractController
         ValidatorInterface $validator
     ): JsonResponse
     {
-        // Use the dynamic 'POST_EDIT' attribute which the Voter handles
         $this->denyAccessUnlessGranted('POST_EDIT', $post);
 
         try {

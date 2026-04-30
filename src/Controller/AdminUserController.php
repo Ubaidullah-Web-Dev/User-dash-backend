@@ -65,7 +65,6 @@ class AdminUserController extends AbstractController
             return $this->json(['message' => 'User not found'], Response::HTTP_NOT_FOUND);
         }
 
-        // Prevent modifying Super Admin roles by regular admins
         if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
             return $this->json(['message' => 'Access denied: Cannot modify Super Admin roles'], Response::HTTP_FORBIDDEN);
         }
@@ -82,7 +81,6 @@ class AdminUserController extends AbstractController
             return $this->json(['message' => 'Roles must be an array'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Basic validation: ensure ROLE_USER is always present
         if (!in_array('ROLE_USER', $roles)) {
             $roles[] = 'ROLE_USER';
         }
@@ -111,12 +109,9 @@ class AdminUserController extends AbstractController
             return $this->json(['message' => 'User not found'], Response::HTTP_NOT_FOUND);
         }
 
-        // Safety: Cannot delete self
         if ($user === $this->getUser()) {
             return $this->json(['message' => 'Security protocol violation: Self-deletion is restricted'], Response::HTTP_FORBIDDEN);
         }
-
-        // Safety: Cannot delete Super Admin
         if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
             return $this->json(['message' => 'Access denied: Super Admin deletion restricted'], Response::HTTP_FORBIDDEN);
         }
@@ -172,7 +167,6 @@ class AdminUserController extends AbstractController
         $hashedPassword = $passwordHasher->hashPassword($user, $createUserDto->password);
         $user->setPassword($hashedPassword);
 
-        // Set the company from the context (resolved from URL slug)
         $company = $tenantContext->getCurrentCompany();
         if (!$company) {
             return $this->json(['message' => 'Could not determine company context'], Response::HTTP_BAD_REQUEST);

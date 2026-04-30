@@ -141,7 +141,6 @@ class VendorController extends AbstractController
             return $this->json(['message' => 'Vendor or Product not found'], Response::HTTP_NOT_FOUND);
         }
 
-        // Validate product belongs to vendor category
         if ($product->getCategory()->getId() !== $vendor->getCategory()->getId()) {
             return $this->json(['message' => 'Product must belong to the same category as the vendor'], Response::HTTP_BAD_REQUEST);
         }
@@ -251,16 +250,11 @@ class VendorController extends AbstractController
             return $this->json(['message' => 'Validation failed', 'errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
         }
 
-        // Prevent updating if already received (optional, but good for stability)
         if ($order->getStatus() === 'received' && $dto->status !== 'received') {
-             // Maybe allow changing if needed, but the user said "Automatic stock update logic... when changes to received"
-             // If we change FROM received, we might need to decrement stock, but user didn't ask for that.
-             // For now, allow it but stock logic only increases.
+
         }
 
         $order->setStatus($dto->status);
-
-        // Handle stock increment when status changes to 'received'
         if ($dto->status === 'received' && $order->getReceivedAt() === null) {
             $product = $order->getProduct();
             if ($product) {
@@ -310,7 +304,6 @@ class VendorController extends AbstractController
                 return $this->json(['message' => "Product with ID $productId not found"], Response::HTTP_NOT_FOUND);
             }
 
-            // Validate product belongs to vendor category
             if ($product->getCategory()->getId() !== $vendor->getCategory()->getId()) {
                 return $this->json(['message' => "Product '{$product->getName()}' does not belong to the same category as the vendor"], Response::HTTP_BAD_REQUEST);
             }

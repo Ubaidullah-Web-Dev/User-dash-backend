@@ -64,7 +64,6 @@ class AuthController extends AbstractController
         $hashedPassword = $passwordHasher->hashPassword($user, $registerDto->password);
         $user->setPassword($hashedPassword);
 
-        // Set the company from the context (resolved from URL slug)
         $company = $this->tenantContext->getCurrentCompany();
         if (!$company) {
             return $this->json(['message' => 'Could not determine company. Please try again.'], Response::HTTP_BAD_REQUEST);

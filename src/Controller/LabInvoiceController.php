@@ -56,7 +56,7 @@ class LabInvoiceController extends AbstractController
             'showHeader' => $request->query->getBoolean('showHeader', true),
             'type' => 'reagent',
             'logo' => $this->getLogoData(),
-            'isEditing' => true, // Assuming if we are here, it's either new or edit, we can use a generic term
+            'isEditing' => true,
             'documentTitle' => 'Reagent Inventory Record',
             'documentNumber' => 'REG-' . str_pad($product->getId(), 5, '0', STR_PAD_LEFT),
             'date' => new \DateTime(),
@@ -117,7 +117,7 @@ class LabInvoiceController extends AbstractController
             return $this->json(['message' => 'Customer not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $period = $request->query->get('period', 'monthly'); // monthly or yearly
+        $period = $request->query->get('period', 'monthly');
         $year = (int) $request->query->get('year', date('Y'));
         $month = (int) $request->query->get('month', date('n'));
 
@@ -149,7 +149,6 @@ class LabInvoiceController extends AbstractController
 
         $orders = $qb->orderBy('o.createdAt', 'ASC')->getQuery()->getResult();
 
-        // Fetch Cash Recoveries
         $crQb = $entityManager->getRepository(CashRecovery::class)->createQueryBuilder('cr')
             ->where('cr.registeredCustomer = :customer')
             ->setParameter('customer', $customer);
@@ -215,12 +214,9 @@ class LabInvoiceController extends AbstractController
             ];
         }
 
-        // Sort everything by date
         usort($statementItems, function($a, $b) {
             return $a['date'] <=> $b['date'];
         });
-
-        // Convert dates to strings for template compatibility
         foreach ($statementItems as &$item) {
             $item['date'] = $item['date']->format('Y-m-d');
             if ($item['paidAt']) $item['paidAt'] = $item['paidAt']->format('Y-m-d');
@@ -330,7 +326,7 @@ class LabInvoiceController extends AbstractController
             $startDate = new \DateTime(sprintf('%d-01-01 00:00:00', $year));
             $endDate = new \DateTime(sprintf('%d-12-31 23:59:59', $year));
             $periodLabel = (string) $year;
-        } else { // custom
+        } else {
             $startStr = $request->query->get('startDate');
             $endStr = $request->query->get('endDate');
             $startDate = new \DateTime($startStr ? $startStr . ' 00:00:00' : 'today 00:00:00');
@@ -338,7 +334,6 @@ class LabInvoiceController extends AbstractController
             $periodLabel = $startDate->format('d M Y') . ' to ' . $endDate->format('d M Y');
         }
 
-        // 1. Revenue & Customers from Orders in Period
         $orderData = $em->getRepository(Order::class)->createQueryBuilder('o')
             ->select('SUM(o.total) as total, COUNT(o.id) as customerCount')
             ->where('o.createdAt BETWEEN :start AND :end')
@@ -352,7 +347,6 @@ class LabInvoiceController extends AbstractController
         $revenue = round((float) ($orderData['total'] ?? 0));
         $customerCount = (int) ($orderData['customerCount'] ?? 0);
 
-        // 2. Total Pending: Sum of all RegisteredCustomer balances (Global)
         $totalPending = round((float) $em->getRepository(RegisteredCustomer::class)->createQueryBuilder('rc')
             ->select('SUM(rc.remainingBalance)')
             ->where('rc.company = :company')
@@ -362,7 +356,6 @@ class LabInvoiceController extends AbstractController
 
         $receivedPayments = $revenue - $totalPending; 
 
-        // 2. Expenses & Stock Added (Vendor Orders received)
         $vendorOrders = $em->getRepository(VendorOrder::class)->createQueryBuilder('vo')
             ->where('vo.status = :status')
             ->andWhere('vo.receivedAt BETWEEN :start AND :end')
@@ -383,7 +376,6 @@ class LabInvoiceController extends AbstractController
         }
         $expenses = round($expenses);
 
-        // 2b. Lab Expenses
         $labExpensesResult = $em->getRepository(LabExpense::class)->createQueryBuilder('le')
             ->select('SUM(le.amount)')
             ->where('le.expenseDate BETWEEN :start AND :end')
@@ -396,7 +388,6 @@ class LabInvoiceController extends AbstractController
 
         $labExpenses = round((float) ($labExpensesResult ?? 0));
 
-        // 3. Stock Removed (Order Items)
         $stockRemoved = $em->getRepository(OrderItem::class)->createQueryBuilder('oi')
             ->join('oi.order', 'o')
             ->select('SUM(oi.quantity)')

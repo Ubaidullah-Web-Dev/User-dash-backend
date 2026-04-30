@@ -93,7 +93,6 @@ class AdminController extends AbstractController
     #[Route('/products/{id}/permanent', name: 'admin_product_permanent_delete', methods: ['DELETE'])]
     public function permanentDeleteProduct(Product $product, EntityManagerInterface $em): JsonResponse
     {
-        // Check if there are any order items for this product
         $orderItemRepo = $em->getRepository(\App\Entity\OrderItem::class);
         $orderItemCount = $orderItemRepo->count(['product' => $product]);
 
@@ -204,7 +203,6 @@ class AdminController extends AbstractController
 
         $em->persist($category);
 
-        // Handle vendor association
         if ($vendorId) {
             $vendor = $vendorRepo->find($vendorId);
             if ($vendor && $vendor->getCompany()->getId() === $company->getId()) {
@@ -214,7 +212,6 @@ class AdminController extends AbstractController
 
         $em->flush();
 
-        // Optional initial product assignment
         $productIds = $data['productIds'] ?? [];
         if (!empty($productIds)) {
             $productRepo->bulkAssignToCategory($productIds, $category);
@@ -246,10 +243,7 @@ class AdminController extends AbstractController
 
         $vendorId = $data['vendorId'] ?? null;
         if ($vendorId !== null) {
-            // Unlink current vendors if changing (simple logic: one category can have multiple vendors but here we might want to link/unlink specific ones)
-            // User said "link it to a vendor", which implies a primary association or setting it on a specific vendor.
 
-            // First unlink vendors currently linked to this category for this company
             $currentVendors = $vendorRepo->findBy(['category' => $category]);
             foreach ($currentVendors as $v) {
                 $v->setCategory(null);
@@ -279,7 +273,6 @@ class AdminController extends AbstractController
             return $this->json(['message' => 'Category not found'], Response::HTTP_NOT_FOUND);
         }
 
-        // Check if category has products
         if (!$category->getProducts()->isEmpty()) {
             return $this->json([
                 'message' => 'Cannot delete category with associated products. Reassign products first.'
@@ -313,7 +306,6 @@ class AdminController extends AbstractController
             return $this->json(['message' => 'No products specified'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Filter products to ensure they belong to the same company
         $validProductIds = [];
         foreach ($productIds as $pId) {
             $p = $productRepo->find($pId);
@@ -367,7 +359,6 @@ class AdminController extends AbstractController
         $paginatedResponse = $categoryRepo->getPaginatedFilterCategories($filters, $page, $limit);
 
         $data = array_map(function (\App\Entity\Category $category) {
-            // Find linked vendor (we assume simple 1-1 for now as per user intent)
             $vendor = null;
             if (!$category->getVendors()->isEmpty()) {
                 $v = $category->getVendors()->first();
@@ -502,14 +493,13 @@ class AdminController extends AbstractController
 
             $order->addItem($orderItem);
 
-            // Deduct stock
             $product->setStock($product->getStock() - $quantity);
         }
 
         $order->setTotal($total - $totalDiscountAmount);
         $order->setAmountTendered($amountTendered);
         $order->setChangeDue($changeDue);
-        $order->setDiscountPercentage(null); // No longer a single percentage
+        $order->setDiscountPercentage(null);
         $order->setDiscountAmount($totalDiscountAmount);
 
         $previousBalancePayment = (float) ($data['previousBalancePayment'] ?? 0);
@@ -522,18 +512,14 @@ class AdminController extends AbstractController
                 if (!$registeredCustomer->isActive()) {
                     return $this->json(['message' => 'The selected customer is disabled and cannot make new orders.'], Response::HTTP_BAD_REQUEST);
                 }
-                // If change is negative, customer underpaid. Add to outstanding balance.
                 if ($changeDue < 0) {
                     $registeredCustomer->addRemainingBalance(abs($changeDue));
                 }
-
-                // Subtract the previous balance payment
                 if ($previousBalancePayment > 0) {
                     $registeredCustomer->setRemainingBalance(
                         $registeredCustomer->getRemainingBalance() - $previousBalancePayment
                     );
                     
-                    // Distribute previous balance payment to unpaid orders
                     $paymentToDistribute = $previousBalancePayment;
                     $unpaidOrders = $em->getRepository(\App\Entity\Order::class)->createQueryBuilder('o')
                         ->where('o.registeredCustomer = :customer')
@@ -559,7 +545,6 @@ class AdminController extends AbstractController
                 }
 
                 $registeredCustomer->addOrder($order);
-                // Total spent updated inside addOrder
             }
         } elseif ($phone) {
             $registeredCustomer = $registeredCustomerRepo->findOneBy(['phone' => $phone, 'company' => $companyId]);
@@ -579,7 +564,6 @@ class AdminController extends AbstractController
                     $registeredCustomer->getRemainingBalance() - $previousBalancePayment
                 );
                 
-                // Distribute previous balance payment to unpaid orders
                 $paymentToDistribute = $previousBalancePayment;
                 $unpaidOrders = $em->getRepository(\App\Entity\Order::class)->createQueryBuilder('o')
                     ->where('o.registeredCustomer = :customer')
