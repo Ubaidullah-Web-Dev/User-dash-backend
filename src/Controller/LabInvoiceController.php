@@ -139,12 +139,14 @@ class LabInvoiceController extends AbstractController
             $startDate = new \DateTime($startStr ? $startStr . ' 00:00:00' : 'today 00:00:00');
             $endDate = new \DateTime($endStr ? $endStr . ' 23:59:59' : 'today 23:59:59');
             $periodLabel = $startDate->format('d M Y') . ' to ' . $endDate->format('d M Y');
-            
+        } else {
+            $periodLabel = 'All Time';
+        }
+
+        if ($period !== 'all' && isset($startDate) && isset($endDate)) {
             $qb->andWhere('o.createdAt BETWEEN :start AND :end')
                 ->setParameter('start', $startDate)
                 ->setParameter('end', $endDate);
-        } else {
-            $periodLabel = 'All Time';
         }
 
         $orders = $qb->orderBy('o.createdAt', 'ASC')->getQuery()->getResult();
@@ -231,6 +233,8 @@ class LabInvoiceController extends AbstractController
             'address' => $settings['address'] ?? 'N/A',
         ];
 
+        $periodClosingBalance = $totalSpent - $totalPaid;
+
         $html = $this->renderView('invoice/customer_statement.html.twig', [
             'showHeader' => $request->query->getBoolean('showHeader', true),
             'logo' => $this->getLogoData(),
@@ -242,7 +246,7 @@ class LabInvoiceController extends AbstractController
                 'city' => $customer->getCity(),
                 'address' => $customer->getAddress()
             ],
-            'customerRemainingBalance' => round($customer->getRemainingBalance()),
+            'customerRemainingBalance' => round($periodClosingBalance),
             'periodLabel' => $periodLabel,
             'orders' => $statementItems,
             'totalSpent' => round($totalSpent),
