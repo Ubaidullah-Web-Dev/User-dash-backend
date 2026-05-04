@@ -347,14 +347,27 @@ class LabInvoiceController extends AbstractController
         $revenue = round((float) ($orderData['total'] ?? 0));
         $customerCount = (int) ($orderData['customerCount'] ?? 0);
 
-        $totalPending = round((float) $em->getRepository(RegisteredCustomer::class)->createQueryBuilder('rc')
-            ->select('SUM(rc.remainingBalance)')
-            ->where('rc.company = :company')
+        $totalPending = round((float) $em->getRepository(Order::class)->createQueryBuilder('o')
+            ->select('SUM(CASE WHEN o.changeDue < 0 THEN ABS(o.changeDue) ELSE 0 END)')
+            ->where('o.createdAt BETWEEN :start AND :end')
+            ->andWhere('o.company = :company')
+            ->setParameter('start', $startDate)
+            ->setParameter('end', $endDate)
             ->setParameter('company', $tenantContext->getCurrentCompanyId())
             ->getQuery()
             ->getSingleScalarResult());
 
-        $receivedPayments = $revenue - $totalPending; 
+        $recoveries = round((float) $em->getRepository(CashRecovery::class)->createQueryBuilder('cr')
+            ->select('SUM(cr.amount)')
+            ->where('cr.createdAt BETWEEN :start AND :end')
+            ->andWhere('cr.company = :company')
+            ->setParameter('start', $startDate)
+            ->setParameter('end', $endDate)
+            ->setParameter('company', $tenantContext->getCurrentCompanyId())
+            ->getQuery()
+            ->getSingleScalarResult());
+
+        $receivedPayments = ($revenue - $totalPending) + $recoveries; 
 
         $vendorOrders = $em->getRepository(VendorOrder::class)->createQueryBuilder('vo')
             ->where('vo.status = :status')

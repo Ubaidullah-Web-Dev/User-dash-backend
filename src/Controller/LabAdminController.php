@@ -316,6 +316,14 @@ class LabAdminController extends AbstractController
         $customer = $order->getRegisteredCustomer();
         if ($customer) {
             $customer->setRemainingBalance($customer->getRemainingBalance() - $actualPayment);
+
+            $recovery = new \App\Entity\CashRecovery();
+            $recovery->setAmount($actualPayment);
+            $recovery->setRegisteredCustomer($customer);
+            $recovery->setCompany($order->getCompany());
+            $recovery->setUser($this->getUser());
+            $recovery->setRemarks('Invoice Payment: ' . $order->getId());
+            $em->persist($recovery);
         }
 
         $em->flush();
