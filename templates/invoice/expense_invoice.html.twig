@@ -209,7 +209,7 @@
                     <div class="doc-type">Official Business Expense Record</div>
                     <table class="invoice-meta" align="right" style="margin-top: 10px;">
                         <tr><td><strong>Ref No:</strong></td><td style="padding-left: 15px; font-weight: bold;">{{ documentNumber }}</td></tr>
-                        <tr><td><strong>Date:</strong></td><td style="padding-left: 15px;">{{ date|date('d M Y, h:i A') }}</td></tr>
+                        <tr><td><strong>Date:</strong></td><td style="padding-left: 15px;">{{ date|date('d M Y, h:i A', 'Asia/Karachi') }}</td></tr>
                         <tr><td><strong>Maker:</strong></td><td style="padding-left: 15px;">{{ invoiceMaker|default('N/A') }}</td></tr>
                     </table>
                 </td>

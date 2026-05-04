@@ -180,7 +180,7 @@
                     <div class="invoice-title">Order Invoice</div>
                     <table class="invoice-meta" align="right">
                         <tr><td><strong>Invoice No:</strong></td><td style="padding-left: 15px;">#INV-{{ "%05d"|format(order.id) }}</td></tr>
-                        <tr><td><strong>Date:</strong></td><td style="padding-left: 15px;">{{ order.createdAt|date('d/m/Y h:i A') }}</td></tr>
+                        <tr><td><strong>Date:</strong></td><td style="padding-left: 15px;">{{ order.createdAt|date('d/m/Y h:i A', 'Asia/Karachi') }}</td></tr>
                         <tr><td><strong>Maker:</strong></td><td style="padding-left: 15px;">{{ invoiceMaker|default('N/A') }}</td></tr>
                     </table>
                 </td>

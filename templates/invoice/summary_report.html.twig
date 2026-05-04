@@ -67,7 +67,13 @@
         }
 
         /* Stats Grid */
-        .stats-grid { width: 100%; border-collapse: separate; border-spacing: 10px 0; margin: 0 -10px; }
+        .stats-grid {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 10px 0;
+            margin: 0 -10px;
+        }
+
         .stat-card {
             background: #f8f9fa;
             padding: 15px;
@@ -77,10 +83,28 @@
             text-align: center;
             vertical-align: top;
         }
-        .stat-label { font-size: 9px; font-weight: bold; color: #666; text-transform: uppercase; margin-bottom: 5px; }
-        .stat-value { font-size: 15px; font-weight: bold; color: #333; }
-        .positive { color: #27ae60; }
-        .negative { color: #c0392b; }
+
+        .stat-label {
+            font-size: 9px;
+            font-weight: bold;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 15px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .positive {
+            color: #27ae60;
+        }
+
+        .negative {
+            color: #c0392b;
+        }
 
         /* Table */
         .table {
@@ -103,8 +127,11 @@
             border-left: 1px solid #ddd;
             border-right: 1px solid #ddd;
         }
-        .text-right { text-align: right; }
-        
+
+        .text-right {
+            text-align: right;
+        }
+
         .last-page-footer {
             position: absolute;
             bottom: 40px;
@@ -123,15 +150,19 @@
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr>
                 <td width="15%" valign="middle" align="center">
-                    {% if logo is defined and logo %}<img src="{{ logo }}" style="max-height: 80px; max-width: 100%;" alt="UHS">{% else %}<div style="font-size: 24px; font-weight: bold; color: #c94b26;">UHS</div>{% endif %}
+                    {% if logo is defined and logo %}<img src="{{ logo }}" style="max-height: 80px; max-width: 100%;"
+                        alt="UHS">{% else %}<div style="font-size: 24px; font-weight: bold; color: #c94b26;">UHS</div>{%
+                    endif %}
                 </td>
                 <td width="85%" valign="middle" style="padding-left: 15px;">
-                    <div style="font-family: 'Times New Roman', Times, serif; font-size: 24px; font-weight: bold; margin-bottom: 5px; letter-spacing: 1px;">
+                    <div
+                        style="font-family: 'Times New Roman', Times, serif; font-size: 24px; font-weight: bold; margin-bottom: 5px; letter-spacing: 1px;">
                         <span style="color: #c94b26;">UNIQUE</span>
                         <span style="color: #1b887a;"> HEALTHCARE </span>
                         <span style="color: #1b2a88;">SOLUTIONS</span>
                     </div>
-                    <div style="background-color: #1b2a88; color: #ffffff; display: inline-block; padding: 5px 15px; font-size: 13px; font-weight: bold;">
+                    <div
+                        style="background-color: #1b2a88; color: #ffffff; display: inline-block; padding: 5px 15px; font-size: 13px; font-weight: bold;">
                         EXCELLENT IN DIAGNOSTIC SERVICES
                     </div>
                 </td>
@@ -146,9 +177,10 @@
             <tr>
                 <td width="55%" valign="top">
                     <div class="section-title">Operational Context:</div>
-                    <div style="background-color: #f8f9fa; padding: 12px; border-left: 4px solid #2e5aac; border-radius: 4px;">
+                    <div
+                        style="background-color: #f8f9fa; padding: 12px; border-left: 4px solid #2e5aac; border-radius: 4px;">
                         <div style="font-size: 11px; color: #333; line-height: 1.5;">
-                            This document provides a comprehensive high-level analysis of laboratory operations, 
+                            This document provides a comprehensive high-level analysis of laboratory operations,
                             financial health, and inventory movements for the specified period.
                         </div>
                     </div>
@@ -156,9 +188,18 @@
                 <td width="45%" valign="top" align="right">
                     <div class="invoice-title">INTELLIGENCE REPORT</div>
                     <table class="invoice-meta" align="right">
-                        <tr><td><strong>Report Type:</strong></td><td style="padding-left: 15px;">{{ reportType }} Summary</td></tr>
-                        <tr><td><strong>Period:</strong></td><td style="padding-left: 15px; font-weight: bold; color: #2e5aac;">{{ periodLabel }}</td></tr>
-                        <tr><td><strong>Generated:</strong></td><td style="padding-left: 15px;">{{ "now"|date('d M Y, h:i A') }}</td></tr>
+                        <tr>
+                            <td><strong>Report Type:</strong></td>
+                            <td style="padding-left: 15px;">{{ reportType }} Summary</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Period:</strong></td>
+                            <td style="padding-left: 15px; font-weight: bold; color: #2e5aac;">{{ periodLabel }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Generated:</strong></td>
+                            <td style="padding-left: 15px;">{{ "now"|date('d M Y, h:i A', 'Asia/Karachi') }}</td>
+                        </tr>
                     </table>
                 </td>
             </tr>
@@ -202,7 +243,9 @@
         </div>
 
         <div style="text-align: right; padding-right: 50px;">
-            <div style="display: inline-block; width: 200px; border-top: 1px solid #000; margin-bottom: 5px; text-align: left;"></div>
+            <div
+                style="display: inline-block; width: 200px; border-top: 1px solid #000; margin-bottom: 5px; text-align: left;">
+            </div>
             <div style="text-align: right; font-weight: bold; width: 200px; float: right;">Authorized Signature</div>
             <div style="clear: both;"></div>
         </div>
@@ -211,40 +254,47 @@
     <!-- FOOTER -->
     <div class="footer">
         {% if showHeader %}
-        <div style="background-color: #1b2a88; color: #ffffff; text-align: center; padding: 6px; font-size: 11px; font-weight: bold; margin-bottom: 8px;">
+        <div
+            style="background-color: #1b2a88; color: #ffffff; text-align: center; padding: 6px; font-size: 11px; font-weight: bold; margin-bottom: 8px;">
             WHOLESALE DISTRIBUTOR OF LAB DISPOSABLE ITEMS & DIAGNOSTIC REAGENTS
         </div>
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 8px;">
             <tr>
                 <!-- Address -->
                 <td width="20" valign="middle" align="left" style="width: 20px;">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMiIgaGVpZ2h0PSIxMiIgdmlld0JveD0iMCAwIDEyIDEyIj48cGF0aCBkPSJNNiAwQzQgMCAyIDIgMiA0YzAgMyA0IDggNCA4czQtNSA0LThjMC0yLTItNC00LTR6bTAgNmMtMS4xIDAtMi0uOS0yLTJzLjktMiAyLTIgMiAuOSAyIDItLjkgMi0yIDJ6IiBmaWxsPSIjMWIyYTg4Ii8+PC9zdmc+" width="12" height="12" style="display: block; width: 12px; height: 12px;">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMiIgaGVpZ2h0PSIxMiIgdmlld0JveD0iMCAwIDEyIDEyIj48cGF0aCBkPSJNNiAwQzQgMCAyIDIgMiA0YzAgMyA0IDggNCA4czQtNSA0LThjMC0yLTItNC00LTR6bTAgNmMtMS4xIDAtMi0uOS0yLTJzLjktMiAyLTIgMiAuOSAyIDItLjkgMi0yIDJ6IiBmaWxsPSIjMWIyYTg4Ii8+PC9zdmc+"
+                        width="12" height="12" style="display: block; width: 12px; height: 12px;">
                 </td>
-                <td width="220" valign="middle" style="font-size: 10px; font-weight: bold; text-align: left; padding-left: 10px;">
+                <td width="220" valign="middle"
+                    style="font-size: 10px; font-weight: bold; text-align: left; padding-left: 10px;">
                     HALI ROAD TEHSIL CHOWK, SAHIWAL PUNJAB PAKISTAN
                 </td>
-                
+
                 <!-- Phone -->
                 <td width="3%" valign="middle" align="center">
                     <span style="color: #1b887a; font-family: DejaVu Sans, sans-serif; font-size: 14px;">&#9742;</span>
                 </td>
-                <td width="22%" valign="middle" style="font-size: 12px; font-weight: bold; text-align: left; padding-left: 2px;">
+                <td width="22%" valign="middle"
+                    style="font-size: 12px; font-weight: bold; text-align: left; padding-left: 2px;">
                     0312 7171837
                 </td>
-                
+
                 <!-- Email -->
                 <td width="4%" valign="middle" align="right">
                     <span style="color: #c94b26; font-family: DejaVu Sans, sans-serif; font-size: 14px;">&#9993;</span>
                 </td>
-                <td width="31%" valign="middle" style="font-size: 11px; font-weight: bold; text-align: right; padding-left: 2px;">
+                <td width="31%" valign="middle"
+                    style="font-size: 11px; font-weight: bold; text-align: right; padding-left: 2px;">
                     uniquehealthcaresolution.swl@gmail.com
                 </td>
             </tr>
         </table>
-        <div style="background-color: #cda34f; color: #000; text-align: center; padding: 4px; font-size: 10px; font-weight: bold;">
+        <div
+            style="background-color: #cda34f; color: #000; text-align: center; padding: 4px; font-size: 10px; font-weight: bold;">
             Laboratory, Radiology & Hospital Equipment, Biomedical Services & General Order Supplier
         </div>
         {% endif %}
     </div>
 </body>
+
 </html>
