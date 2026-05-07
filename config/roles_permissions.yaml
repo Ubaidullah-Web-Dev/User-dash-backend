@@ -21,6 +21,7 @@ roles:
     ROLE_ARCHITECTURAL:
         permissions:
             - USER_VIEW
+            - USER_CREATE
             - USER_EDIT_ROLE
             - USER_DELETE
 
@@ -37,6 +38,7 @@ roles:
             - POST_EDIT_ALL
             - POST_DELETE
             - USER_VIEW
+            - USER_CREATE
             - USER_EDIT_ROLE
             - USER_DELETE
             - SETTINGS_EDIT
