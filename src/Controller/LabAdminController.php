@@ -266,9 +266,15 @@ class LabAdminController extends AbstractController
             $quantity = (int) ($itemData['quantity'] ?? 0);
             $price = (float) ($itemData['price'] ?? $product->getPrice());
             $discountPercent = (float) ($itemData['discountPercentage'] ?? 0);
-
             $itemSubtotal = $price * $quantity;
-            $itemDiscount = ($itemSubtotal * $discountPercent) / 100;
+            $itemDiscount = 0;
+
+            if (isset($itemData['discountAmount'])) {
+                $itemDiscount = (float) $itemData['discountAmount'];
+                $discountPercent = $itemSubtotal > 0 ? ($itemDiscount / $itemSubtotal) * 100 : 0;
+            } else {
+                $itemDiscount = ($itemSubtotal * $discountPercent) / 100;
+            }
 
             $orderItem = new \App\Entity\OrderItem();
             $orderItem->setOrder($order);

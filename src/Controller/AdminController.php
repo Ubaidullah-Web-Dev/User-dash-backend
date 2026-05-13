@@ -458,8 +458,6 @@ class AdminController extends AbstractController
         foreach ($items as $itemData) {
             $productId = $itemData['productId'] ?? null;
             $quantity = $itemData['quantity'] ?? 0;
-            $itemDiscountPercentage = (float) ($itemData['discountPercentage'] ?? 0);
-
             if (!$productId || $quantity <= 0) {
                 return $this->json(['message' => 'Invalid product or quantity'], Response::HTTP_BAD_REQUEST);
             }
@@ -478,7 +476,15 @@ class AdminController extends AbstractController
             }
 
             $itemSubtotal = $product->getPrice() * $quantity;
-            $itemDiscountAmount = ($itemSubtotal * $itemDiscountPercentage) / 100;
+            $itemDiscountPercentage = (float) ($itemData['discountPercentage'] ?? 0);
+            $itemDiscountAmount = 0;
+
+            if (isset($itemData['discountAmount'])) {
+                $itemDiscountAmount = (float) $itemData['discountAmount'];
+                $itemDiscountPercentage = $itemSubtotal > 0 ? ($itemDiscountAmount / $itemSubtotal) * 100 : 0;
+            } else {
+                $itemDiscountAmount = ($itemSubtotal * $itemDiscountPercentage) / 100;
+            }
 
             $total += $itemSubtotal;
             $totalDiscountAmount += $itemDiscountAmount;
