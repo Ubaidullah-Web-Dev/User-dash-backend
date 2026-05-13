@@ -50,12 +50,40 @@ class LabAdminController extends AbstractController
             ->getQuery()
             ->getSingleScalarResult();
 
+        $todayPending = $orderRepo->createQueryBuilder('o')
+            ->select('SUM(o.changeDue)')
+            ->where('o.createdAt >= :today')
+            ->andWhere('o.company = :companyId')
+            ->andWhere('o.changeDue < 0')
+            ->setParameter('today', $today)
+            ->setParameter('companyId', $companyId)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $totalSales = $orderRepo->createQueryBuilder('o')
+            ->select('SUM(o.total)')
+            ->where('o.company = :companyId')
+            ->setParameter('companyId', $companyId)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $totalPending = $orderRepo->createQueryBuilder('o')
+            ->select('SUM(o.changeDue)')
+            ->where('o.company = :companyId')
+            ->andWhere('o.changeDue < 0')
+            ->setParameter('companyId', $companyId)
+            ->getQuery()
+            ->getSingleScalarResult();
+
         $recentSales = $orderRepo->findBy(['company' => $companyId], ['createdAt' => 'DESC'], 5);
 
         return $this->json([
             'totalProducts' => count($products),
             'stockValue' => round($totalStockValue),
             'todaySales' => round((float) $todaySales),
+            'totalSales' => round((float) $totalSales),
+            'todayPending' => abs((float) $todayPending),
+            'totalPending' => abs((float) $totalPending),
             'lowStockCount' => $lowStockCount,
             'recentSales' => array_map(fn(Order $o) => [
                 'id' => $o->getId(),
