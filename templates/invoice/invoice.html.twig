@@ -253,6 +253,9 @@
                     <td class="text-center">{{ loop.index }}</td>
                     <td style="font-weight: bold;">
                         {{ item.description }}
+                        {% if item.expiryDate is defined and item.expiryDate %}
+                        <div style="font-size: 8px; color: #555; font-weight: normal;">EXP: {{ item.expiryDate }}</div>
+                        {% endif %}
                         {% if item.discountPercentage is defined and item.discountPercentage > 0 %}
                         <div style="font-size: 8px; color: #c0392b; font-weight: bold;">Disc: {{ item.discountPercentage }}% (-PKR {{ item.discountAmount|number_format(0) }})</div>
                         {% endif %}

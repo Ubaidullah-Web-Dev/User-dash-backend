@@ -203,6 +203,7 @@
                             {{ item.product.category.name|default('General') }}
                             {% if item.product.companyName %} | {{ item.product.companyName }}{% endif %}
                             {% if item.product.packSize %} | {{ item.product.packSize }}{% endif %}
+                            {% if item.product.expiryDate %} | EXP: {{ item.product.expiryDate|date('d M Y') }}{% endif %}
                         </span>
                     </td>
                     <td class="text-right">PKR {{ item.price|number_format(0) }}</td>

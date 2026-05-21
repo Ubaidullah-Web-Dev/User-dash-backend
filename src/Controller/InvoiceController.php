@@ -47,6 +47,7 @@ class InvoiceController extends AbstractController
                 'discountPercentage' => $item->getDiscountPercentage(),
                 'discountAmount' => $item->getDiscountAmount(),
                 'amount' => ($item->getPrice() * $item->getQuantity()) - ($item->getDiscountAmount() ?: 0),
+                'expiryDate' => $item->getProduct()->getExpiryDate() ? $item->getProduct()->getExpiryDate()->format('d M Y') : null,
             ];
         }
 
