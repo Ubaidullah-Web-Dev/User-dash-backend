@@ -371,7 +371,7 @@ class LabInvoiceController extends AbstractController
             ->getQuery()
             ->getSingleScalarResult());
 
-        $receivedPayments = ($revenue - $totalPending) + $recoveries; 
+        $receivedPayments = $revenue - $totalPending; 
 
         $vendorOrders = $em->getRepository(VendorOrder::class)->createQueryBuilder('vo')
             ->where('vo.status = :status')
