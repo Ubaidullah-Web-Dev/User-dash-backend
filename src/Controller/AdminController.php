@@ -504,7 +504,7 @@ class AdminController extends AbstractController
 
         $order->setTotal($total - $totalDiscountAmount);
         $order->setAmountTendered($amountTendered);
-        $order->setChangeDue($changeDue);
+        $order->setChangeDue($amountTendered - ($total - $totalDiscountAmount));
         $order->setDiscountPercentage(null);
         $order->setDiscountAmount($totalDiscountAmount);
 

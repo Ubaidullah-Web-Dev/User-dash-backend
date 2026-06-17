@@ -200,12 +200,11 @@ class LabInvoiceController extends AbstractController
                 'amountTendered' => round($order->getAmountTendered() ?: 0),
                 'pending' => $pendingAmount,
                 'remarks' => $order->getRemarks(),
-                'paidAt' => $order->getPaidAt() ?: ($order->getAmountTendered() > 0 ? $order->getCreatedAt() : null)
+                'paidAt' => $order->getPaidAt()
             ];
         }
 
         foreach ($recoveries as $recovery) {
-            $totalPaid += $recovery->getAmount();
             $statementItems[] = [
                 'type' => 'recovery',
                 'date' => $recovery->getCreatedAt(),

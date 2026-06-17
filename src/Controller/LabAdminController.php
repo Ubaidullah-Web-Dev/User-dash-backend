@@ -259,7 +259,7 @@ class LabAdminController extends AbstractController
         $calculatedDiscount = 0;
 
         foreach ($newItems as $itemData) {
-            $product = $productRepo->find($itemData['productId']);
+            $product = $productRepo->findOneBy(['id' => $itemData['productId'], 'company' => $tenantContext->getCurrentCompanyId()]);
             if (!$product)
                 continue;
 
