@@ -28,11 +28,18 @@ class CreateAdminCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
+        $company = new \App\Entity\Company();
+        $company->setName('Unique Healthcare Solutions');
+        $company->setSlug('unique-healthcare');
+        $company->setSettingsJson(['address' => 'Sahiwal', 'phone' => '123456789']);
+        $this->entityManager->persist($company);
+
         $user = new User();
         $user->setEmail('admin_test@gmail.com');
         $user->setName('Admin Test');
         $user->setRoles(['ROLE_ADMIN']);
         $user->setPassword($this->passwordHasher->hashPassword($user, 'admin123'));
+        $user->setCompany($company);
 
         $this->entityManager->persist($user);
         $this->entityManager->flush();

@@ -79,7 +79,7 @@
             padding: 15px;
             border-radius: 6px;
             border: 1px solid #ddd;
-            width: 25%;
+            width: 20%;
             text-align: center;
             vertical-align: top;
         }
@@ -215,6 +215,13 @@
                     <td class="stat-card">
                         <div class="stat-label">Gross Revenue</div>
                         <div class="stat-value">PKR {{ revenue|number_format(0) }}</div>
+                    </td>
+                    <td class="stat-card">
+                        <div class="stat-label">Sales Profit</div>
+                        <div class="stat-value {{ salesProfit >= 0 ? 'positive' : 'negative' }}">
+                            {{ salesProfit >= 0 ? '+' : '' }}{{ salesProfit|number_format(0) }}
+                        </div>
+                        <div style="font-size: 7px; color: #888; margin-top: 3px;">REV - COGS</div>
                     </td>
                     <td class="stat-card">
                         <div class="stat-label">Lab Expenses</div>

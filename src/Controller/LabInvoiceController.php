@@ -416,6 +416,20 @@ class LabInvoiceController extends AbstractController
             ->getSingleScalarResult();
         $stockRemoved = (int) ($stockRemoved ?? 0);
 
+        $cogs = (float) $em->getRepository(OrderItem::class)->createQueryBuilder('oi')
+            ->join('oi.order', 'o')
+            ->join('oi.product', 'p')
+            ->select('SUM(oi.quantity * COALESCE(p.purchasePrice, 0))')
+            ->where('o.createdAt BETWEEN :start AND :end')
+            ->andWhere('o.company = :company')
+            ->setParameter('start', $startDate)
+            ->setParameter('end', $endDate)
+            ->setParameter('company', $tenantContext->getCurrentCompanyId())
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $salesProfit = $revenue - $cogs;
+
         $html = $this->renderView('invoice/summary_report.html.twig', [
             'showHeader' => $request->query->getBoolean('showHeader', true),
             'logo' => $this->getLogoData(),
@@ -425,6 +439,7 @@ class LabInvoiceController extends AbstractController
             'expenses' => $expenses,
             'labExpenses' => $labExpenses,
             'netIncome' => $receivedPayments - ($expenses + $labExpenses),
+            'salesProfit' => round($salesProfit),
             'stockAdded' => $stockAdded,
             'stockRemoved' => $stockRemoved,
             'customerCount' => $customerCount,

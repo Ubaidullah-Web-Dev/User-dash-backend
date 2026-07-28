@@ -40,13 +40,18 @@ class InvoiceController extends AbstractController
 
         $itemsData = [];
         foreach ($order->getItems() as $item) {
+            $qty = $item->getQuantity();
+            $price = $item->getPrice();
+            $discountAmount = $item->getDiscountAmount() ?: 0;
+            $amount = ($price * $qty) - $discountAmount;
+
             $itemsData[] = [
                 'description' => $item->getProduct()->getName(),
-                'qty' => $item->getQuantity(),
-                'rate' => $item->getPrice(),
+                'qty' => $qty,
+                'rate' => $price,
                 'discountPercentage' => $item->getDiscountPercentage(),
-                'discountAmount' => $item->getDiscountAmount(),
-                'amount' => ($item->getPrice() * $item->getQuantity()) - ($item->getDiscountAmount() ?: 0),
+                'discountAmount' => $discountAmount,
+                'amount' => $amount,
                 'expiryDate' => $item->getProduct()->getExpiryDate() ? $item->getProduct()->getExpiryDate()->format('d M Y') : null,
             ];
         }

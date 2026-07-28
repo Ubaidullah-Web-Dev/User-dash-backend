@@ -192,7 +192,13 @@
         <!-- PRODUCTS TABLE -->
         <table class="table">
             <thead>
-                <tr><th>Description</th><th width="15%" class="text-right">Price</th><th width="10%" class="text-center">Qty</th><th width="15%" class="text-right">Discount</th><th width="15%" class="text-right">Total</th></tr>
+                <tr>
+                    <th>Description</th>
+                    <th width="16%" class="text-right">Price</th>
+                    <th width="10%" class="text-center">Qty</th>
+                    <th width="16%" class="text-right">Discount</th>
+                    <th width="14%" class="text-right">Total</th>
+                </tr>
             </thead>
             <tbody>
                 {% for item in order.items %}
@@ -212,7 +218,7 @@
                     <td class="text-right"><strong>PKR {{ ((item.price * item.quantity) - (item.discountAmount ?? 0))|number_format(0) }}</strong></td>
                 </tr>
                 {% else %}
-                <tr><td colspan="5" class="text-center">No items found.</td></tr>
+                <tr><td colspan="7" class="text-center">No items found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -223,6 +229,7 @@
             {% if order.discountAmount > 0 %}
             <tr><td>{{ order.discountPercentage ? 'Discount (' ~ order.discountPercentage ~ '%):' : 'Total Discount:' }}</td><td class="text-right" style="color: #c0392b;">-PKR {{ order.discountAmount|number_format(0) }}</td></tr>
             {% endif %}
+
             <tr class="total"><td>Grand Total:</td><td class="text-right">PKR {{ order.total|number_format(0) }}</td></tr>
             <tr><td>Amount Paid:</td><td class="text-right">PKR {{ (order.amountTendered ?? 0)|number_format(0) }}</td></tr>
             <tr><td>Balance Due:</td><td class="text-right">

@@ -242,9 +242,10 @@
                 <tr>
                     <th width="5%" class="text-center">#</th>
                     <th>Description</th>
-                    <th width="10%" class="text-center">Qty</th>
-                    <th width="20%" class="text-right">Rate</th>
-                    <th width="20%" class="text-right">Amount</th>
+                    <th width="8%" class="text-center">Qty</th>
+                    <th width="14%" class="text-right">Rate</th>
+
+                    <th width="15%" class="text-right">Amount</th>
                 </tr>
             </thead>
             <tbody>
@@ -262,6 +263,7 @@
                     </td>
                     <td class="text-center">{{ item.qty }}</td>
                     <td class="text-right">PKR {{ item.rate|number_format(0) }}</td>
+
                     <td class="text-right" style="font-weight: bold;">PKR {{ item.amount|number_format(0) }}</td>
                 </tr>
                 {% endfor %}
@@ -274,6 +276,7 @@
             {% if discountAmount is defined and discountAmount > 0 %}
             <tr><td>{{ discountPercentage is defined and discountPercentage ? 'Discount (' ~ discountPercentage ~ '%):' : 'Total Discount:' }}</td><td class="text-right" style="color: #c0392b;">-PKR {{ discountAmount|number_format(0) }}</td></tr>
             {% endif %}
+
             <tr class="total"><td>Total Amount:</td><td class="text-right">PKR {{ total|number_format(0) }}</td></tr>
             
             {% if amountTendered is defined and amountTendered is not null and changeDue is defined %}
