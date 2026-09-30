@@ -1,0 +1,187 @@
+{# Port of app/(tenant)/[companySlug]/admin/cash-recovery/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-cash-recovery{% endblock %}
+{% block content %}
+<div class="space-y-8 animate-in fade-in duration-700" x-data="cashRecovery">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-4xl font-black tracking-tight text-foreground">Cash Recovery</h1>
+            <p class="text-muted-foreground mt-1 font-medium">Manage and recover outstanding customer balances.</p>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="flex items-center space-x-4 bg-secondary/50 p-4 rounded-2xl border border-border">
+                <div class="flex flex-col">
+                    <span class="text-xs font-black uppercase tracking-widest">Header &amp; Footer</span>
+                    <span class="text-[10px] text-muted-foreground font-bold">INCLUDE BRANDING IN PDFS</span>
+                </div>
+                <twig:Switch model="showBranding" class="data-[state=checked]:bg-primary" />
+            </div>
+            <twig:Card class="bg-primary/5 border-primary/20 shadow-none">
+                <twig:Card:Content class="py-3 px-4 flex items-center gap-3">
+                    <div class="p-2 bg-primary/10 rounded-lg"><twig:ux:icon name="lucide:banknote" class="h-5 w-5 text-primary" /></div>
+                    <div>
+                        <p class="text-[10px] uppercase font-black tracking-widest text-primary/70">Total Pending (Current Page)</p>
+                        <p class="text-lg font-black text-primary" x-text="`PKR ${Math.round(totalPending).toLocaleString()}`"></p>
+                    </div>
+                </twig:Card:Content>
+            </twig:Card>
+        </div>
+    </div>
+
+    <twig:Card class="border-none shadow-xl bg-secondary/30 backdrop-blur-sm overflow-hidden">
+        <twig:Card:Header class="pb-4">
+            <div class="relative group">
+                <twig:ux:icon name="lucide:search" class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <twig:Input placeholder="Search by name, phone or lab name..." x-model="searchQuery" class="pl-12 bg-background/50 border-none h-14 rounded-2xl text-lg font-bold shadow-inner" />
+            </div>
+        </twig:Card:Header>
+        <twig:Card:Content class="p-0">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-secondary/50 border-y border-border">
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Customer Info</th>
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Total Spent</th>
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Remaining Balance</th>
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        <template x-for="i in (loading ? 5 : 0)" :key="i">
+                            <tr class="animate-pulse"><td colspan="4" class="px-6 py-8"><div class="h-12 bg-secondary/50 rounded-xl w-full"></div></td></tr>
+                        </template>
+                        <template x-if="!loading && customers.length === 0">
+                            <tr>
+                                <td colspan="4" class="px-6 py-20 text-center">
+                                    <div class="flex flex-col items-center gap-2 opacity-50">
+                                        <twig:ux:icon name="lucide:users" class="h-12 w-12 mb-2" />
+                                        <p class="text-xl font-bold">No customers found</p>
+                                        <p class="text-sm">Try searching for someone else or check the filters.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                        <template x-for="customer in (loading ? [] : customers)" :key="customer.id">
+                            <tr class="group hover:bg-secondary/50 transition-colors">
+                                <td class="px-6 py-5">
+                                    <div class="flex items-center gap-4">
+                                        <div class="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black text-lg" x-text="customer.name[0]"></div>
+                                        <div>
+                                            <p class="font-bold text-lg group-hover:text-primary transition-colors" x-text="customer.name"></p>
+                                            <p class="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+                                                <span x-text="customer.phone"></span>
+                                                <template x-if="customer.labName">
+                                                    <span class="contents">
+                                                        <span class="h-1 w-1 rounded-full bg-muted-foreground/30"></span>
+                                                        <span class="text-primary/70" x-text="customer.labName"></span>
+                                                    </span>
+                                                </template>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5 text-right font-black text-foreground" x-text="`PKR ${Math.round(customer.totalSpent || 0).toLocaleString()}`"></td>
+                                <td class="px-6 py-5 text-right">
+                                    <span class="px-4 py-2 rounded-xl text-lg font-black italic" :class="customer.remainingBalance > 0 ? 'text-pink-500 bg-pink-500/5' : 'text-emerald-500 bg-emerald-500/5'" x-text="`PKR ${Math.round(customer.remainingBalance).toLocaleString()}`"></span>
+                                </td>
+                                <td class="px-6 py-5 text-center">
+                                    <twig:Button x-on:click="openRecovery(customer)" class="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl px-6">Recover Cash</twig:Button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </twig:Card:Content>
+    </twig:Card>
+
+    <template x-if="!loading && totalPages > 1">
+        <div class="flex justify-center gap-2">
+            <template x-for="p in pages" :key="p">
+                <div class="contents">
+                    <template x-if="page === p"><twig:Button variant="primary" x-on:click="page = p" class="w-10 h-10 rounded-xl font-bold" x-text="p"></twig:Button></template>
+                    <template x-if="page !== p"><twig:Button variant="secondary" x-on:click="page = p" class="w-10 h-10 rounded-xl font-bold" x-text="p"></twig:Button></template>
+                </div>
+            </template>
+        </div>
+    </template>
+
+    <template x-if="selectedCustomer">
+        <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-300">
+            <twig:Card class="w-full max-w-xl border-none shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-primary"></div>
+                <button type="button" @click="selectedCustomer = null" class="absolute top-6 right-6 p-2 rounded-xl hover:bg-secondary transition-colors">
+                    <twig:ux:icon name="lucide:x" class="h-6 w-6" />
+                </button>
+
+                <template x-if="!successData">
+                    <div>
+                        <twig:Card:Header class="pt-10 pb-6">
+                            <twig:Card:Title class="text-3xl font-black">Record Payment</twig:Card:Title>
+                            <twig:Card:Description class="text-lg font-medium">Collecting payment from <span class="text-primary font-bold" x-text="selectedCustomer.name"></span></twig:Card:Description>
+                        </twig:Card:Header>
+                        <twig:Card:Content class="space-y-6">
+                            <div class="p-4 bg-secondary/50 rounded-2xl flex items-center justify-between">
+                                <p class="font-bold text-muted-foreground">Current Balance</p>
+                                <p class="text-2xl font-black text-red-500 underline decoration-red-500/30 underline-offset-8" x-text="`PKR ${selectedCustomer.remainingBalance.toLocaleString()}`"></p>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Payment Amount</label>
+                                    <div class="relative group">
+                                        <twig:ux:icon name="lucide:banknote" class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                        <twig:Input type="number" placeholder="Enter amount received..." x-model="recoveryAmount"
+                                            class="pl-12 bg-secondary/30 border-none h-14 rounded-2xl text-xl font-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Remarks (Optional)</label>
+                                    <div class="relative group">
+                                        <twig:ux:icon name="lucide:file-text" class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                        <twig:Input placeholder="Reason for payment, cheque number, etc." x-model="remarks" class="pl-12 bg-secondary/30 border-none h-14 rounded-2xl font-bold" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pt-4 flex gap-3">
+                                <twig:Button variant="secondary" class="flex-1 h-14 rounded-2xl font-bold text-lg" x-on:click="selectedCustomer = null">Cancel</twig:Button>
+                                <twig:Button class="flex-[2] h-14 rounded-2xl font-black text-lg shadow-lg shadow-primary/20" x-on:click="handleRecovery()" disabledWhen="isProcessing || !recoveryAmount">
+                                    <template x-if="isProcessing"><span class="contents"><twig:ux:icon name="lucide:loader-circle" class="mr-2 h-5 w-5 animate-spin" /> Processing...</span></template>
+                                    <template x-if="!isProcessing"><span>Confirm Payment</span></template>
+                                </twig:Button>
+                            </div>
+                        </twig:Card:Content>
+                    </div>
+                </template>
+
+                <template x-if="successData">
+                    <twig:Card:Content class="pt-16 pb-12 text-center animate-in zoom-in-95 duration-500">
+                        <div class="mx-auto w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center mb-8 border-4 border-green-500/20">
+                            <twig:ux:icon name="lucide:circle-check" class="h-12 w-12 text-green-500" />
+                        </div>
+                        <h2 class="text-4xl font-black mb-2">Payment Confirmed!</h2>
+                        <p class="text-xl font-bold text-muted-foreground mb-10" x-text="`PKR ${successData.amount.toLocaleString()} received from ${selectedCustomer.name}`"></p>
+                        <div class="flex flex-col sm:flex-row gap-4 max-w-sm mx-auto">
+                            <twig:Button class="flex-1 h-14 rounded-2xl font-black text-lg bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20" x-on:click="handlePreview(successData.recoveryId)" disabledWhen="previewing">
+                                <template x-if="previewing"><twig:ux:icon name="lucide:loader-circle" class="mr-2 h-5 w-5 animate-spin" /></template>
+                                <template x-if="!previewing"><twig:ux:icon name="lucide:eye" class="mr-2 h-5 w-5" /></template>
+                                Preview
+                            </twig:Button>
+                            <twig:Button class="flex-1 h-14 rounded-2xl font-black text-lg bg-primary shadow-lg shadow-primary/20" x-on:click="handleDownload(successData.recoveryId)">
+                                <twig:ux:icon name="lucide:download" class="mr-2 h-5 w-5" />
+                                Download
+                            </twig:Button>
+                        </div>
+                        <twig:Button variant="link" class="mt-8 text-primary font-bold hover:no-underline hover:opacity-80" x-on:click="selectedCustomer = null">Go back to list</twig:Button>
+                    </twig:Card:Content>
+                </template>
+            </twig:Card>
+        </div>
+    </template>
+
+    {{ include('admin/_pdf_preview.html.twig', {
+        titleHtml: 'RECEIPT <span class="text-foreground not-italic">Preview</span>', titleClass: 'text-primary/80', zClass: 'z-[110]',
+        subtitle: 'Reviewing payment receipt', iconName: 'download',
+        buttonClass: 'bg-primary hover:bg-primary/90 text-primary-foreground font-black px-6 rounded-xl flex items-center gap-2 uppercase italic shadow-lg shadow-primary/20 h-10',
+    }) }}
+</div>
+{% endblock %}

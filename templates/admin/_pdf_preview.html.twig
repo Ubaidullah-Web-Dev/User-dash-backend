@@ -1,7 +1,7 @@
 {# Full-screen PDF preview modal shared by several admin pages (same markup in each React page).
    Variables: titleHtml (raw HTML for the h2 inner content), titleClass, subtitle, buttonClass, iconName #}
 <template x-if="previewUrl">
-    <div class="fixed inset-0 z-[100] flex flex-col bg-background/95 backdrop-blur-sm animate-in fade-in duration-300">
+    <div class="fixed inset-0 {{ zClass|default('z-[100]') }} flex flex-col bg-background/95 backdrop-blur-sm animate-in fade-in duration-300">
         <div class="p-4 border-b border-border flex justify-between items-center bg-card shadow-sm">
             <div>
                 <h2 class="text-xl font-black uppercase italic tracking-tighter {{ titleClass|default('') }}">{{ titleHtml|raw }}</h2>

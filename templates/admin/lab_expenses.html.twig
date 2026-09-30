@@ -1,0 +1,193 @@
+{# Port of app/(tenant)/[companySlug]/admin/lab-expenses/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-lab-expenses{% endblock %}
+{% set labelClass = 'text-[10px] font-black uppercase tracking-widest text-muted-foreground' %}
+{% block content %}
+<div class="space-y-10 animate-in fade-in duration-700" x-data="labExpenses">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 print:hidden">
+        <div>
+            <h1 class="text-4xl font-black text-foreground tracking-tighter mb-2 uppercase italic">LAB <span class="text-primary not-italic">EXPENSES</span></h1>
+            <p class="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">Manage all laboratory operational and one-off expenses.</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex bg-secondary/30 p-2 rounded-2xl border border-border items-center gap-4 px-4 h-11">
+                <div class="flex items-center gap-2">
+                    <twig:Switch model="showHeader" id="show-header" class="data-[state=checked]:bg-primary" />
+                    <twig:Label for="show-header" class="text-[9px] font-black uppercase tracking-widest cursor-pointer opacity-70">Header/Footer</twig:Label>
+                </div>
+            </div>
+            <twig:Button x-on:click="showAddModal = true" class="bg-primary hover:opacity-90 text-primary-foreground font-black px-6 rounded-xl h-11 shadow-lg shadow-primary/20 flex items-center gap-2 transition-all active:scale-95">
+                <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
+                RECORD NEW EXPENSE
+            </twig:Button>
+        </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-[2.5rem] p-6 shadow-sm print:hidden">
+        <div class="flex flex-col md:flex-row gap-4">
+            <div class="space-y-2 flex-grow">
+                <twig:Label class="{{ labelClass }} ml-1">Search Expenses</twig:Label>
+                <div class="relative">
+                    <twig:ux:icon name="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <twig:Input placeholder="Search by title or description..." x-model="searchQuery" x-on:input="onFiltersChanged()" class="pl-10 bg-secondary/30 border-border rounded-xl h-11 font-bold text-sm focus-visible:ring-primary/50" />
+                </div>
+            </div>
+            <div class="space-y-2">
+                <twig:Label class="{{ labelClass }} ml-1 flex items-center gap-1"><twig:ux:icon name="lucide:calendar" class="h-3 w-3" /> Start Date</twig:Label>
+                <twig:Input type="date" x-model="startDate" x-on:input="onFiltersChanged()" class="bg-secondary/30 border-border rounded-xl h-11 font-bold text-sm focus-visible:ring-primary/50 w-full md:w-40" />
+            </div>
+            <div class="space-y-2">
+                <twig:Label class="{{ labelClass }} ml-1 flex items-center gap-1"><twig:ux:icon name="lucide:calendar" class="h-3 w-3" /> End Date</twig:Label>
+                <twig:Input type="date" x-model="endDate" x-on:input="onFiltersChanged()" class="bg-secondary/30 border-border rounded-xl h-11 font-bold text-sm focus-visible:ring-primary/50 w-full md:w-40" />
+            </div>
+            <div class="flex items-end min-w-max">
+                <twig:Button variant="ghost" x-on:click="resetFilters()" class="text-muted-foreground hover:text-foreground h-11 px-4 rounded-xl font-bold flex items-center gap-2 w-full">
+                    <twig:ux:icon name="lucide:funnel-x" class="h-4 w-4" /> Reset Filters
+                </twig:Button>
+            </div>
+        </div>
+    </div>
+
+    <twig:Card class="bg-card border-border rounded-[2.5rem] shadow-sm overflow-hidden text-foreground print:hidden">
+        <twig:Card:Header class="p-8 border-b border-border bg-secondary/10 flex flex-row items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-primary/20 rounded-lg text-primary"><twig:ux:icon name="lucide:receipt-text" class="h-5 w-5" /></div>
+                <div><twig:Card:Title class="text-xl font-black">EXPENSE HISTORY</twig:Card:Title></div>
+            </div>
+        </twig:Card:Header>
+        <twig:Card:Content class="p-0">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-secondary/5 border-b border-border">
+                        <tr>
+                            <th class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Details</th>
+                            <th class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Category</th>
+                            <th class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Amount</th>
+                            <th class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Date</th>
+                            <th class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        <template x-if="loading && expenses.length === 0">
+                            <tr><td colspan="5" class="p-12 text-center font-black uppercase italic text-primary/50 animate-pulse">Loading Expenses...</td></tr>
+                        </template>
+                        <template x-if="!(loading && expenses.length === 0) && expenses.length === 0">
+                            <tr><td colspan="5" class="p-12 text-center text-muted-foreground font-black uppercase tracking-widest text-xs">No expenses found.</td></tr>
+                        </template>
+                        <template x-for="expense in expenses" :key="expense.id">
+                            <tr class="hover:bg-secondary/20 transition-all border-b border-border dark:border-slate-800">
+                                <td class="p-6">
+                                    <div class="flex items-center gap-3">
+                                        <div class="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-lg" x-text="expense.title.charAt(0).toUpperCase()"></div>
+                                        <div>
+                                            <p class="font-bold text-foreground text-base leading-tight mb-0.5" x-text="expense.title"></p>
+                                            <p class="text-[10px] text-muted-foreground font-medium max-w-[200px] truncate" x-text="expense.description || 'No description provided'"></p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="p-6 text-xs font-black text-muted-foreground tracking-wider uppercase">
+                                    <span class="px-2 py-1 bg-secondary rounded-lg border border-border" x-text="expense.category || 'General'"></span>
+                                </td>
+                                <td class="p-6 text-center">
+                                    <span class="text-base font-black text-red-500" x-text="`PKR ${Math.round(parseFloat(expense.amount)).toLocaleString()}`"></span>
+                                </td>
+                                <td class="p-6 text-center">
+                                    <div class="flex items-center justify-center gap-1.5 text-muted-foreground font-bold text-xs">
+                                        <twig:ux:icon name="lucide:calendar" class="h-3 w-3" />
+                                        <span x-text="expense.expenseDate"></span>
+                                    </div>
+                                </td>
+                                <td class="p-6 text-right">
+                                    <div class="flex justify-end gap-2">
+                                        <twig:Button variant="ghost" size="icon" class="h-10 w-10 text-muted-foreground hover:bg-primary/10 hover:text-primary rounded-xl" x-on:click="handlePreview(expense.id)" disabledWhen="previewing === expense.id">
+                                            <template x-if="previewing === expense.id"><twig:ux:icon name="lucide:loader-circle" class="h-4 w-4 animate-spin" /></template>
+                                            <template x-if="previewing !== expense.id"><twig:ux:icon name="lucide:eye" class="h-4 w-4" /></template>
+                                        </twig:Button>
+                                        <twig:Button variant="ghost" size="icon" class="h-10 w-10 text-muted-foreground hover:bg-primary/10 hover:text-primary rounded-xl" x-on:click="handleDownload(expense.id)">
+                                            <twig:ux:icon name="lucide:file-down" class="h-4 w-4" />
+                                        </twig:Button>
+                                        <twig:Button variant="ghost" size="icon" class="h-10 w-10 text-muted-foreground hover:bg-red-500/10 hover:text-red-500 rounded-xl" x-on:click="handleDelete(expense.id)">
+                                            <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />
+                                        </twig:Button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+
+            <template x-if="totalPages > 1">
+                <div class="p-6 border-t border-border bg-secondary/5 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <p class="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                        Showing <span class="text-foreground" x-text="(currentPage - 1) * limit + 1"></span> to <span class="text-foreground" x-text="Math.min(currentPage * limit, totalItems)"></span> of <span class="text-foreground" x-text="totalItems"></span> expenses
+                    </p>
+                    <div class="flex items-center gap-2">
+                        <twig:Button variant="outline" size="icon" x-on:click="currentPage = 1" disabledWhen="currentPage === 1 || loading" class="h-10 w-10 rounded-xl border-border bg-card hover:bg-secondary/20 disabled:opacity-50"><twig:ux:icon name="lucide:chevrons-left" class="h-4 w-4" /></twig:Button>
+                        <twig:Button variant="outline" size="icon" x-on:click="currentPage = Math.max(1, currentPage - 1)" disabledWhen="currentPage === 1 || loading" class="h-10 w-10 rounded-xl border-border bg-card hover:bg-secondary/20 disabled:opacity-50"><twig:ux:icon name="lucide:chevron-left" class="h-4 w-4" /></twig:Button>
+                        <div class="flex items-center gap-1 mx-2">
+                            <div class="h-10 px-4 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                                <span class="text-xs font-black text-primary" x-text="`Page ${currentPage} of ${totalPages}`"></span>
+                            </div>
+                        </div>
+                        <twig:Button variant="outline" size="icon" x-on:click="currentPage = Math.min(totalPages, currentPage + 1)" disabledWhen="currentPage === totalPages || loading" class="h-10 w-10 rounded-xl border-border bg-card hover:bg-secondary/20 disabled:opacity-50"><twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" /></twig:Button>
+                        <twig:Button variant="outline" size="icon" x-on:click="currentPage = totalPages" disabledWhen="currentPage === totalPages || loading" class="h-10 w-10 rounded-xl border-border bg-card hover:bg-secondary/20 disabled:opacity-50"><twig:ux:icon name="lucide:chevrons-right" class="h-4 w-4" /></twig:Button>
+                    </div>
+                </div>
+            </template>
+        </twig:Card:Content>
+    </twig:Card>
+
+    <template x-if="showAddModal">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300 print:hidden">
+            <div class="bg-card w-full max-w-2xl rounded-[2rem] shadow-2xl border border-border overflow-hidden animate-in slide-in-from-bottom-10 duration-500">
+                <div class="px-6 py-5 border-b border-border bg-secondary/30 flex justify-between items-center">
+                    <h2 class="text-lg font-black text-foreground flex items-center gap-2">
+                        <twig:ux:icon name="lucide:wallet" class="h-5 w-5 text-primary" />
+                        UNIVERSAL EXPENSE FORM
+                    </h2>
+                    <twig:Button variant="ghost" size="icon" x-on:click="showAddModal = false" class="rounded-full hover:bg-foreground/10 h-8 w-8"><twig:ux:icon name="lucide:x" class="h-4 w-4" /></twig:Button>
+                </div>
+                <form @submit.prevent="handleCreateExpense()" class="p-6 space-y-5">
+                    <div class="space-y-2">
+                        <twig:Label class="{{ labelClass }}">Expense Title / Item</twig:Label>
+                        <twig:Input required x-init="$nextTick(() => $el.focus())" placeholder="e.g. Utility Bill, New Microscopes..." x-model="newExpense.title" class="bg-secondary/20 h-11 rounded-xl px-4 font-bold text-sm border-border" />
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="space-y-2">
+                            <twig:Label class="{{ labelClass }}">Amount (PKR)</twig:Label>
+                            <div class="relative">
+                                <div class="absolute left-3 top-1/2 -translate-y-1/2 font-black text-muted-foreground text-xs">PKR</div>
+                                <twig:Input required type="number" min="0" placeholder="0" x-model="newExpense.amount" class="bg-secondary/20 h-11 rounded-xl pl-12 font-black text-sm border-border text-primary" />
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <twig:Label class="{{ labelClass }}">Date</twig:Label>
+                            <twig:Input required type="date" x-model="newExpense.expenseDate" class="bg-secondary/20 h-11 rounded-xl px-4 font-bold text-sm border-border font-mono" />
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <twig:Label class="{{ labelClass }}">Category</twig:Label>
+                        <twig:Select model="newExpense.category" options="categoryOptions" placeholder="Select Category" triggerClass="bg-secondary/20 h-11 rounded-xl px-4 font-bold text-sm border-border" contentClass="border-border rounded-xl shadow-xl" />
+                    </div>
+                    <div class="space-y-2">
+                        <twig:Label class="{{ labelClass }}">Description / Notes (Optional)</twig:Label>
+                        <textarea class="w-full bg-secondary/20 rounded-xl p-3 text-sm font-medium text-foreground border border-border focus:ring-2 focus:ring-primary/50 outline-none resize-none" rows="3"
+                                  placeholder="Add any relevant details about this expense..." x-model="newExpense.description"></textarea>
+                    </div>
+                    <div class="pt-2 flex items-center justify-end gap-3">
+                        <twig:Button type="button" variant="ghost" x-on:click="showAddModal = false" class="h-11 px-6 rounded-xl font-bold text-sm">CANCEL</twig:Button>
+                        <twig:Button type="submit" class="bg-primary hover:opacity-90 text-primary-foreground font-black h-11 px-8 rounded-xl shadow-lg shadow-primary/20 text-sm">RECORD EXPENSE</twig:Button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+
+    {{ include('admin/_pdf_preview.html.twig', {
+        titleHtml: 'EXPENSE <span class="text-foreground not-italic">Receipt</span>', titleClass: 'text-primary',
+        subtitle: 'Reviewing digital document', iconName: 'file-down',
+        buttonClass: 'bg-primary hover:bg-primary/90 text-white font-black px-6 rounded-xl flex items-center gap-2 uppercase italic shadow-lg shadow-primary/20 h-10 text-xs',
+    }) }}
+</div>
+{% endblock %}

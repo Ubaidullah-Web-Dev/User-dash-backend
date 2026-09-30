@@ -5,11 +5,11 @@ import { Controller } from '@hotwired/stimulus';
 // width on the next page (no flicker).
 export default class extends Controller {
     static targets = ['aside', 'content', 'compactOnly', 'expandedOnly', 'openButton', 'item'];
-    static values = { compact: Boolean, open: { type: Boolean, default: true } };
+    static values = { compact: Boolean, open: { type: Boolean, default: true }, cookie: { type: String, default: 'sidebar_compact' } };
 
     toggleCompact() {
         this.compactValue = !this.compactValue;
-        document.cookie = `sidebar_compact=${this.compactValue ? 1 : 0}; path=/; max-age=31536000; SameSite=Lax`;
+        document.cookie = `${this.cookieValue}=${this.compactValue ? 1 : 0}; path=/; max-age=31536000; SameSite=Lax`;
     }
 
     open() { this.openValue = true; }

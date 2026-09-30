@@ -1,0 +1,122 @@
+{# Port of app/super-admin/companies/page.tsx #}
+{% extends 'super_admin/layout.html.twig' %}
+{% block pages %}super-admin-companies{% endblock %}
+{% set labelClass = 'text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1' %}
+{% set inputClass = 'h-12 rounded-xl bg-secondary/30 border-border/50 focus:ring-primary/20' %}
+{% block content %}
+<div x-data="companiesGovernance">
+    <template x-if="loading">
+        <div class="h-[60vh] flex flex-col items-center justify-center space-y-4">
+            <twig:ux:icon name="lucide:loader-circle" class="h-10 w-10 animate-spin text-primary/40" />
+            <div class="text-sm font-medium text-muted-foreground animate-pulse">Loading companies...</div>
+        </div>
+    </template>
+    <template x-if="!loading">
+        <div class="space-y-8 animate-in fade-in duration-700">
+            <div class="flex items-center justify-between pb-4 border-b">
+                <div>
+                    <h1 class="text-3xl font-bold tracking-tight text-foreground">Companies</h1>
+                    <p class="text-muted-foreground">Manage organizational nodes and administration.</p>
+                </div>
+                <twig:Button x-on:click="isCreatingCompany = true" class="rounded-xl shadow-lg shadow-primary/10">
+                    <twig:ux:icon name="lucide:plus" class="h-4 w-4 mr-2" />
+                    New Company
+                </twig:Button>
+            </div>
+
+            <div class="rounded-2xl border border-border/50 bg-card shadow-sm overflow-hidden">
+                <twig:Table>
+                    <twig:Table:Header class="bg-secondary/30">
+                        <twig:Table:Row>
+                            <twig:Table:Head class="font-bold text-[11px] uppercase tracking-wider py-4 pl-6 text-muted-foreground">Company Name</twig:Table:Head>
+                            <twig:Table:Head class="font-bold text-[11px] uppercase tracking-wider py-4 text-center text-muted-foreground">Slug</twig:Table:Head>
+                            <twig:Table:Head class="font-bold text-[11px] uppercase tracking-wider py-4 text-muted-foreground">Created At</twig:Table:Head>
+                            <twig:Table:Head class="font-bold text-[11px] uppercase tracking-wider py-4 pr-6 text-right text-muted-foreground">Actions</twig:Table:Head>
+                        </twig:Table:Row>
+                    </twig:Table:Header>
+                    <twig:Table:Body>
+                        <template x-for="company in companies" :key="company.id">
+                            <twig:Table:Row class="hover:bg-secondary/20 transition-colors border-border/50">
+                                <twig:Table:Cell class="py-4 pl-6">
+                                    <div class="flex items-center gap-3">
+                                        <div class="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold" x-text="company.name[0]"></div>
+                                        <span class="font-semibold text-sm" x-text="company.name"></span>
+                                    </div>
+                                </twig:Table:Cell>
+                                <twig:Table:Cell class="py-4 text-center">
+                                    <code class="text-[10px] font-mono bg-secondary px-2 py-1 rounded-md text-primary font-bold" x-text="company.slug"></code>
+                                </twig:Table:Cell>
+                                <twig:Table:Cell class="py-4 text-xs text-muted-foreground font-medium" x-text="new Date(company.createdAt).toLocaleDateString()"></twig:Table:Cell>
+                                <twig:Table:Cell class="py-4 pr-6 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <twig:Button variant="ghost" size="sm" title="Add Admin" x-on:click="selectedCompanyId = company.id; isCreatingAdmin = true" class="h-9 w-9 p-0 hover:bg-primary/10 hover:text-primary transition-colors text-muted-foreground">
+                                            <twig:ux:icon name="lucide:user-plus" class="h-4 w-4" />
+                                        </twig:Button>
+                                        <twig:Button variant="ghost" size="sm" title="Delete Company" x-on:click="handleDeleteCompany(company.id)" class="h-9 w-9 p-0 hover:bg-red-500/10 hover:text-red-500 transition-colors text-muted-foreground">
+                                            <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />
+                                        </twig:Button>
+                                    </div>
+                                </twig:Table:Cell>
+                            </twig:Table:Row>
+                        </template>
+                    </twig:Table:Body>
+                </twig:Table>
+            </div>
+
+            <template x-if="isCreatingCompany || isCreatingAdmin">
+                <div class="fixed inset-0 z-50 flex items-center justify-center p-6 animate-in fade-in duration-300">
+                    <div class="absolute inset-0 bg-background/80 backdrop-blur-sm" @click="closeModals()"></div>
+                    <twig:Card class="relative w-full max-w-md bg-card border-border shadow-2xl rounded-3xl overflow-hidden animate-in zoom-in-95 duration-300">
+                        <twig:Card:Header class="p-8 border-b bg-secondary/5">
+                            <twig:Card:Title class="text-xl font-bold flex items-center gap-3">
+                                <template x-if="isCreatingCompany"><twig:ux:icon name="lucide:building-2" class="h-5 w-5 text-primary" /></template>
+                                <template x-if="!isCreatingCompany"><twig:ux:icon name="lucide:shield-check" class="h-5 w-5 text-primary" /></template>
+                                <span x-text="isCreatingCompany ? 'New Company' : 'New Admin'"></span>
+                            </twig:Card:Title>
+                        </twig:Card:Header>
+                        <form @submit.prevent="submitModal()" class="p-8 space-y-6">
+                            <template x-if="isCreatingCompany">
+                                    <div class="space-y-2">
+                                        <twig:Label class="{{ labelClass }}">Company Name</twig:Label>
+                                        <twig:Input placeholder="e.g. Acme Corp" x-model="newCompany.name" class="{{ inputClass }}" required />
+                                    </div>
+                            </template>
+                            <template x-if="isCreatingCompany">
+                                    <div class="space-y-2">
+                                        <twig:Label class="{{ labelClass }}">Slug</twig:Label>
+                                        <twig:Input placeholder="acme-corp" x-react-value="newCompany.slug" x-on:input="newCompany.slug = $event.target.value.toLowerCase().replace(/ /g, '-')" class="h-12 rounded-xl bg-secondary/30 border-border/50 font-mono text-sm focus:ring-primary/20" required />
+                                    </div>
+                            </template>
+                            <template x-if="!isCreatingCompany">
+                                    <div class="space-y-2">
+                                        <twig:Label class="{{ labelClass }}">Email</twig:Label>
+                                        <twig:Input type="email" placeholder="admin@example.com" x-model="newAdmin.email" class="{{ inputClass }}" required />
+                                    </div>
+                            </template>
+                            <template x-if="!isCreatingCompany">
+                                    <div class="space-y-2">
+                                        <twig:Label class="{{ labelClass }}">Full Name</twig:Label>
+                                        <twig:Input placeholder="Full Name" x-model="newAdmin.name" class="{{ inputClass }}" required />
+                                    </div>
+                            </template>
+                            <template x-if="!isCreatingCompany">
+                                    <div class="space-y-2">
+                                        <twig:Label class="{{ labelClass }}">Password</twig:Label>
+                                        <twig:Input type="password" placeholder="••••••••" x-model="newAdmin.password" class="{{ inputClass }}" required />
+                                    </div>
+                            </template>
+                            <div class="flex gap-4 pt-4">
+                                <twig:Button type="button" variant="ghost" x-on:click="closeModals()" class="flex-1 h-12 rounded-xl font-bold text-xs uppercase tracking-widest">Cancel</twig:Button>
+                                <twig:Button type="submit" disabledWhen="saving" class="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-bold text-xs uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+                                    <template x-if="saving"><twig:ux:icon name="lucide:loader-circle" class="h-4 w-4 animate-spin" /></template>
+                                    <template x-if="!saving"><span>Create</span></template>
+                                </twig:Button>
+                            </div>
+                        </form>
+                    </twig:Card>
+                </div>
+            </template>
+        </div>
+    </template>
+</div>
+{% endblock %}

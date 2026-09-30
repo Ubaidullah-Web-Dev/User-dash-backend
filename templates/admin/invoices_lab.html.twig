@@ -1,0 +1,335 @@
+{# Port of app/(tenant)/[companySlug]/admin/invoices-lab/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-invoices-lab{% endblock %}
+{% block content %}
+<div class="space-y-10 animate-in fade-in duration-700" x-data="invoicesLab">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+            <h1 class="text-4xl font-black text-foreground tracking-tighter mb-2 uppercase italic text-pink-500">INVOICE <span class="text-foreground not-italic">Archive</span></h1>
+            <p class="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">Digital Receipts &amp; Billing History Records.</p>
+        </div>
+        <div class="flex bg-secondary/30 p-2 rounded-2xl border border-border items-center gap-4">
+            <div class="flex items-center gap-2 px-4 border-r border-border py-1">
+                <twig:Switch model="showHeader" id="show-header" class="data-[state=checked]:bg-pink-500" />
+                <twig:Label for="show-header" class="text-[9px] font-black uppercase tracking-widest cursor-pointer opacity-70">Header/Footer</twig:Label>
+            </div>
+            <div class="flex items-center">
+                <twig:ux:icon name="lucide:search" class="h-10 w-10 p-2 text-muted-foreground" />
+                <twig:Input placeholder="Filter by ID or Name..." x-model="search" x-on:input="handleSearchChange()" class="bg-transparent border-none font-bold placeholder:font-medium focus-visible:ring-0 w-64 uppercase text-[10px] tracking-widest" />
+            </div>
+        </div>
+    </div>
+
+    <twig:Card class="bg-card border-border rounded-[2.5rem] shadow-sm overflow-hidden border-t-4 border-t-pink-500/20">
+        <twig:Card:Header class="p-10 border-b border-border bg-secondary/10">
+            <twig:Card:Title class="text-xl font-black flex items-center gap-3 uppercase italic">
+                <twig:ux:icon name="lucide:receipt" class="h-6 w-6 text-pink-500" />
+                Billing Ledger
+            </twig:Card:Title>
+        </twig:Card:Header>
+        <twig:Card:Content class="p-0">
+            <twig:Table>
+                <twig:Table:Header>
+                    <twig:Table:Row class="border-border hover:bg-transparent">
+                        <twig:Table:Head class="p-8 font-black uppercase text-[10px] tracking-widest">Receipt ID</twig:Table:Head>
+                        <twig:Table:Head class="p-8 font-black uppercase text-[10px] tracking-widest">Customer Node</twig:Table:Head>
+                        <twig:Table:Head class="p-8 font-black uppercase text-[10px] tracking-widest">Timestamp</twig:Table:Head>
+                        <twig:Table:Head class="p-8 font-black uppercase text-[10px] tracking-widest text-center">Pending</twig:Table:Head>
+                        <twig:Table:Head class="p-8 font-black uppercase text-[10px] tracking-widest text-right">Actions</twig:Table:Head>
+                    </twig:Table:Row>
+                </twig:Table:Header>
+                <twig:Table:Body>
+                    <template x-if="loading">
+                        <twig:Table:Row>
+                            <twig:Table:Cell colspan="5" class="p-24 text-center font-black uppercase italic text-pink-500/50 animate-pulse">Accessing Vault...</twig:Table:Cell>
+                        </twig:Table:Row>
+                    </template>
+                    <template x-for="inv in (loading ? [] : invoices)" :key="inv.id">
+                        <twig:Table:Row class="border-border hover:bg-pink-500/5 transition-colors">
+                            <twig:Table:Cell class="p-8 font-black text-foreground" x-text="`#${inv.id}`"></twig:Table:Cell>
+                            <twig:Table:Cell class="p-8">
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-foreground uppercase tracking-tighter" x-text="inv.customerName || 'Anonymous User'"></span>
+                                    <span class="text-[10px] font-black text-muted-foreground opacity-50" x-text="inv.phone || 'NO CONTACT'"></span>
+                                </div>
+                            </twig:Table:Cell>
+                            <twig:Table:Cell class="p-8">
+                                <div class="flex items-center gap-2 text-muted-foreground font-medium text-xs">
+                                    <twig:ux:icon name="lucide:calendar" class="h-3 w-3 text-pink-500" />
+                                    <span x-text="new Date(inv.createdAt).toLocaleString()"></span>
+                                </div>
+                            </twig:Table:Cell>
+                            <twig:Table:Cell class="p-8 text-center">
+                                <span class="font-black text-lg italic" :class="inv.pendingAmount > 0 ? 'text-pink-500' : 'text-muted-foreground/30'" x-text="`PKR ${Math.round(inv.pendingAmount).toLocaleString()}`"></span>
+                            </twig:Table:Cell>
+                            <twig:Table:Cell class="p-8 text-right">
+                                <div class="flex justify-end gap-3">
+                                    <twig:Button variant="ghost" size="icon" class="h-10 w-10 text-muted-foreground hover:bg-emerald-500/10 hover:text-emerald-500 rounded-xl" x-on:click="handleEdit(inv.id)">
+                                        <twig:ux:icon name="lucide:square-pen" class="h-5 w-5" />
+                                    </twig:Button>
+                                    <twig:Button variant="ghost" size="icon" class="h-10 w-10 text-muted-foreground hover:bg-pink-500/10 hover:text-pink-500 rounded-xl" x-on:click="handlePreview(inv.id)" disabledWhen="previewing">
+                                        <template x-if="previewing"><twig:ux:icon name="lucide:loader-circle" class="h-4 w-4 animate-spin" /></template>
+                                        <template x-if="!previewing"><twig:ux:icon name="lucide:eye" class="h-5 w-5" /></template>
+                                    </twig:Button>
+                                    <twig:Button variant="ghost" size="icon" class="h-10 w-10 text-muted-foreground hover:bg-pink-500/10 hover:text-pink-500 rounded-xl" x-on:click="handleDownload(inv.id)">
+                                        <twig:ux:icon name="lucide:file-down" class="h-5 w-5" />
+                                    </twig:Button>
+                                </div>
+                            </twig:Table:Cell>
+                        </twig:Table:Row>
+                    </template>
+                    <template x-if="invoices.length === 0 && !loading">
+                        <twig:Table:Row>
+                            <twig:Table:Cell colspan="5" class="p-24 text-center italic opacity-30 font-bold uppercase text-[10px] tracking-[0.3em]">Vault is empty</twig:Table:Cell>
+                        </twig:Table:Row>
+                    </template>
+                </twig:Table:Body>
+            </twig:Table>
+
+            <template x-if="totalPages > 1">
+                <div class="p-8 border-t border-border bg-secondary/10 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div class="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        Showing <span class="text-foreground" x-text="(page - 1) * 10 + 1"></span> to <span class="text-foreground" x-text="Math.min(page * 10, totalItems)"></span> of <span class="text-foreground" x-text="totalItems"></span> sync'd nodes
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <twig:Button variant="outline" size="icon" x-on:click="page = Math.max(1, page - 1)" disabledWhen="page === 1 || loading" class="h-11 w-11 rounded-xl border-border bg-card hover:bg-pink-500/10 hover:text-pink-500 transition-all disabled:opacity-30">
+                            <twig:ux:icon name="lucide:chevron-left" class="h-4 w-4" />
+                        </twig:Button>
+                        <div class="px-5 py-2.5 rounded-xl bg-background border border-border text-[10px] font-black uppercase tracking-widest shadow-inner" x-text="`Page ${page} of ${totalPages}`"></div>
+                        <twig:Button variant="outline" size="icon" x-on:click="page = Math.min(totalPages, page + 1)" disabledWhen="page === totalPages || loading" class="h-11 w-11 rounded-xl border-border bg-card hover:bg-pink-500/10 hover:text-pink-500 transition-all disabled:opacity-30">
+                            <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+                        </twig:Button>
+                    </div>
+                </div>
+            </template>
+        </twig:Card:Content>
+    </twig:Card>
+
+    {{ include('admin/_pdf_preview.html.twig', {
+        titleHtml: 'INVOICE <span class="text-foreground not-italic">Preview</span>', titleClass: 'text-pink-500/80',
+        subtitle: 'Reviewing digital receipt', iconName: 'file-down',
+        buttonClass: 'bg-pink-500 hover:bg-pink-600 text-white font-black px-6 rounded-xl flex items-center gap-2 uppercase italic shadow-lg shadow-pink-500/20 h-10',
+    }) }}
+
+    <template x-if="isEditModalOpen">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
+            <div class="bg-card w-full max-w-4xl max-h-[90vh] rounded-[2rem] shadow-2xl border border-border overflow-hidden animate-in slide-in-from-bottom-10 duration-500 flex flex-col">
+                <div class="px-8 py-6 border-b border-border bg-card/50 flex justify-between items-start sticky top-0 z-10 backdrop-blur-xl">
+                    <div>
+                        <h2 class="text-2xl font-black uppercase italic tracking-tighter flex items-center gap-3">
+                            <twig:ux:icon name="lucide:square-pen" class="h-6 w-6 text-emerald-500" />
+                            Modify <span class="text-emerald-500">Invoice</span> <span x-text="`#${editingInvoice?.id ?? ''}`"></span>
+                        </h2>
+                        <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Itemized reconciliation &amp; financial adjustment</p>
+                    </div>
+                    <twig:Button variant="ghost" size="icon" x-on:click="isEditModalOpen = false" class="rounded-full hover:bg-foreground/10 h-10 w-10 shrink-0">
+                        <twig:ux:icon name="lucide:x" class="h-5 w-5" />
+                    </twig:Button>
+                </div>
+
+                <template x-if="editLoading">
+                    <div class="flex-1 p-20 text-center flex flex-col items-center justify-center gap-4">
+                        <twig:ux:icon name="lucide:loader-circle" class="h-10 w-10 animate-spin text-emerald-500/50" />
+                        <p class="font-black uppercase tracking-widest text-[10px] italic">Accessing Ledger Data...</p>
+                    </div>
+                </template>
+                <template x-if="!editLoading && editingInvoice">
+                    <div class="flex-1 overflow-y-auto p-8 space-y-8 pb-32 custom-scrollbar">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-3">
+                                <twig:Label class="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">Customer Name</twig:Label>
+                                <div class="relative group">
+                                    <twig:ux:icon name="lucide:user" class="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 group-focus-within:text-emerald-500 transition-colors" />
+                                    <twig:Input x-model="editingInvoice.customerName" class="pl-11 bg-secondary/30 border-border rounded-xl h-12 font-bold focus-visible:ring-emerald-500/20 text-sm" />
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <twig:Label class="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">Customer Phone</twig:Label>
+                                <div class="relative group">
+                                    <twig:ux:icon name="lucide:calendar" class="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 group-focus-within:text-emerald-500 transition-colors" />
+                                    <twig:Input x-model="editingInvoice.phone" class="pl-11 bg-secondary/30 border-border rounded-xl h-12 font-bold focus-visible:ring-emerald-500/20 text-sm" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-sm font-black uppercase tracking-[0.2em] italic flex items-center gap-2">
+                                    <twig:ux:icon name="lucide:shopping-cart" class="h-4 w-4 text-emerald-500" />
+                                    Manifest Items
+                                </h3>
+                                <twig:Button x-on:click="isProductPickerOpen = true" size="sm" class="rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest px-4">
+                                    <twig:ux:icon name="lucide:plus" class="h-3 w-3 mr-2" /> Select Product
+                                </twig:Button>
+                            </div>
+
+                            <div class="border border-border rounded-2xl overflow-hidden bg-background/50 shadow-inner">
+                                <twig:Table>
+                                    <twig:Table:Header class="bg-secondary/30">
+                                        <twig:Table:Row class="border-border hover:bg-transparent">
+                                            <twig:Table:Head class="font-black uppercase text-[10px] tracking-widest w-[40%]">Product/Reagent</twig:Table:Head>
+                                            <twig:Table:Head class="font-black uppercase text-[10px] tracking-widest text-center">QTY</twig:Table:Head>
+                                            <twig:Table:Head class="font-black uppercase text-[10px] tracking-widest text-right">Unit Price</twig:Table:Head>
+                                            <twig:Table:Head class="font-black uppercase text-[10px] tracking-widest text-right">Disc %</twig:Table:Head>
+                                            <twig:Table:Head class="font-black uppercase text-[10px] tracking-widest text-right">Item Total</twig:Table:Head>
+                                            <twig:Table:Head class="w-[50px]"></twig:Table:Head>
+                                        </twig:Table:Row>
+                                    </twig:Table:Header>
+                                    <twig:Table:Body class="text-[11px] font-bold uppercase tracking-tighter">
+                                        <template x-for="(item, idx) in editingInvoice.items" :key="idx">
+                                            <twig:Table:Row class="border-border hover:bg-emerald-500/5 transition-colors">
+                                                <twig:Table:Cell>
+                                                    <select @change="updateItem(idx, 'productId', $event.target.value)"
+                                                            x-effect="availableProducts.length; const v = String(item.productId); $nextTick(() => { $el.value = v })"
+                                                            class="w-full bg-transparent border-none focus:ring-0 font-bold uppercase cursor-pointer">
+                                                        <template x-for="p in availableProducts" :key="p.id"><option :value="String(p.id)" x-text="p.name"></option></template>
+                                                    </select>
+                                                </twig:Table:Cell>
+                                                <twig:Table:Cell class="text-center">
+                                                    <twig:Input type="number" x-react-value="item.quantity" x-on:input="updateItem(idx, 'quantity', parseInt($event.target.value))" class="h-8 w-16 mx-auto bg-card border-border rounded-lg text-center font-black" />
+                                                </twig:Table:Cell>
+                                                <twig:Table:Cell class="text-right">
+                                                    <twig:Input type="number" x-react-value="item.price" x-on:input="updateItem(idx, 'price', parseFloat($event.target.value))" class="h-8 w-24 ml-auto bg-card border-border rounded-lg text-right font-black" />
+                                                </twig:Table:Cell>
+                                                <twig:Table:Cell class="text-right">
+                                                    <div class="flex items-center justify-end gap-1">
+                                                        <twig:Button variant="ghost" size="icon" x-on:click="updateItem(idx, 'discountType', item.discountType === 'percent' ? 'amount' : 'percent')" class="h-6 w-6 p-0 rounded hover:bg-emerald-500/10 text-emerald-500">
+                                                            <template x-if="item.discountType === 'percent'"><twig:ux:icon name="lucide:percent" class="h-3 w-3" /></template>
+                                                            <template x-if="item.discountType !== 'percent'"><span class="text-[9px] font-bold">PKR</span></template>
+                                                        </twig:Button>
+                                                        <twig:Input type="number" x-react-value="item.discountType === 'percent' ? item.discountPercentage : item.discountAmount"
+                                                            x-on:input="updateItem(idx, item.discountType === 'percent' ? 'discountPercentage' : 'discountAmount', parseFloat($event.target.value) || 0)"
+                                                            class="h-8 w-16 bg-card border-border rounded-lg text-right font-black p-1 text-[10px]" />
+                                                    </div>
+                                                </twig:Table:Cell>
+                                                <twig:Table:Cell class="text-right font-black" x-text="`PKR ${Math.round(item.quantity * item.price - (item.discountAmount || 0)).toLocaleString()}`"></twig:Table:Cell>
+                                                <twig:Table:Cell>
+                                                    <twig:Button variant="ghost" size="icon" x-on:click="removeItem(idx)" class="h-8 w-8 text-muted-foreground hover:bg-pink-500/10 hover:text-pink-500 rounded-lg">
+                                                        <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />
+                                                    </twig:Button>
+                                                </twig:Table:Cell>
+                                            </twig:Table:Row>
+                                        </template>
+                                        <template x-if="editingInvoice.items.length === 0">
+                                            <twig:Table:Row>
+                                                <twig:Table:Cell colspan="6" class="p-10 text-center italic opacity-30 font-black uppercase text-[10px] tracking-widest">No items in manifest</twig:Table:Cell>
+                                            </twig:Table:Row>
+                                        </template>
+                                    </twig:Table:Body>
+                                </twig:Table>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="bg-card border border-border p-6 rounded-2xl space-y-6 shadow-sm">
+                                <div class="flex items-center justify-between border-b border-border pb-3">
+                                    <h3 class="text-[10px] font-black uppercase tracking-widest opacity-50 flex items-center gap-2">
+                                        <twig:ux:icon name="lucide:building" class="h-3 w-3" /> Financial Adjustments
+                                    </h3>
+                                    <div class="flex flex-col items-end">
+                                        <span class="text-[9px] font-bold text-muted-foreground uppercase opacity-40">Previous Paid</span>
+                                        <span class="text-xs font-black text-foreground" x-text="`PKR ${Math.round(editingInvoice.amountTendered || 0).toLocaleString()}`"></span>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="space-y-0.5">
+                                            <twig:Label class="text-[10px] font-black uppercase tracking-widest text-primary">Amount Received Now</twig:Label>
+                                            <p class="text-[9px] text-muted-foreground font-medium uppercase tracking-tight">Record any new payment</p>
+                                        </div>
+                                        <div class="relative group w-40">
+                                            <div class="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground">PKR</div>
+                                            <twig:Input type="number" placeholder="0.00" x-react-value="editingInvoice.paymentReceived || ''"
+                                                x-on:input="editingInvoice = { ...editingInvoice, paymentReceived: parseFloat($event.target.value) || 0 }"
+                                                class="bg-secondary/20 border-border rounded-xl h-12 font-black text-right pl-10 focus-visible:ring-primary/20 text-lg text-primary" />
+                                        </div>
+                                    </div>
+                                    <div class="pt-4 border-t border-dashed border-border/50 space-y-3">
+                                        <div class="flex items-center justify-between opacity-60">
+                                            <span class="text-[9px] font-bold uppercase tracking-widest">Customer Current Balance</span>
+                                            <span class="text-xs font-black" x-text="`PKR ${Math.round(editingInvoice.customerBalance || 0).toLocaleString()}`"></span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[9px] font-black uppercase tracking-widest text-emerald-500">New Potential Balance</span>
+                                            <span class="text-sm font-black italic" :class="totals.newCustomerBalance > 0 ? 'text-pink-500' : 'text-emerald-500'" x-text="`PKR ${Math.round(totals.newCustomerBalance).toLocaleString()}`"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-emerald-500/10 p-6 rounded-2xl border border-emerald-500/20 space-y-4 shadow-sm relative overflow-hidden">
+                                <div class="absolute top-0 right-0 p-4 opacity-5"><twig:ux:icon name="lucide:receipt" class="h-20 w-20 rotate-12" /></div>
+                                <div class="flex items-end justify-between border-b border-emerald-500/10 pb-3 opacity-40">
+                                    <span class="text-[10px] font-black uppercase tracking-widest">Original Total</span>
+                                    <span class="font-black text-sm italic" x-text="`PKR ${Math.round(editingInvoice.total || 0).toLocaleString()}`"></span>
+                                </div>
+                                <div class="flex items-end justify-between pt-1">
+                                    <span class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600/70">Modified Total</span>
+                                    <span class="text-3xl font-black italic text-foreground tracking-tighter leading-none" x-text="`PKR ${Math.round(totals.total).toLocaleString()}`"></span>
+                                </div>
+                                <div class="flex items-end justify-between pt-4 mt-4 border-t border-emerald-500/20">
+                                    <div class="flex flex-col">
+                                        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Amount Due</span>
+                                        <span class="text-[9px] font-bold text-muted-foreground uppercase opacity-60">Remaining for this invoice</span>
+                                    </div>
+                                    <span class="text-2xl font-black italic" :class="totals.amountDue > 0 ? 'text-pink-500' : 'text-emerald-500'" x-text="`PKR ${Math.round(totals.amountDue).toLocaleString()}`"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-8 pb-4">
+                            <twig:Button variant="outline" x-on:click="isEditModalOpen = false" class="h-12 px-8 rounded-xl border-border bg-card font-black uppercase text-[10px] tracking-widest hover:bg-secondary/20 transition-all">Cancel</twig:Button>
+                            <twig:Button x-on:click="handleSave()" disabledWhen="saving || !totals.total" class="h-12 px-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-500/25 transition-all active:scale-95 flex items-center gap-3">
+                                <template x-if="saving"><twig:ux:icon name="lucide:loader-circle" class="h-5 w-5 animate-spin" /></template>
+                                <template x-if="!saving"><twig:ux:icon name="lucide:circle-check-big" class="h-5 w-5" /></template>
+                                COMMIT RECONCILIATION
+                            </twig:Button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <template x-if="isProductPickerOpen">
+                <div class="absolute inset-0 z-20 bg-background/98 backdrop-blur-2xl flex flex-col p-8 animate-in zoom-in-95 duration-300 shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-border/50 rounded-[2rem]">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 class="text-xl font-black uppercase italic tracking-tighter flex items-center gap-3">
+                                <twig:ux:icon name="lucide:shopping-cart" class="h-6 w-6 text-emerald-500" />
+                                Select <span class="text-emerald-500">Product</span>
+                            </h3>
+                            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Search and click to add to manifest</p>
+                        </div>
+                        <twig:Button variant="ghost" size="icon" x-on:click="isProductPickerOpen = false" class="rounded-full h-10 w-10"><twig:ux:icon name="lucide:x" class="h-5 w-5" /></twig:Button>
+                    </div>
+                    <div class="relative mb-6">
+                        <twig:ux:icon name="lucide:search" class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <twig:Input placeholder="Search by name..." x-model="productSearch" x-init="$nextTick(() => $el.focus())" class="pl-12 h-14 bg-secondary/30 border-border rounded-2xl font-black italic shadow-inner" />
+                    </div>
+                    <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <template x-if="loadingPickerProducts">
+                                <div class="col-span-full py-12 text-center text-muted-foreground font-black uppercase text-[10px] tracking-widest italic animate-pulse">Searching catalog...</div>
+                            </template>
+                            <template x-if="!loadingPickerProducts && pickerProducts.length === 0">
+                                <div class="col-span-full py-12 text-center text-muted-foreground font-black uppercase text-[10px] tracking-widest italic">No products found</div>
+                            </template>
+                            <template x-for="product in (loadingPickerProducts ? [] : pickerProducts)" :key="product.id">
+                                <div @click="addItem(product)" class="p-5 bg-card border border-border rounded-2xl hover:bg-emerald-500/5 hover:border-emerald-500/20 cursor-pointer transition-all flex flex-col gap-3 group">
+                                    <div class="flex justify-between items-start">
+                                        <h4 class="font-black text-xs uppercase tracking-tight w-2/3 group-hover:text-emerald-500 transition-colors" x-text="product.name"></h4>
+                                        <span class="text-[10px] font-black bg-secondary px-2 py-1 rounded-md uppercase tracking-widest opacity-60" x-text="`STOCK: ${product.stock}`"></span>
+                                    </div>
+                                    <div class="flex items-end justify-between mt-auto pt-3 border-t border-border/10">
+                                        <span class="text-[10px] font-bold text-muted-foreground">UNIT PRICE</span>
+                                        <span class="font-black italic text-emerald-500" x-text="`PKR ${Math.round(parseFloat(product.price)).toLocaleString()}`"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </template>
+</div>
+{% endblock %}

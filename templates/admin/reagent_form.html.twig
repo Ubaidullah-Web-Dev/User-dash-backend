@@ -35,11 +35,11 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div class="space-y-3">
                                     <twig:Label class="{{ labelClass }}">Product Name <span class="text-red-500">*</span></twig:Label>
-                                    <twig:Input name="name" required x-bind:value="formData.name || ''" x-on:input="setField($event)" class="{{ fieldClass }}" placeholder="Enter reagent name..." />
+                                    <twig:Input name="name" required x-react-value="formData.name || ''" x-on:input="setField($event)" class="{{ fieldClass }}" placeholder="Enter reagent name..." />
                                 </div>
                                 <div class="space-y-3">
                                     <twig:Label class="{{ labelClass }}">Company Name</twig:Label>
-                                    <twig:Input name="companyName" x-bind:value="formData.companyName || ''" x-on:input="setField($event)" class="{{ fieldClass }}" placeholder="Manufacturer / Brand" />
+                                    <twig:Input name="companyName" x-react-value="formData.companyName || ''" x-on:input="setField($event)" class="{{ fieldClass }}" placeholder="Manufacturer / Brand" />
                                 </div>
                                 <div class="space-y-3">
                                     <twig:Label class="{{ labelClass }}">Category <span class="text-red-500">*</span></twig:Label>
@@ -48,37 +48,37 @@
                                 </div>
                                 <div class="space-y-3">
                                     <twig:Label class="{{ labelClass }}">Pack Size</twig:Label>
-                                    <twig:Input name="packSize" x-bind:value="formData.packSize || ''" x-on:input="setField($event)" placeholder="e.g. 500ml, 100 Tests" class="{{ fieldClass }}" />
+                                    <twig:Input name="packSize" x-react-value="formData.packSize || ''" x-on:input="setField($event)" placeholder="e.g. 500ml, 100 Tests" class="{{ fieldClass }}" />
                                 </div>
                                 <div class="space-y-3">
                                     <twig:Label class="{{ labelClass }}">Purchase Price (PKR)</twig:Label>
-                                    <twig:Input name="purchasePrice" type="number" x-bind:value="formData.purchasePrice || ''" x-on:input="setField($event)" class="{{ fieldClass }}" placeholder="0.00" />
+                                    <twig:Input name="purchasePrice" type="number" x-react-value="formData.purchasePrice || ''" x-on:input="setField($event)" class="{{ fieldClass }}" placeholder="0.00" />
                                 </div>
                                 <div class="space-y-3">
                                     <twig:Label class="{{ labelClass }}">Sale Price (PKR) <span class="text-red-500">*</span></twig:Label>
-                                    <twig:Input name="price" required type="number" x-bind:value="formData.price || ''" x-on:input="setField($event)" class="{{ fieldClass }}" placeholder="0.00" />
+                                    <twig:Input name="price" required type="number" x-react-value="formData.price || ''" x-on:input="setField($event)" class="{{ fieldClass }}" placeholder="0.00" />
                                 </div>
                                 <div class="space-y-3">
                                     <twig:Label class="{{ labelClass }}">Available Stock</twig:Label>
-                                    <twig:Input name="stock" required type="number" x-bind:value="formData.stock || '0'" x-on:input="setField($event)" class="{{ fieldClass }}" />
+                                    <twig:Input name="stock" required type="number" x-react-value="formData.stock || '0'" x-on:input="setField($event)" class="{{ fieldClass }}" />
                                 </div>
                                 <div class="space-y-3">
                                     <twig:Label class="{{ labelClass }}">Min Stock Alert</twig:Label>
-                                    <twig:Input name="minimumStock" type="number" x-bind:value="formData.minimumStock || '0'" x-on:input="setField($event)" class="{{ fieldClass }}" />
+                                    <twig:Input name="minimumStock" type="number" x-react-value="formData.minimumStock || '0'" x-on:input="setField($event)" class="{{ fieldClass }}" />
                                 </div>
                                 <div class="space-y-3">
                                     <twig:Label class="{{ labelClass }}">Expiry Date</twig:Label>
-                                    <twig:Input name="expiryDate" type="date" x-bind:value="formData.expiryDate || ''" x-on:input="setField($event)" class="{{ fieldClass }}" />
+                                    <twig:Input name="expiryDate" type="date" x-react-value="formData.expiryDate || ''" x-on:input="setField($event)" class="{{ fieldClass }}" />
                                 </div>
                                 <div class="space-y-3">
                                     <twig:Label class="{{ labelClass }}">Batch Number</twig:Label>
-                                    <twig:Input name="batchNumber" x-bind:value="formData.batchNumber || ''" x-on:input="setField($event)" class="{{ fieldClass }}" placeholder="Batch reference..." />
+                                    <twig:Input name="batchNumber" x-react-value="formData.batchNumber || ''" x-on:input="setField($event)" class="{{ fieldClass }}" placeholder="Batch reference..." />
                                 </div>
                             </div>
                             <div class="space-y-3">
                                 <twig:Label class="{{ labelClass }}">Description / Notes</twig:Label>
                                 <textarea name="description" class="w-full bg-secondary/30 border-border rounded-2xl p-6 font-bold text-lg focus:ring-2 focus:ring-primary/20 transition-all min-h-[120px] focus:outline-none"
-                                          x-bind:value="formData.description || ''" x-on:input="setField($event)" placeholder="Additional details or storage instructions..."></textarea>
+                                          x-react-value="formData.description || ''" x-on:input="setField($event)" placeholder="Additional details or storage instructions..."></textarea>
                             </div>
 
                             <div class="pt-6 border-t border-border flex flex-col md:flex-row gap-4">

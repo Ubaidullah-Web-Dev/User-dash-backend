@@ -1,5 +1,20 @@
 // Alpine versions of the Radix/shadcn primitives (Select, Switch, Dialog). Markup: templates/_ui.html.twig
 export default function registerUi(Alpine) {
+    // x-react-value="expr": a React-style controlled value. Like ReactDOMInput, the DOM value is only
+    // rewritten when it differs (loosely for number inputs), so half-typed input such as "2." survives.
+    Alpine.directive('react-value', (el, { expression }, { effect, evaluateLater }) => {
+        const get = evaluateLater(expression);
+        effect(() => get((value) => {
+            const v = value ?? '';
+            if (el.type === 'number') {
+                // eslint-disable-next-line eqeqeq
+                if ((v === 0 && el.value === '') || el.value != v) el.value = String(v);
+            } else if (el.value !== String(v)) {
+                el.value = String(v);
+            }
+        }));
+    });
+
     // <Select value onValueChange><SelectTrigger/><SelectContent position="popper">…</Select>
     // Parent binds with x-model (x-modelable="value"); options come from the parent scope.
     Alpine.data('uiSelect', () => ({

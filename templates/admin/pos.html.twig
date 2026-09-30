@@ -1,0 +1,194 @@
+{# Port of app/(tenant)/[companySlug]/admin/pos/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-pos{% endblock %}
+{% set inputClass = 'pl-11 bg-secondary/30 border-border rounded-xl h-12 font-bold focus-visible:ring-primary/20 text-sm' %}
+{% set iconClass = 'absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 group-focus-within:text-primary transition-colors' %}
+{% block content %}
+<div x-data="posPage">
+    <template x-if="lastOrderId">
+        <div class="flex flex-col items-center justify-center min-h-[70vh] animate-in zoom-in-95 duration-500">
+            <div class="bg-emerald-500/10 h-32 w-32 rounded-full flex items-center justify-center mb-8 border border-emerald-500/20 shadow-[0_0_50px_rgba(16,185,129,0.2)]">
+                <twig:ux:icon name="lucide:circle-check-big" class="h-16 w-16 text-emerald-500 animate-in spin-in-180 duration-700" />
+            </div>
+            <h1 class="text-5xl font-black italic uppercase tracking-tighter mb-4">Transaction <span class="text-emerald-500">Successful</span></h1>
+            <p class="text-muted-foreground font-black uppercase tracking-widest text-sm mb-12 opacity-50" x-text="`Local Order ID: #${lastOrderId}`"></p>
+            <div class="flex gap-4">
+                <twig:Button x-on:click="handleDownloadInvoice()" class="h-14 px-10 rounded-2xl bg-emerald-500 text-white font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:-translate-y-1 transition-all">
+                    <twig:ux:icon name="lucide:file-down" class="mr-3 h-5 w-5" /> Download Invoice
+                </twig:Button>
+                <twig:Button x-on:click="startNewSale()" class="h-14 px-10 rounded-2xl bg-primary text-primary-foreground font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:-translate-y-1 transition-all">
+                    <twig:ux:icon name="lucide:monitor-play" class="mr-3 h-5 w-5" /> Next Customer
+                </twig:Button>
+            </div>
+        </div>
+    </template>
+
+    <template x-if="!lastOrderId">
+        <div class="h-[calc(100vh-1rem)] flex flex-col md:flex-row gap-6 animate-in fade-in duration-500 overflow-hidden px-4 pb-4 -mt-8">
+            <div class="flex-1 flex flex-col bg-card border border-border rounded-[2.5rem] shadow-xl overflow-hidden">
+                <div class="p-6 border-b border-border bg-secondary/30 flex-none pb-8">
+                    <div class="flex items-center gap-3 mb-6">
+                        <twig:ux:icon name="lucide:monitor-play" class="h-6 w-6 text-primary" />
+                        <h1 class="text-2xl font-black text-foreground tracking-tighter italic uppercase leading-none">Point of <span class="text-primary not-italic">Sale</span></h1>
+                    </div>
+                    <form @submit.prevent="handleSearchSubmit()" class="flex gap-2 w-full">
+                        <div class="relative flex-1 group">
+                            <twig:ux:icon name="lucide:search" class="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                            <twig:Input placeholder="Scan or search inventory..." x-init="$nextTick(() => $el.focus())" x-model="search"
+                                class="pl-14 bg-background border-border rounded-2xl h-14 font-black text-lg focus-visible:ring-2 focus-visible:ring-primary/20 transition-all shadow-inner" />
+                        </div>
+                        <div class="w-[180px] shrink-0">
+                            <twig:Select model="selectedCategory" options="categoryOptions" placeholder="Category" onChange="currentPage = 1" triggerIcon="funnel" triggerIconClass="h-4 w-4 text-primary"
+                                triggerClass="h-14 bg-background border-border rounded-2xl font-black uppercase text-[10px] tracking-widest pl-5 shadow-inner focus:ring-primary/20"
+                                contentClass="rounded-2xl border-border bg-card shadow-2xl font-black uppercase text-[10px] tracking-widest" />
+                        </div>
+                        <twig:Button type="submit" class="h-14 w-14 rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 shrink-0">
+                            <template x-if="loadingProducts"><twig:ux:icon name="lucide:loader-circle" class="h-6 w-6 animate-spin" /></template>
+                            <template x-if="!loadingProducts"><twig:ux:icon name="lucide:search" class="h-6 w-6" /></template>
+                        </twig:Button>
+                    </form>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-6 bg-background/50 custom-scrollbar">
+                    <template x-if="products.length === 0">
+                        <div class="h-full flex items-center justify-center">
+                            <p class="text-center font-black uppercase tracking-widest text-[10px] opacity-30 italic border-2 border-dashed border-border rounded-3xl p-10">No items found in registry</p>
+                        </div>
+                    </template>
+                    <template x-if="products.length > 0">
+                        <div class="border border-border bg-card rounded-2xl overflow-hidden shadow-sm mb-20 relative">
+                            <twig:Table>
+                                <twig:Table:Header class="bg-secondary/30 sticky top-0 z-10 backdrop-blur-md">
+                                    <twig:Table:Row class="hover:bg-transparent border-border">
+                                        <twig:Table:Head class="font-black uppercase tracking-widest text-[10px] w-[60px] text-center">Icon</twig:Table:Head>
+                                        <twig:Table:Head class="font-black uppercase tracking-widest text-[10px]">Product</twig:Table:Head>
+                                        <twig:Table:Head class="font-black uppercase tracking-widest text-[10px] text-right">Price</twig:Table:Head>
+                                        <twig:Table:Head class="font-black uppercase tracking-widest text-[10px] text-right">Stock</twig:Table:Head>
+                                        <twig:Table:Head class="w-[100px]"></twig:Table:Head>
+                                    </twig:Table:Row>
+                                </twig:Table:Header>
+                                <twig:Table:Body>
+                                    <template x-for="product in products" :key="product.id">
+                                        <twig:Table:Row x-on:click="addToCart(product)" class="cursor-pointer transition-colors border-border/50" x-bind:class="product.stock > 0 ? 'hover:bg-primary/5' : 'opacity-40 grayscale hover:bg-destructive/5'">
+                                            <twig:Table:Cell class="p-2 sm:p-4 text-center align-middle">
+                                                <div class="h-10 w-10 bg-secondary/50 rounded-lg flex items-center justify-center border border-border/50 mx-auto">
+                                                    <span class="text-lg font-black text-muted-foreground/60 uppercase italic" x-text="product.name[0]"></span>
+                                                </div>
+                                            </twig:Table:Cell>
+                                            <twig:Table:Cell class="p-2 sm:p-4 align-middle">
+                                                <span class="font-black text-sm uppercase tracking-tighter text-foreground/90" x-text="product.name"></span>
+                                            </twig:Table:Cell>
+                                            <twig:Table:Cell class="p-2 sm:p-4 text-right align-middle font-black text-primary italic text-sm" x-text="`PKR ${parseFloat(product.price).toLocaleString()}`"></twig:Table:Cell>
+                                            <twig:Table:Cell class="p-2 sm:p-4 text-right align-middle">
+                                                <span class="text-[10px] font-black tracking-widest uppercase px-2 py-1 rounded-md inline-block" :class="product.stock > 0 ? 'bg-secondary text-foreground/70' : 'bg-destructive/10 text-destructive'" x-text="product.stock > 0 ? product.stock : 'OUT OF STOCK'"></span>
+                                            </twig:Table:Cell>
+                                            <twig:Table:Cell class="p-2 sm:p-4 text-right align-middle">
+                                                <twig:Button size="sm" variant="secondary" class="h-8 rounded-lg font-black text-[10px] uppercase tracking-widest bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/20">Add</twig:Button>
+                                            </twig:Table:Cell>
+                                        </twig:Table:Row>
+                                    </template>
+                                </twig:Table:Body>
+                            </twig:Table>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="p-4 border-t border-border bg-secondary/20 flex-none flex items-center justify-between">
+                    <div class="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <div class="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
+                        <span x-text="`Showing ${rangeStart}-${rangeEnd} of ${totalItems} matches`"></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <twig:Button variant="outline" size="sm" disabledWhen="currentPage === 1 || loadingProducts" x-on:click="currentPage = Math.max(1, currentPage - 1)" class="h-10 px-4 rounded-xl border-border bg-background font-black uppercase text-[10px] tracking-widest hover:bg-primary hover:text-white transition-all disabled:opacity-30">
+                            <twig:ux:icon name="lucide:chevron-left" class="h-4 w-4 mr-2" /> Previous
+                        </twig:Button>
+                        <div class="bg-background border border-border px-4 h-10 rounded-xl flex items-center justify-center font-black text-[10px] tracking-widest text-foreground shadow-inner" x-text="`${currentPage} / ${totalPages}`"></div>
+                        <twig:Button variant="outline" size="sm" disabledWhen="currentPage === totalPages || totalPages === 0 || loadingProducts" x-on:click="currentPage = Math.min(totalPages, currentPage + 1)" class="h-10 px-4 rounded-xl border-border bg-background font-black uppercase text-[10px] tracking-widest hover:bg-primary hover:text-white transition-all disabled:opacity-30">
+                            Next <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4 ml-2" />
+                        </twig:Button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full md:w-[950px] xl:w-[500px] flex-none flex flex-col bg-card border border-border rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                <div class="p-8 border-b border-border bg-linear-to-br from-primary/5 to-transparent flex-none z-10">
+                    <h2 class="text-xl font-black tracking-tight flex items-center italic text-foreground uppercase mb-1">
+                        <twig:ux:icon name="lucide:shopping-cart" class="mr-3 h-6 w-6 text-primary" />
+                        Current Bill
+                    </h2>
+                    <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest opacity-50">Local Transaction Matrix</p>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-8 bg-secondary/5 custom-scrollbar z-10">
+                    <template x-if="cart.length === 0">
+                        <div class="h-full flex flex-col items-center justify-center text-center opacity-30 gap-6">
+                            <twig:ux:icon name="lucide:shopping-cart" class="h-20 w-20 mb-2 text-muted-foreground" />
+                            <p class="font-black uppercase tracking-[0.2em] text-[12px] italic">Cart is empty<br />Scan items to begin</p>
+                        </div>
+                    </template>
+                    <template x-if="cart.length > 0">
+                        <div class="space-y-6">
+                            <template x-for="item in cart" :key="item.id">
+                                <div class="flex flex-col gap-5 p-6 bg-background border border-border rounded-2xl shadow-sm animate-in slide-in-from-right-2 duration-300">
+                                    <div class="flex justify-between items-start">
+                                        <h4 class="font-black uppercase text-sm tracking-tighter leading-none w-3/4 pr-2" x-text="item.name"></h4>
+                                        <span class="font-black italic text-primary" x-text="`PKR ${(parseFloat(item.price) * item.cartQuantity).toLocaleString()}`"></span>
+                                    </div>
+                                    <div class="flex items-center justify-between mt-auto pt-4 border-t border-border/50">
+                                        <div class="flex items-center gap-1 bg-secondary rounded-xl p-1 border border-border">
+                                            <twig:Button variant="ghost" size="sm" x-on:click="updateQuantity(item.id, -1)" class="h-8 w-8 p-0 rounded-lg hover:bg-background hover:text-foreground"><twig:ux:icon name="lucide:minus" class="h-4 w-4" /></twig:Button>
+                                            <span class="font-black text-sm w-8 text-center" x-text="item.cartQuantity"></span>
+                                            <twig:Button variant="ghost" size="sm" x-on:click="updateQuantity(item.id, 1)" class="h-8 w-8 p-0 rounded-lg hover:bg-background hover:text-foreground"><twig:ux:icon name="lucide:plus" class="h-4 w-4" /></twig:Button>
+                                        </div>
+                                        <twig:Button variant="ghost" size="sm" x-on:click="removeFromCart(item.id)" class="h-10 w-10 p-0 rounded-xl bg-destructive/5 text-destructive hover:bg-destructive hover:text-white transition-colors">
+                                            <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />
+                                        </twig:Button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="p-6 border-t border-border bg-background flex-none z-10 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+                    <div class="space-y-4 mb-6">
+                        <div class="relative group">
+                            <twig:ux:icon name="lucide:circle-user" class="{{ iconClass }}" />
+                            <twig:Input placeholder="Walk-In Customer Name" x-model="customerName" class="{{ inputClass }}" />
+                        </div>
+                        <div class="relative group">
+                            <twig:ux:icon name="lucide:phone" class="{{ iconClass }}" />
+                            <twig:Input placeholder="Phone Number (Optional)" x-model="customerPhone" class="{{ inputClass }}" />
+                        </div>
+                        <div class="relative group">
+                            <twig:ux:icon name="lucide:wallet" class="{{ iconClass }}" />
+                            <twig:Input type="number" placeholder="Amount Given" x-model="amountGiven" min="0" step="any" class="{{ inputClass }}" />
+                        </div>
+                        <div class="relative group">
+                            <twig:ux:icon name="lucide:percent" class="{{ iconClass }}" />
+                            <twig:Input type="number" placeholder="Discount Percentage (%)" x-model="discountPercentage" min="0" max="100" step="any" class="{{ inputClass }}" />
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-3 mb-6 px-2">
+                        <div class="flex items-end justify-between">
+                            <span class="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-50">Total Amount</span>
+                            <span class="text-4xl font-black italic text-foreground tracking-tighter leading-none" x-text="`PKR ${money(total)}`"></span>
+                        </div>
+                        <div class="flex items-end justify-between pt-3 border-t border-border/50">
+                            <span class="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/80">Change Due</span>
+                            <span class="text-2xl font-black italic tracking-tighter leading-none" :class="changeDue > 0 ? 'text-primary' : 'text-muted-foreground/50'" x-text="`PKR ${money(changeDue)}`"></span>
+                        </div>
+                    </div>
+
+                    <twig:Button x-on:click="handleCheckout()" disabledWhen="checkoutDisabled" class="w-full h-16 rounded-2xl bg-primary hover:opacity-90 text-primary-foreground font-black uppercase tracking-widest text-sm shadow-2xl shadow-primary/25 disabled:opacity-50 transition-all hover:-translate-y-1">
+                        <template x-if="isProcessing"><twig:ux:icon name="lucide:loader-circle" class="h-6 w-6 animate-spin mr-3" /></template>
+                        <template x-if="!isProcessing"><twig:ux:icon name="lucide:receipt" class="h-6 w-6 mr-3" /></template>
+                        COMPLETE SALE
+                    </twig:Button>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+{% endblock %}

@@ -1,0 +1,107 @@
+{# Port of app/super-admin/layout.tsx (role check done server-side by AdminAreaGuard) #}
+{% extends 'base.html.twig' %}
+
+{% set isCompact = app.request.cookies.get('superadmin_sidebar_compact') == '1' %}
+{% set pathname = app.request.pathInfo %}
+{% set navItems = [
+    {label: 'Intelligence', icon: 'layout-dashboard', href: '/super-admin', description: 'Real-time system health'},
+    {label: 'Governance', icon: 'globe', href: '/super-admin/companies', description: 'Global brand management'},
+    {label: 'Banners', icon: 'megaphone', href: '/super-admin/banner', description: 'Promotional visibility'},
+] %}
+
+{% block body %}
+<div class="min-h-screen bg-background text-foreground flex overflow-hidden"
+     data-controller="sidebar" data-sidebar-cookie-value="superadmin_sidebar_compact" data-sidebar-compact-value="{{ isCompact ? 'true' : 'false' }}">
+    <aside data-sidebar-target="aside"
+           class="fixed inset-y-0 left-0 z-50 bg-secondary/50 dark:bg-gray-900/40 border-r border-border backdrop-blur-xl transition-all duration-500 ease-in-out lg:translate-x-0 translate-x-0 {{ isCompact ? 'w-20' : 'w-72' }}">
+        <div class="h-full flex flex-col {{ isCompact ? 'p-4' : 'p-6' }}" data-compact-class="p-4" data-expanded-class="p-6">
+            <div class="flex items-center mb-10 {{ isCompact ? 'justify-center' : 'justify-between px-2' }}" data-compact-class="justify-center" data-expanded-class="justify-between px-2">
+                <a href="/super-admin" class="flex items-center gap-3 group">
+                    <div class="h-10 w-10 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center text-primary shadow-sm transition-all group-hover:bg-primary group-hover:text-primary-foreground">
+                        <twig:ux:icon name="lucide:shield-alert" class="h-5 w-5" />
+                    </div>
+                    <div class="flex flex-col" data-sidebar-target="expandedOnly" {{ isCompact ? 'hidden' }}>
+                        <span class="font-bold tracking-tight text-lg leading-none">Console</span>
+                        <span class="text-primary tracking-widest text-[9px] font-medium uppercase opacity-70">Privileged Root</span>
+                    </div>
+                </a>
+                <button type="button" data-action="sidebar#close" class="lg:hidden p-2 text-muted-foreground hover:text-foreground">
+                    <twig:ux:icon name="lucide:x" class="h-5 w-5" />
+                </button>
+            </div>
+
+            <nav class="flex-1 space-y-1">
+                {% for item in navItems %}
+                    {% set isActive = pathname == item.href %}
+                    <a href="{{ item.href }}" data-compact-class="justify-center p-3.5" data-expanded-class="px-4 py-3"
+                       class="flex items-center {{ isCompact ? 'justify-center p-3.5' : 'px-4 py-3' }} rounded-xl transition-all group relative {{ isActive ? 'bg-primary/5 text-primary' : 'text-muted-foreground/80 hover:bg-secondary/80 hover:text-foreground' }}">
+                        <twig:ux:icon name="lucide:{{ item.icon }}" data-compact-class="" data-expanded-class="mr-3.5"
+                            class="{{ isCompact ? '' : 'mr-3.5' }} h-5 w-5 shrink-0 transition-colors {{ isActive ? 'text-primary' : 'group-hover:text-primary/70' }}" />
+                        <div class="flex flex-col" data-sidebar-target="expandedOnly" {{ isCompact ? 'hidden' }}>
+                            <span class="font-semibold text-sm tracking-tight">{{ item.label }}</span>
+                            <span class="text-[10px] font-medium opacity-50">{{ item.description }}</span>
+                        </div>
+                        {% if isActive %}<div class="ml-auto w-1 h-1 rounded-full bg-primary" data-sidebar-target="expandedOnly" {{ isCompact ? 'hidden' }}></div>{% endif %}
+                    </a>
+                {% endfor %}
+            </nav>
+
+            <div class="pt-6 border-t border-border/50">
+                <div class="flex items-center mb-6 {{ isCompact ? 'justify-center' : 'px-2' }}" data-compact-class="justify-center" data-expanded-class="px-2">
+                    <div class="w-9 h-9 shrink-0 rounded-full bg-secondary border border-border/50 flex items-center justify-center text-xs font-bold text-primary/70 shadow-sm">{{ app.user.userIdentifier|first|upper }}</div>
+                    <div class="flex-1 min-w-0 ml-3" data-sidebar-target="expandedOnly" {{ isCompact ? 'hidden' }}>
+                        <p class="text-[11px] font-semibold text-foreground truncate">{{ app.user.userIdentifier }}</p>
+                        <p class="text-[9px] text-muted-foreground uppercase font-medium tracking-wider">Root Access</p>
+                    </div>
+                </div>
+                <div x-data>
+                    <twig:Button variant="ghost" x-on:click="window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'success', title: 'Governance session terminated.' } })); $nextTick(() => document.getElementById('logout-form').submit())"
+                        data-compact-class="justify-center h-12" data-expanded-class="justify-start h-11 px-4"
+                        class="w-full {{ isCompact ? 'justify-center h-12' : 'justify-start h-11 px-4' }} text-muted-foreground hover:bg-red-500/5 hover:text-red-500 rounded-xl transition-all">
+                        <twig:ux:icon name="lucide:log-out" data-compact-class="" data-expanded-class="mr-3" class="{{ isCompact ? '' : 'mr-3' }} h-4 w-4 shrink-0" />
+                        <span class="text-xs font-semibold" data-sidebar-target="expandedOnly" {{ isCompact ? 'hidden' }}>Sign Out</span>
+                    </twig:Button>
+                </div>
+                <form id="logout-form" method="post" action="{{ path('web_logout') }}" hidden>
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+                </form>
+            </div>
+        </div>
+    </aside>
+
+    <div data-sidebar-target="content" class="flex-1 flex flex-col transition-all duration-500 {{ isCompact ? 'lg:pl-20' : 'lg:pl-72' }}">
+        <header class="h-20 sticky top-0 z-40 bg-background/60 backdrop-blur-xl border-b border-border/50 flex items-center justify-between px-8">
+            <div class="flex items-center gap-5">
+                <button type="button" data-sidebar-target="openButton" data-action="sidebar#open" class="lg:hidden p-2 text-muted-foreground hover:text-foreground hidden">
+                    <twig:ux:icon name="lucide:menu" class="h-5 w-5" />
+                </button>
+                <button type="button" data-action="sidebar#toggleCompact" class="hidden lg:block p-2 text-muted-foreground hover:text-foreground transition-all hover:scale-105 active:scale-95">
+                    <span data-sidebar-target="compactOnly" {{ isCompact ? '' : 'hidden' }}><twig:ux:icon name="lucide:panel-left" class="h-5 w-5" /></span>
+                    <span data-sidebar-target="expandedOnly" {{ isCompact ? 'hidden' }}><twig:ux:icon name="lucide:panel-left-close" class="h-5 w-5" /></span>
+                </button>
+                <div class="hidden sm:block h-5 w-px bg-border/50 mx-2"></div>
+                <nav class="flex items-center text-sm font-medium text-muted-foreground">
+                    {% set parts = pathname|split('/')|filter(p => p is not empty) %}
+                    {% for part in parts %}
+                        <span class="flex items-center capitalize">
+                            <span class="{{ loop.last ? 'text-foreground font-semibold' : '' }}">{{ part|replace({'-': ' '}) }}</span>
+                            {% if not loop.last %}<twig:ux:icon name="lucide:chevron-right" class="h-3.5 w-3.5 mx-2 opacity-30" />{% endif %}
+                        </span>
+                    {% endfor %}
+                </nav>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5 p-1 bg-secondary/30 rounded-xl border border-border/50">
+                    <twig:ThemeToggle />
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-8 custom-scrollbar bg-secondary/2">
+            <div class="max-w-6xl mx-auto">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}

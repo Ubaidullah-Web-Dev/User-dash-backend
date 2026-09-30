@@ -1,0 +1,128 @@
+{# Port of app/super-admin/page.tsx #}
+{% extends 'super_admin/layout.html.twig' %}
+{% block pages %}super-admin{% endblock %}
+{% set labelClass = 'text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1' %}
+{% set iconClass = 'absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary' %}
+{% block content %}
+<div class="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000" x-data="superAdminDashboard">
+    <div class="space-y-1">
+        <h1 class="text-4xl font-bold tracking-tight text-foreground">Intelligence Console</h1>
+        <p class="text-sm text-muted-foreground font-medium">Unified telemetry and orchestration for the multi-tenant architecture.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <template x-for="(stat, i) in stats" :key="i">
+            <twig:Card class="bg-card/50 backdrop-blur-sm border-border/50 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group overflow-hidden">
+                <twig:Card:Content class="p-6">
+                    <div class="flex flex-row items-center justify-between mb-4">
+                        <div class="p-3 rounded-xl transition-transform duration-500" :class="[stat.bg, stat.color]">
+                            <template x-if="stat.icon === 'activity'"><twig:ux:icon name="lucide:activity" class="h-5 w-5" /></template>
+                            <template x-if="stat.icon === 'users'"><twig:ux:icon name="lucide:users" class="h-5 w-5" /></template>
+                            <template x-if="stat.icon === 'database'"><twig:ux:icon name="lucide:database" class="h-5 w-5" /></template>
+                            <template x-if="stat.icon === 'lock'"><twig:ux:icon name="lucide:lock" class="h-5 w-5" /></template>
+                        </div>
+                        <div class="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/30 px-2 pb-0.5 rounded-full border border-border/50" x-text="`Node ${i + 1}`"></div>
+                    </div>
+                    <p class="text-xs font-medium text-muted-foreground mb-1 tracking-tight" x-text="stat.label"></p>
+                    <p class="text-xl font-bold text-foreground tracking-tighter" x-text="stat.value"></p>
+                </twig:Card:Content>
+            </twig:Card>
+        </template>
+    </div>
+    {# tailwind: text-emerald-500 bg-emerald-500/5 text-blue-500 bg-blue-500/5 text-purple-500 bg-purple-500/5 text-primary bg-primary/5 #}
+
+    <twig:Card class="bg-card/30 backdrop-blur-md border-border/50 rounded-3xl shadow-sm overflow-hidden relative group">
+        <div class="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+            <twig:ux:icon name="lucide:shield-check" class="h-64 w-64 -mr-20 -mt-20" />
+        </div>
+        <twig:Card:Header class="p-10 border-b border-border/50 bg-secondary/5 relative z-10">
+            <twig:Card:Title class="text-2xl font-bold flex flex-row items-center space-x-4">
+                <div class="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                    <twig:ux:icon name="lucide:shield-check" class="h-6 w-6" />
+                </div>
+                <span>Infrastructure Governance</span>
+            </twig:Card:Title>
+            <twig:Card:Description class="text-sm font-medium">Global administrative control for the decentralized node network.</twig:Card:Description>
+        </twig:Card:Header>
+        <twig:Card:Content class="p-20 text-center relative z-10">
+            <div class="max-w-md mx-auto space-y-8">
+                <div class="relative inline-block">
+                    <div class="absolute inset-0 bg-primary/20 blur-2xl rounded-full animate-pulse"></div>
+                    <div class="relative p-6 rounded-3xl bg-primary/5 border border-primary/10">
+                        <twig:ux:icon name="lucide:settings" class="h-10 w-10 text-primary animate-[spin_10s_linear_infinite]" />
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <h2 class="text-3xl font-bold text-foreground tracking-tighter italic">Privileged Root Online</h2>
+                    <p class="text-muted-foreground text-sm font-medium leading-relaxed">The multi-tenant orchestration engine is fully initialized. You now have complete governance over global nodes, operator privileges, and system-wide security protocols.</p>
+                </div>
+                <div class="pt-4">
+                    <div class="inline-flex flex-row items-center space-x-2 px-4 py-2 rounded-full border border-emerald-500/20 bg-emerald-500/5 text-emerald-500 text-[10px] font-black uppercase tracking-widest">
+                        <twig:ux:icon name="lucide:activity" class="h-3 w-3" />
+                        <span>System Integrity Optimal</span>
+                    </div>
+                </div>
+            </div>
+        </twig:Card:Content>
+    </twig:Card>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <twig:Card class="lg:col-span-2 bg-card/40 backdrop-blur-xl border-border/50 rounded-3xl shadow-xl overflow-hidden border-t-4 border-t-primary/20">
+            <twig:Card:Header class="p-8 border-b border-border/50 bg-secondary/10">
+                <div class="flex flex-row items-center space-x-4">
+                    <div class="h-12 w-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-inner">
+                        <twig:ux:icon name="lucide:shield-plus" class="h-6 w-6" />
+                    </div>
+                    <div>
+                        <twig:Card:Title class="text-xl font-bold uppercase tracking-tight">Operator Provisioning</twig:Card:Title>
+                        <twig:Card:Description class="text-xs font-semibold uppercase tracking-widest opacity-60">Add new root administrative entity</twig:Card:Description>
+                    </div>
+                </div>
+            </twig:Card:Header>
+            <twig:Card:Content class="p-8">
+                <form @submit.prevent="handleCreateAdmin()" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <twig:Label class="{{ labelClass }}">Entity Name</twig:Label>
+                            <div class="relative group">
+                                <twig:ux:icon name="lucide:user" class="{{ iconClass }}" />
+                                <twig:Input placeholder="Full name..." x-model="formData.name" class="pl-10 bg-secondary/20 border-border group-focus-within:border-primary/50 rounded-xl h-12 font-bold text-xs uppercase transition-all" />
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <twig:Label class="{{ labelClass }}">System Email</twig:Label>
+                            <div class="relative group">
+                                <twig:ux:icon name="lucide:mail" class="{{ iconClass }}" />
+                                <twig:Input type="email" placeholder="admin@system.io" x-model="formData.email" class="pl-10 bg-secondary/20 border-border group-focus-within:border-primary/50 rounded-xl h-12 font-bold text-xs lowercase transition-all" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <twig:Label class="{{ labelClass }}">Access Protocol (Password)</twig:Label>
+                        <div class="relative group">
+                            <twig:ux:icon name="lucide:key" class="{{ iconClass }}" />
+                            <twig:Input type="password" placeholder="••••••••••••" x-model="formData.password" class="pl-10 bg-secondary/20 border-border group-focus-within:border-primary/50 rounded-xl h-12 font-bold text-xs transition-all" />
+                        </div>
+                    </div>
+                    <div class="pt-2">
+                        <twig:Button type="submit" disabledWhen="saving" class="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 rounded-xl font-black uppercase tracking-[0.25em] text-[10px] shadow-lg shadow-primary/20 transition-all active:scale-95 disabled:opacity-50">
+                            <template x-if="saving"><div class="flex flex-row items-center space-x-2"><twig:ux:icon name="lucide:loader-circle" class="h-4 w-4 animate-spin" /><span>Provisioning...</span></div></template>
+                            <template x-if="!saving"><div class="flex flex-row items-center space-x-2"><twig:ux:icon name="lucide:shield-plus" class="h-4 w-4" /><span>Authorize New Operator</span></div></template>
+                        </twig:Button>
+                    </div>
+                </form>
+            </twig:Card:Content>
+        </twig:Card>
+
+        <twig:Card class="bg-primary/5 border-primary/10 border-dashed rounded-3xl p-8 flex flex-col items-center justify-center text-center space-y-4 group hover:bg-primary/8 transition-all">
+            <div class="h-16 w-16 bg-primary/20 rounded-full flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <twig:ux:icon name="lucide:lock" class="h-8 w-8" />
+            </div>
+            <div class="space-y-2">
+                <h3 class="font-bold uppercase tracking-tight text-sm">Security Note</h3>
+                <p class="text-[10px] font-medium text-muted-foreground leading-relaxed">Authorized operators gain full root privileges. Ensure the new entity is fully vetted before provisioning system-wide access.</p>
+            </div>
+        </twig:Card>
+    </div>
+</div>
+{% endblock %}
