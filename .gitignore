@@ -27,3 +27,7 @@
 ###> local dev ###
 /php.ini
 ###< local dev ###
+
+###> deploy ###
+/deploy/infinityfree/prod.env
+###< deploy ###

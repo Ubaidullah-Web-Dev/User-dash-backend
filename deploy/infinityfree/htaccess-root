@@ -1,0 +1,15 @@
+# InfinityFree serves htdocs/ itself as the web root and it cannot be changed, so the whole project
+# lives in htdocs/ and every request is sent into public/. Nothing outside public/ (.env.local.php,
+# config/jwt/*.pem, vendor/, var/ ...) is ever reachable from the web.
+DirectoryIndex public/index.php
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    Require all denied
+</IfModule>
