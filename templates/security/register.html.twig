@@ -1,0 +1,63 @@
+{# Port of app/(tenant)/[companySlug]/register/page.tsx #}
+{% extends 'base.html.twig' %}
+{% block pages %}register{% endblock %}
+{% block body %}
+<div class="flex min-h-screen items-center justify-center bg-background px-4 relative overflow-hidden transition-colors duration-500" x-data="registerPage">
+    <div class="absolute top-6 right-6 z-50">
+        <twig:ThemeToggle />
+    </div>
+    <div class="absolute top-1/4 -left-20 w-80 h-80 bg-primary/10 blur-[120px] rounded-full pointer-events-none"></div>
+    <div class="absolute bottom-1/4 -right-20 w-80 h-80 bg-blue-500/10 blur-[120px] rounded-full pointer-events-none"></div>
+
+    <twig:Card class="w-full max-w-md border-border bg-card shadow-2xl shadow-primary/5 relative z-10">
+        <twig:Card:Header class="space-y-1 pb-8 text-center border-b border-border/50 mb-6">
+            <twig:Card:Title class="text-3xl font-black tracking-tight text-foreground">Create an account</twig:Card:Title>
+            <twig:Card:Description class="text-muted-foreground text-base">Join the premium admin experience</twig:Card:Description>
+        </twig:Card:Header>
+        <form @submit.prevent="handleSubmit()">
+            <twig:Card:Content class="space-y-4">
+                <div class="space-y-2">
+                    <div class="relative">
+                        <twig:ux:icon name="lucide:user" class="absolute left-3.5 top-3 h-5 w-5 text-gray-400 dark:text-gray-500" />
+                        <twig:Input name="name" placeholder="Full Name" class="pl-11" required x-model="formData.name" />
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div class="relative">
+                        <twig:ux:icon name="lucide:mail" class="absolute left-3.5 top-3 h-5 w-5 text-gray-400 dark:text-gray-500" />
+                        <twig:Input name="email" type="email" placeholder="Email Address" class="pl-11" required x-model="formData.email" />
+                    </div>
+                    <p class="text-[10px] text-gray-400 dark:text-gray-500 ml-1">Accepted: gmail.com, outlook.com, yahoo.com</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="relative">
+                        <twig:ux:icon name="lucide:lock" class="absolute left-3.5 top-3 h-5 w-5 text-gray-400 dark:text-gray-500" />
+                        <twig:Input name="password" type="password" x-bind:type="showPassword ? 'text' : 'password'" placeholder="Password" class="pl-11 pr-11" required x-model="formData.password" />
+                        <button type="button" @click="showPassword = !showPassword" class="absolute right-3.5 top-3 text-gray-400 dark:text-gray-500 hover:text-primary transition-colors focus:outline-none">
+                            <template x-if="showPassword"><twig:ux:icon name="lucide:eye-off" class="h-5 w-5" /></template>
+                            <template x-if="!showPassword"><twig:ux:icon name="lucide:eye" class="h-5 w-5" /></template>
+                        </button>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div class="relative">
+                        <twig:ux:icon name="lucide:circle-check" class="absolute left-3.5 top-3 h-5 w-5 text-gray-400 dark:text-gray-500" />
+                        <twig:Input name="confirmPassword" type="password" x-bind:type="showConfirmPassword ? 'text' : 'password'" placeholder="Confirm Password" class="pl-11 pr-11" required x-model="formData.confirmPassword" />
+                        <button type="button" @click="showConfirmPassword = !showConfirmPassword" class="absolute right-3.5 top-3 text-gray-400 dark:text-gray-500 hover:text-primary transition-colors focus:outline-none">
+                            <template x-if="showConfirmPassword"><twig:ux:icon name="lucide:eye-off" class="h-5 w-5" /></template>
+                            <template x-if="!showConfirmPassword"><twig:ux:icon name="lucide:eye" class="h-5 w-5" /></template>
+                        </button>
+                    </div>
+                </div>
+            </twig:Card:Content>
+            <twig:Card:Footer class="flex flex-col space-y-4">
+                <twig:Button type="submit" class="w-full h-12 text-base rounded-2xl" loading="isLoading">Register Now</twig:Button>
+                <p class="text-center text-sm text-gray-400 dark:text-gray-500">
+                    Already have an account?{{ ' ' }}
+                    <a href="/{{ companySlug }}/login" class="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors">Sign in</a>
+                </p>
+            </twig:Card:Footer>
+        </form>
+    </twig:Card>
+</div>
+{% endblock %}

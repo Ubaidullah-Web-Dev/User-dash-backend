@@ -1,0 +1,92 @@
+{# Port of app/(tenant)/[companySlug]/admin/stock/vendors/new/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-stock-vendor-new{% endblock %}
+{% set labelClass = 'text-muted-foreground font-black uppercase text-[10px] tracking-[0.2em] pl-1' %}
+{% block content %}
+<div class="py-12 px-4 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700" x-data="stockVendorNew">
+    <div class="mb-10 flex items-center justify-between">
+        <div>
+            <a href="/{{ companySlug }}/admin/stock" class="flex items-center text-muted-foreground hover:text-primary transition-colors mb-4 group">
+                <twig:ux:icon name="lucide:arrow-left" class="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                <span class="text-xs font-black uppercase tracking-widest">Back to Stock Manager</span>
+            </a>
+            <h1 class="text-4xl font-black text-foreground tracking-tighter flex items-center">
+                <twig:ux:icon name="lucide:user-plus" class="mr-4 h-10 w-10 text-primary" />
+                ADD NEW <span class="text-primary ml-2 uppercase">Vendor</span>
+            </h1>
+        </div>
+        <twig:Badge variant="outline" class="border-primary/20 bg-primary/5 text-primary font-black px-4 py-1.5 rounded-full tracking-widest text-[10px]">STOCK MGR PORTAL</twig:Badge>
+    </div>
+
+    <twig:Card class="bg-card border-border rounded-[3rem] overflow-hidden shadow-2xl border-t-4 border-t-primary/20">
+        <twig:Card:Header class="bg-secondary/30 p-10 border-b border-border">
+            <twig:Card:Title class="text-xl font-black flex items-center text-foreground tracking-tight italic uppercase">
+                <twig:ux:icon name="lucide:building-2" class="mr-3 h-6 w-6 text-primary" />
+                Vendor Onboarding Information
+            </twig:Card:Title>
+        </twig:Card:Header>
+        <twig:Card:Content class="p-10">
+            <form @submit.prevent="handleSubmit()" class="space-y-10">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-foreground">
+                    <div class="space-y-3">
+                        <twig:Label for="name" class="{{ labelClass }}">Vendor/Supplier Name <span class="text-primary">*</span></twig:Label>
+                        <div class="relative">
+                            <twig:ux:icon name="lucide:user-plus" class="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <twig:Input id="name" name="name" placeholder="e.g. MedSupply Pro" class="h-14 bg-secondary/50 border-border rounded-2xl pl-14 pr-6 font-bold focus:ring-primary/20" x-model="formData.name" required />
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <twig:Label for="email" class="{{ labelClass }}">Email address <span class="text-primary">*</span></twig:Label>
+                        <div class="relative">
+                            <twig:ux:icon name="lucide:mail" class="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <twig:Input id="email" name="email" type="email" placeholder="contact@supplier.com" class="h-14 bg-secondary/50 border-border rounded-2xl pl-14 pr-6 font-bold focus:ring-primary/20" x-model="formData.email" required />
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <twig:Label for="phone" class="{{ labelClass }}">Contact Number</twig:Label>
+                        <div class="relative">
+                            <twig:ux:icon name="lucide:phone" class="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <twig:Input id="phone" name="phone" placeholder="+1 (555) 000-0000" class="h-14 bg-secondary/50 border-border rounded-2xl pl-14 pr-6 font-bold" x-model="formData.phone" />
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <twig:Label for="companyName" class="{{ labelClass }}">Company Registered Name</twig:Label>
+                        <div class="relative">
+                            <twig:ux:icon name="lucide:building-2" class="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <twig:Input id="companyName" name="companyName" placeholder="MedSupply Global Ltd." class="h-14 bg-secondary/50 border-border rounded-2xl pl-14 pr-6 font-bold" x-model="formData.companyName" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-3 text-foreground">
+                        <twig:Label class="{{ labelClass }}">Operational Status</twig:Label>
+                        <twig:Select model="formData.status" options="statusOptions" placeholder="Select Status" triggerIcon="circle-check"
+                            triggerClass="h-14 bg-secondary/50 border-border rounded-2xl px-6 font-bold" contentClass="bg-card border-border text-foreground rounded-2xl" />
+                    </div>
+                    <div></div>
+                </div>
+
+                <div class="space-y-3 text-foreground">
+                    <twig:Label for="address" class="{{ labelClass }}">Business Address</twig:Label>
+                    <div class="relative">
+                        <twig:ux:icon name="lucide:map-pin" class="absolute left-6 top-8 h-5 w-5 text-muted-foreground" />
+                        <textarea id="address" name="address" placeholder="Enter full physical address or headquarters..."
+                                  class="w-full h-32 bg-secondary/50 border border-border rounded-3xl p-8 pl-16 focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground font-medium scrollbar-hide"
+                                  x-model="formData.address"></textarea>
+                    </div>
+                </div>
+
+                <div class="pt-6">
+                    <twig:Button type="submit" class="w-full h-18 bg-primary hover:opacity-90 text-primary-foreground font-black text-xl rounded-2xl shadow-2xl shadow-primary/20 transition-all active:scale-[0.98] group" disabledWhen="loading">
+                        <template x-if="loading"><twig:ux:icon name="lucide:loader-circle" class="mr-3 h-7 w-7 animate-spin" /></template>
+                        <template x-if="!loading"><twig:ux:icon name="lucide:user-plus" class="mr-3 h-7 w-7 group-hover:scale-110 transition-transform" /></template>
+                        REGISTER VENDOR
+                    </twig:Button>
+                    <p class="text-center text-[10px] text-muted-foreground mt-6 font-bold uppercase tracking-[0.3em]">Stock Manager Action • Secure Data Entry</p>
+                </div>
+            </form>
+        </twig:Card:Content>
+    </twig:Card>
+</div>
+{% endblock %}

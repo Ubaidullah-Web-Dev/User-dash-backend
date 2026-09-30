@@ -1,0 +1,114 @@
+{# Port of admin/stock/new/page.tsx (id = null) and admin/stock/[id]/in/page.tsx, both rendering StockInForm.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-stock-in{% endblock %}
+{% set labelClass = 'text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1' %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div class="flex items-center justify-between">
+        <div>
+            {% if id %}
+                <h1 class="text-4xl font-black text-foreground tracking-tighter mb-2 uppercase italic">REAGENT <span class="text-primary not-italic">Stock In</span></h1>
+                <p class="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">Quickly update stock for a specific item.</p>
+            {% else %}
+                <h1 class="text-4xl font-black text-foreground tracking-tighter mb-2 uppercase italic">NEW <span class="text-primary not-italic">Stock Entry</span></h1>
+                <p class="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">Add inventory volume for laboratory reagents.</p>
+            {% endif %}
+        </div>
+        <a href="/{{ companySlug }}/admin/stock">
+            <twig:Button variant="ghost" class="flex items-center gap-2 font-bold uppercase text-xs tracking-widest text-muted-foreground hover:text-primary transition-colors">
+                <twig:ux:icon name="lucide:arrow-left" class="h-4 w-4" />
+                Back to Manager
+            </twig:Button>
+        </a>
+    </div>
+
+    <twig:Card class="bg-card border-border rounded-[3rem] shadow-2xl overflow-hidden border-t-8 border-t-primary/20">
+        <twig:Card:Header class="p-10 border-b border-border bg-secondary/5">
+            <twig:Card:Title class="text-2xl font-black flex items-center gap-4 italic uppercase">
+                <twig:ux:icon name="lucide:circle-plus" class="h-8 w-8 text-primary" />
+                {{ id ? 'Update inventory' : 'Restock Inventory' }}
+            </twig:Card:Title>
+            <twig:Card:Description class="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                {{ id ? 'Enter the received quantity and purchase price for this reagent.' : 'Select a reagent and enter the newly received stock details.' }}
+            </twig:Card:Description>
+        </twig:Card:Header>
+        <twig:Card:Content class="p-10">
+            <form @submit.prevent="handleSubmit()" class="space-y-8" x-data="stockInForm">
+                <div class="space-y-3">
+                    <twig:Label class="{{ labelClass }}">Reagent Selection</twig:Label>
+                    <twig:Select model="selectedProductId" options="productOptions" disabled="loading || !!initialProductId"
+                        placeholderExpr="loading ? 'Loading products...' : 'Select a reagent to restock'"
+                        triggerClass="bg-secondary/30 border-border h-14 rounded-2xl font-bold focus:ring-primary/20"
+                        contentClass="bg-white dark:bg-slate-900 border-border max-h-[300px] z-120" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-3">
+                        <twig:Label class="{{ labelClass }}">Quantity Added</twig:Label>
+                        <div class="relative">
+                            <twig:ux:icon name="lucide:plus" class="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <twig:Input type="number" required x-model="quantity" class="pl-12 bg-secondary/30 border-border h-14 rounded-2xl font-bold focus:ring-primary/20" placeholder="0" />
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <twig:Label class="{{ labelClass }}">Purchase Price</twig:Label>
+                        <twig:Input type="number" x-model="purchasePrice" class="bg-secondary/30 border-border h-14 rounded-2xl font-bold focus:ring-primary/20" placeholder="Optional 0.00" />
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <twig:Label class="{{ labelClass }}">Supplier / Vendor Name</twig:Label>
+                    <div x-ref="vendor" class="relative">
+                        <twig:ux:icon name="lucide:building" class="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                        <twig:Input x-model="vendorSearch" x-on:input="onVendorInput()" class="pl-12 bg-secondary/30 border-border h-14 rounded-2xl font-bold focus:ring-primary/20 pr-10" placeholder="Type to search vendors..." />
+                        <template x-if="isSearchingVendors">
+                            <div class="absolute right-3 top-1/2 -translate-y-1/2">
+                                <twig:ux:icon name="lucide:loader-circle" class="animate-spin h-4 w-4 text-primary" />
+                            </div>
+                        </template>
+                        <template x-if="showVendorSuggestions && vendors.length > 0">
+                            <div class="absolute z-50 left-0 right-0 top-full mt-2 bg-slate-50 dark:bg-slate-950 border border-border rounded-2xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto custom-scrollbar ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2">
+                                <template x-for="vendor in vendors" :key="vendor.id">
+                                    <button type="button" @click="handleVendorSelect(vendor)" class="w-full text-left p-4 hover:bg-primary/5 transition-colors border-b border-border last:border-0 group">
+                                        <div class="font-black text-sm uppercase italic group-hover:text-primary transition-colors" x-text="vendor.companyName || vendor.name"></div>
+                                        <div class="text-[10px] text-muted-foreground font-bold uppercase tracking-widest" x-text="`${vendor.name} • ${vendor.category?.name || 'Uncategorized'}`"></div>
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex gap-4">
+                    <template x-if="!isSuccess">
+                        <div class="contents">
+                            <twig:Button variant="ghost" type="button" x-on:click="toStock()" class="rounded-2xl font-black h-14 px-10 border border-border">CANCEL</twig:Button>
+                            <twig:Button type="submit" disabledWhen="submitting" class="flex-1 bg-primary text-primary-foreground font-black rounded-2xl h-14 px-12 shadow-xl shadow-primary/20">
+                                <template x-if="submitting"><twig:ux:icon name="lucide:loader-circle" class="h-5 w-5 animate-spin" /></template>
+                                <template x-if="!submitting">
+                                    <div class="flex items-center gap-2">
+                                        <twig:ux:icon name="lucide:trending-up" class="h-5 w-5" />
+                                        SAVE STOCK ENTRY
+                                    </div>
+                                </template>
+                            </twig:Button>
+                        </div>
+                    </template>
+                    <template x-if="isSuccess">
+                        <div class="contents">
+                            <twig:Button type="button" x-on:click="handleDownloadInvoice()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl h-14 px-12 shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2">
+                                <twig:ux:icon name="lucide:file-down" class="h-5 w-5" />
+                                DOWNLOAD INVOICE
+                            </twig:Button>
+                            <twig:Button variant="outline" type="button" x-on:click="toStock()" class="rounded-2xl font-black h-14 px-10 border-emerald-500 text-emerald-600 flex items-center gap-2">
+                                <twig:ux:icon name="lucide:circle-check" class="h-5 w-5" />
+                                DONE
+                            </twig:Button>
+                        </div>
+                    </template>
+                </div>
+            </form>
+        </twig:Card:Content>
+    </twig:Card>
+</div>
+{% endblock %}

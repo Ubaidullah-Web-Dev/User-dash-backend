@@ -1,8 +1,14 @@
+# Twig pages (the former Next.js frontend). Paths are declared explicitly in each controller.
+web_pages:
+    resource: '../src/Controller/Web/'
+    type: attribute
+
 # Non-slugged routes (Default Company)
 controllers_default:
     resource: '../src/Controller/'
     type: attribute
     name_prefix: 'default_'
+    exclude: '../src/Controller/Web/'
 
 # Slugged routes (Other Companies)
 controllers_tenant:
@@ -10,6 +16,6 @@ controllers_tenant:
     type: attribute
     prefix: '/{companySlug}'
     name_prefix: 'tenant_'
-    exclude: '../src/Controller/SuperAdminController.php'
+    exclude: '../src/Controller/{SuperAdminController.php,Web}'
     requirements:
         companySlug: '^(?!api|super-admin|login|register|_wdt|_profiler|images|uploads|pdfs|favicon.ico)[^/]+$'

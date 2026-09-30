@@ -30,14 +30,29 @@ security:
             stateless: true
             security: false
 
+        # JSON API: accepts a JWT bearer token (legacy Next.js client) OR the session
+        # cookie of the Twig pages (shared "app" context). Cookie-authenticated writes
+        # are CSRF-checked by App\Security\ApiCsrfListener.
         api:
             pattern: ^/(?:[^/]+/)?api
-            stateless: true
+            stateless: false
+            context: app
             jwt: ~
 
+        # Twig pages
         main:
             lazy: true
+            context: app
             provider: app_user_provider
+            custom_authenticator: App\Security\LoginFormAuthenticator
+            entry_point: App\Security\LoginFormAuthenticator
+            logout:
+                path: web_logout
+                enable_csrf: true
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 31536000 # "Remember me" previously issued a 1-year JWT
+                remember_me_parameter: _remember_me
 
     access_control:
         - { path: ^/(?:[^/]+/)?api/login, roles: PUBLIC_ACCESS }

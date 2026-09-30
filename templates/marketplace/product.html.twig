@@ -1,0 +1,126 @@
+{# Port of app/(tenant)/[companySlug]/marketplace/[slug]/page.tsx #}
+{% extends 'marketplace/layout.html.twig' %}
+{% block pages %}marketplace-product{% endblock %}
+{% block content %}
+<div x-data="productPage">
+    <template x-if="loading">
+        <div class="min-h-screen flex items-center justify-center text-primary font-black uppercase tracking-widest">LOADING PRODUCT...</div>
+    </template>
+
+    <template x-if="!loading && product">
+        <div class="max-w-7xl mx-auto px-4 py-12">
+            <twig:Button variant="ghost" class="mb-8 text-muted-foreground hover:text-foreground rounded-xl" x-on:click="back()">
+                <twig:ux:icon name="lucide:chevron-left" class="mr-2 h-4 w-4" /> Back to Marketplace
+            </twig:Button>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                <div class="space-y-6">
+                    <twig:Card class="relative aspect-square overflow-hidden bg-card border-border rounded-[3rem] group shadow-sm">
+                        <twig:NextImage src="getImageUrl(product.images[activeImage])" alt="product.name" class="w-full h-full object-cover" />
+                        <template x-if="product.images.length > 1">
+                            <div class="contents">
+                                <twig:Button variant="ghost" size="icon" x-on:click="prevImage()"
+                                    class="absolute left-6 top-1/2 -translate-y-1/2 h-14 w-14 rounded-full bg-background/20 hover:bg-background/40 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity text-foreground border border-border/50">
+                                    <twig:ux:icon name="lucide:chevron-left" class="h-8 w-8" />
+                                </twig:Button>
+                                <twig:Button variant="ghost" size="icon" x-on:click="nextImage()"
+                                    class="absolute right-6 top-1/2 -translate-y-1/2 h-14 w-14 rounded-full bg-background/20 hover:bg-background/40 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity text-foreground border border-border/50">
+                                    <twig:ux:icon name="lucide:chevron-right" class="h-8 w-8" />
+                                </twig:Button>
+                            </div>
+                        </template>
+                        <twig:Badge class="absolute top-8 left-8 bg-background/80 backdrop-blur-md text-primary border-primary/20 px-4 py-2 text-sm font-black uppercase tracking-wider" x-text="product.category.name"></twig:Badge>
+                        <template x-if="product.isOutOfStock">
+                            <twig:Badge class="absolute top-8 right-8 bg-red-500 text-white font-black border-none px-6 py-3 text-lg shadow-2xl">OUT OF STOCK</twig:Badge>
+                        </template>
+                    </twig:Card>
+
+                    <div class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                        <template x-for="(img, idx) in product.images" :key="idx">
+                            <button type="button" @click="activeImage = idx"
+                                    class="h-24 w-24 rounded-2xl overflow-hidden shrink-0 border-2 transition-all relative"
+                                    :class="activeImage === idx ? 'border-primary shadow-lg shadow-primary/20' : 'border-border hover:border-muted-foreground/30'">
+                                <twig:NextImage src="getImageUrl(img)" alt="`${product.name} thumbnail ${idx + 1}`" class="w-full h-full object-cover" />
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="flex flex-col">
+                    <div class="space-y-4 mb-8">
+                        <div class="flex items-center space-x-2 text-amber-500">
+                            {% for i in 1..5 %}<twig:ux:icon name="lucide:star" class="h-4 w-4 fill-amber-500" />{% endfor %}
+                            <span class="text-muted-foreground font-medium text-sm ml-2">(48 Reviews)</span>
+                        </div>
+                        <h1 class="text-5xl font-black text-foreground leading-tight tracking-tighter" x-text="product.name"></h1>
+                        <p class="text-muted-foreground font-medium leading-relaxed text-lg" x-text="product.description"></p>
+                    </div>
+
+                    <div class="mb-10 p-10 rounded-4xl bg-card border border-border shadow-sm">
+                        <div class="flex items-end flex-wrap gap-4 mb-8">
+                            <span class="text-5xl font-black text-foreground" x-text="`$${parseFloat(product.price).toLocaleString()}`"></span>
+                            <template x-if="product.unit">
+                                <twig:Badge variant="secondary" class="mb-1 bg-secondary border-border text-muted-foreground font-black px-4 py-1.5 rounded-xl uppercase tracking-widest text-[10px]" x-text="`PER ${product.unit}`"></twig:Badge>
+                            </template>
+                            <span class="text-muted-foreground text-xl font-bold line-through mb-1 opacity-50" x-text="`$${(parseFloat(product.price) * 1.2).toFixed(2)}`"></span>
+                        </div>
+
+                        <div class="flex items-center space-x-6 mb-10">
+                            <div class="flex items-center bg-secondary/50 border border-border rounded-2xl p-1">
+                                <twig:Button variant="ghost" size="icon" class="h-10 w-10 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                                    x-on:click="quantity = Math.max(1, quantity - 1)" disabledWhen="product.isOutOfStock">
+                                    <twig:ux:icon name="lucide:minus" class="h-4 w-4" />
+                                </twig:Button>
+                                <span class="w-12 text-center font-black text-foreground" :class="product.isOutOfStock ? 'opacity-30' : ''" x-text="quantity"></span>
+                                <twig:Button variant="ghost" size="icon" class="h-10 w-10 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                                    x-on:click="quantity = Math.min(remaining, quantity + 1)" disabledWhen="product.isOutOfStock || quantity >= remaining">
+                                    <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
+                                </twig:Button>
+                            </div>
+                            <span class="font-bold text-sm uppercase tracking-widest"
+                                  :class="product.isOutOfStock || remaining <= 0 ? 'text-red-500 font-black italic' : 'text-muted-foreground'"
+                                  x-text="product.isOutOfStock ? 'Currently Unavailable' : (remaining <= 0 ? 'All units in your cart' : `${remaining} left in stock`)"></span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <twig:Button class="h-16 bg-primary hover:opacity-90 rounded-2xl text-lg font-black text-primary-foreground shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-50 disabled:shadow-none"
+                                x-on:click="handleAddToCart(false)" disabledWhen="addingToCart || product.isOutOfStock">
+                                <template x-if="addingToCart"><twig:ux:icon name="lucide:loader-circle" class="animate-spin mr-2" width="24" height="24" /></template>
+                                <template x-if="!addingToCart && product.isOutOfStock"><twig:ux:icon name="lucide:plus" class="mr-3 rotate-45" width="24" height="24" /></template>
+                                <template x-if="!addingToCart && !product.isOutOfStock"><twig:ux:icon name="lucide:shopping-cart" class="mr-3" width="24" height="24" /></template>
+                                <span x-text="product.isOutOfStock ? 'STRICTLY OUT OF STOCK' : 'ADD TO CART'"></span>
+                            </twig:Button>
+                            <twig:Button variant="outline" class="h-16 border-border bg-transparent hover:bg-secondary text-foreground rounded-2xl font-black transition-all active:scale-95"
+                                x-on:click="handleAddToCart(true)">
+                                <twig:ux:icon name="lucide:heart" class="mr-3 text-red-500" width="24" height="24" />
+                                SAVE FOR LATER
+                            </twig:Button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6 pt-10 border-t border-border mt-auto">
+                        <div class="flex items-center space-x-4">
+                            <div class="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                                <twig:ux:icon name="lucide:truck" class="h-6 w-6 text-primary" />
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-foreground">Free Express</h4>
+                                <p class="text-muted-foreground text-xs font-medium">Orders over $500</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="h-12 w-12 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
+                                <twig:ux:icon name="lucide:shield-check" class="h-6 w-6 text-purple-500" />
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-foreground">2 Year Warranty</h4>
+                                <p class="text-muted-foreground text-xs font-medium">Official coverage</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+{% endblock %}

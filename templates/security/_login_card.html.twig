@@ -1,0 +1,50 @@
+{# Shared markup of app/login/page.tsx and app/(tenant)/[companySlug]/login/page.tsx #}
+<div class="flex min-h-screen items-center justify-center bg-background px-4 relative overflow-hidden transition-colors duration-500"
+     x-data="loginPage({{ {endpoint: endpoint, csrfToken: csrf_token('authenticate'), tenant: tenant}|json_encode|e('html_attr') }})">
+    <div class="absolute top-6 right-6 z-50">
+        <twig:ThemeToggle />
+    </div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 blur-[150px] rounded-full pointer-events-none"></div>
+
+    <twig:Card class="w-full max-w-md border-border bg-card shadow-2xl shadow-primary/5 relative z-10">
+        <twig:Card:Header class="space-y-1 pb-8 text-center border-b border-border/50 mb-6">
+            <twig:Card:Title class="text-3xl font-black tracking-tight text-foreground">Sign In</twig:Card:Title>
+            <twig:Card:Description class="text-gray-500 dark:text-gray-400 text-base">Access your administrative dashboard</twig:Card:Description>
+        </twig:Card:Header>
+        <form @submit.prevent="handleSubmit()">
+            <twig:Card:Content class="space-y-4">
+                <div class="space-y-2">
+                    <div class="relative">
+                        <twig:ux:icon name="lucide:mail" class="absolute left-3.5 top-3 h-5 w-5 text-gray-400 dark:text-gray-500" />
+                        <twig:Input type="email" placeholder="Email Address" class="pl-11" required x-model="email" />
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div class="relative">
+                        <twig:ux:icon name="lucide:lock" class="absolute left-3.5 top-3 h-5 w-5 text-gray-400 dark:text-gray-500" />
+                        <twig:Input type="password" x-bind:type="showPassword ? 'text' : 'password'" placeholder="Password" class="pl-11 pr-11" required x-model="password" />
+                        <button type="button" @click="showPassword = !showPassword"
+                                class="absolute right-3.5 top-3 text-gray-400 dark:text-gray-500 hover:text-primary transition-colors focus:outline-none">
+                            <template x-if="showPassword"><twig:ux:icon name="lucide:eye-off" class="h-5 w-5" /></template>
+                            <template x-if="!showPassword"><twig:ux:icon name="lucide:eye" class="h-5 w-5" /></template>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <input id="remember_me" type="checkbox" x-model="rememberMe"
+                                   class="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary cursor-pointer" />
+                            <label for="remember_me" class="text-sm font-medium text-gray-500 dark:text-gray-400 cursor-pointer select-none">Remember me</label>
+                        </div>
+                        <a href="{{ forgotHref }}" class="text-sm text-cyan-400 hover:text-cyan-300 transition-colors">Forgot password?</a>
+                    </div>
+                </div>
+            </twig:Card:Content>
+            <twig:Card:Footer class="{{ footerClass }}">
+                <twig:Button type="submit" class="w-full h-12 text-base rounded-2xl group" loading="isLoading">
+                    Sign In
+                    <template x-if="!isLoading"><twig:ux:icon name="lucide:arrow-right" class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" /></template>
+                </twig:Button>
+            </twig:Card:Footer>
+        </form>
+    </twig:Card>
+</div>

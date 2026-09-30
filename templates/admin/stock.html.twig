@@ -1,0 +1,179 @@
+{# Port of app/(tenant)/[companySlug]/admin/stock/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-stock{% endblock %}
+{% block content %}
+<div class="space-y-10 animate-in fade-in duration-700" x-data="stockPage">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+            <h1 class="text-4xl font-black text-foreground tracking-tighter mb-2 uppercase italic">STOCK <span class="text-primary not-italic">Manager</span></h1>
+            <p class="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">Update Reagent Inventory &amp; Manage Stock Volume.</p>
+        </div>
+        <div class="flex gap-4 items-center">
+            <div class="flex bg-secondary/30 p-2 rounded-2xl border border-border items-center gap-3 px-4 h-14">
+                <twig:Switch model="showHeader" id="show-header" class="data-[state=checked]:bg-primary" />
+                <twig:Label for="show-header" class="text-[10px] font-black uppercase tracking-widest cursor-pointer opacity-70">Header/Footer</twig:Label>
+            </div>
+            <a href="/{{ companySlug }}/admin/stock/vendors/new">
+                <twig:Button variant="outline" class="bg-secondary/10 hover:bg-secondary/20 border-border text-foreground font-black px-6 rounded-2xl h-14 flex items-center gap-3">
+                    <twig:ux:icon name="lucide:plus" class="h-5 w-5" />
+                    ADD VENDOR
+                </twig:Button>
+            </a>
+            <a href="/{{ companySlug }}/admin/stock/new">
+                <twig:Button class="bg-primary hover:opacity-90 text-primary-foreground font-black px-8 rounded-2xl h-14 shadow-lg shadow-primary/20 flex items-center gap-3">
+                    <twig:ux:icon name="lucide:plus" class="h-5 w-5" />
+                    NEW STOCK ENTRY
+                </twig:Button>
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <twig:Card class="bg-card border-border rounded-[2rem] shadow-sm p-6 flex items-center gap-6">
+            <div class="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <twig:ux:icon name="lucide:package" class="h-7 w-7 text-primary" />
+            </div>
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Reagents</p>
+                <p class="text-2xl font-black text-foreground" x-text="totalItems"></p>
+            </div>
+        </twig:Card>
+        <twig:Card class="bg-card border-border rounded-[2rem] shadow-sm p-6 flex items-center gap-6">
+            <div class="h-14 w-14 rounded-2xl bg-green-500/10 flex items-center justify-center">
+                <twig:ux:icon name="lucide:trending-up" class="h-7 w-7 text-green-500" />
+            </div>
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page Stock Units</p>
+                <p class="text-2xl font-black text-foreground" x-text="pageStockUnits"></p>
+            </div>
+        </twig:Card>
+        <twig:Card class="bg-card border-border rounded-[2.5rem] shadow-sm p-6 flex items-center gap-6 cursor-pointer hover:bg-secondary/5 transition-colors">
+            <div class="h-14 w-14 rounded-2xl bg-orange-500/10 flex items-center justify-center">
+                <twig:ux:icon name="lucide:clipboard-list" class="h-7 w-7 text-orange-500" />
+            </div>
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-muted-foreground">View History</p>
+                <p class="text-xs font-bold text-foreground flex items-center gap-1 uppercase tracking-tighter">Stock Log <twig:ux:icon name="lucide:arrow-up-right" class="h-3 w-3" /></p>
+            </div>
+        </twig:Card>
+    </div>
+
+    <twig:Card class="bg-card border-border rounded-[2.5rem] shadow-sm overflow-hidden">
+        <twig:Card:Header class="p-8 border-b border-border bg-secondary/10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="flex items-center gap-4">
+                <div class="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                    <twig:ux:icon name="lucide:tag" class="h-6 w-6" />
+                </div>
+                <div>
+                    <twig:Card:Title class="text-xl font-black uppercase italic tracking-widest">Inventory List</twig:Card:Title>
+                    <twig:Card:Description class="text-[10px] font-bold uppercase tracking-widest">Current stock levels for all laboratory items.</twig:Card:Description>
+                </div>
+            </div>
+            <div class="relative w-full md:w-80">
+                <twig:ux:icon name="lucide:search" class="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <twig:Input placeholder="Search by name, batch or company..." x-model="searchTerm" class="pl-12 bg-secondary/30 border-border rounded-xl h-12 font-bold focus:ring-primary/20" />
+            </div>
+        </twig:Card:Header>
+        <twig:Card:Content class="p-0">
+            <div class="overflow-x-auto">
+                <twig:Table>
+                    <twig:Table:Header class="bg-secondary/5 border-b border-border">
+                        <twig:Table:Row class="border-none">
+                            <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Reagent / Item</twig:Table:Head>
+                            <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Category</twig:Table:Head>
+                            <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center border-x border-border/10">Batch</twig:Table:Head>
+                            <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Current Stock</twig:Table:Head>
+                            <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-10">Actions</twig:Table:Head>
+                        </twig:Table:Row>
+                    </twig:Table:Header>
+                    <twig:Table:Body>
+                        <template x-if="loading">
+                            <twig:Table:Row>
+                                <twig:Table:Cell colspan="5" class="p-20 text-center">
+                                    <twig:ux:icon name="lucide:loader-circle" class="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading inventory data...</p>
+                                </twig:Table:Cell>
+                            </twig:Table:Row>
+                        </template>
+                        <template x-if="!loading && products.length === 0">
+                            <twig:Table:Row>
+                                <twig:Table:Cell colspan="5" class="p-20 text-center">
+                                    <twig:ux:icon name="lucide:package" class="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">No matching reagents found in stock.</p>
+                                </twig:Table:Cell>
+                            </twig:Table:Row>
+                        </template>
+                        <template x-for="product in (loading ? [] : products)" :key="product.id">
+                            <twig:Table:Row class="hover:bg-secondary/10 transition-colors border-b border-border last:border-0 group">
+                                <twig:Table:Cell class="p-6">
+                                    <div class="flex items-center gap-4">
+                                        <div class="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-xs uppercase tracking-tighter" x-text="product.name?.[0]"></div>
+                                        <div>
+                                            <p class="font-black text-foreground uppercase tracking-tight text-sm" x-text="product.name"></p>
+                                            <p class="text-[9px] font-bold text-muted-foreground uppercase tracking-widest" x-text="product.companyName || 'Unknown Supplier'"></p>
+                                        </div>
+                                    </div>
+                                </twig:Table:Cell>
+                                <twig:Table:Cell class="p-6">
+                                    <span class="text-[10px] font-black uppercase px-3 py-1 bg-secondary/50 rounded-full text-foreground border border-border" x-text="product.category?.name || 'Uncategorized'"></span>
+                                </twig:Table:Cell>
+                                <twig:Table:Cell class="p-6 text-center font-mono text-xs font-bold text-muted-foreground group-hover:text-foreground transition-colors" x-text="product.batchNumber || '—'"></twig:Table:Cell>
+                                <twig:Table:Cell class="p-6 text-center">
+                                    <span class="text-base font-black" :class="product.stock <= 5 ? 'text-red-500' : 'text-foreground'" x-text="product.stock"></span>
+                                    <span class="text-[8px] block font-black uppercase tracking-tighter text-muted-foreground">Units</span>
+                                </twig:Table:Cell>
+                                <twig:Table:Cell class="p-6 text-right pr-6">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <twig:Button variant="ghost" size="icon" x-on:click="handlePreviewRecord(product)" title="Preview Record" disabledWhen="previewingId === product.id"
+                                            class="h-9 w-9 text-muted-foreground hover:bg-primary/10 hover:text-primary rounded-lg border border-transparent hover:border-primary/20">
+                                            <template x-if="previewingId === product.id"><twig:ux:icon name="lucide:loader-circle" class="h-4 w-4 animate-spin" /></template>
+                                            <template x-if="previewingId !== product.id"><twig:ux:icon name="lucide:eye" class="h-4 w-4" /></template>
+                                        </twig:Button>
+                                        <twig:Button variant="ghost" size="icon" x-on:click="handleDownloadRecord(product)" title="Download Record"
+                                            class="h-9 w-9 text-muted-foreground hover:bg-emerald-500/10 hover:text-emerald-500 rounded-lg border border-transparent hover:border-emerald-500/20">
+                                            <twig:ux:icon name="lucide:file-down" class="h-4 w-4" />
+                                        </twig:Button>
+                                        <a :href="`/{{ companySlug }}/admin/reagents/${product.id}/edit`">
+                                            <twig:Button variant="ghost" size="icon" title="Edit Details" class="h-9 w-9 text-muted-foreground hover:bg-primary/10 hover:text-primary rounded-lg border border-transparent hover:border-primary/20">
+                                                <twig:ux:icon name="lucide:pen" class="h-4 w-4" />
+                                            </twig:Button>
+                                        </a>
+                                        <a :href="`/{{ companySlug }}/admin/stock/${product.id}/in`">
+                                            <twig:Button variant="outline" class="rounded-xl border-primary/20 hover:border-primary text-primary hover:bg-primary hover:text-white font-black text-[10px] uppercase gap-2 h-9 px-4 transition-all italic">
+                                                <twig:ux:icon name="lucide:plus" class="h-3 w-3" />
+                                                Stock In
+                                            </twig:Button>
+                                        </a>
+                                    </div>
+                                </twig:Table:Cell>
+                            </twig:Table:Row>
+                        </template>
+                    </twig:Table:Body>
+                </twig:Table>
+            </div>
+
+            <template x-if="!loading && totalPages > 1">
+                <div class="p-8 border-t border-border bg-secondary/5 flex items-center justify-between">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-muted-foreground" x-text="`Page ${currentPage} of ${totalPages} — Total ${totalItems} reagents`"></p>
+                    <div class="flex gap-2">
+                        <twig:Button variant="outline" size="sm" disabledWhen="currentPage === 1" x-on:click="handlePageChange(currentPage - 1)" class="rounded-xl font-bold uppercase text-[10px] tracking-widest">
+                            <twig:ux:icon name="lucide:chevron-left" class="h-4 w-4 mr-2" />
+                            Prev
+                        </twig:Button>
+                        <twig:Button variant="outline" size="sm" disabledWhen="currentPage === totalPages" x-on:click="handlePageChange(currentPage + 1)" class="rounded-xl font-bold uppercase text-[10px] tracking-widest">
+                            Next
+                            <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4 ml-2" />
+                        </twig:Button>
+                    </div>
+                </div>
+            </template>
+        </twig:Card:Content>
+    </twig:Card>
+
+    {{ include('admin/_pdf_preview.html.twig', {
+        titleHtml: 'INVENTORY <span class="text-foreground not-italic">Record</span>', titleClass: 'text-primary',
+        subtitle: 'Reviewing digital document', iconName: 'file-down',
+        buttonClass: 'bg-primary hover:bg-primary/90 text-white font-black px-6 rounded-xl flex items-center gap-2 uppercase italic shadow-lg shadow-primary/20 h-10 text-xs',
+    }) }}
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{# Port of app/(tenant)/[companySlug]/posts/page.tsx #}
+{% extends 'base.html.twig' %}
+{% block pages %}posts{% endblock %}
+{% block body %}
+<div class="min-h-screen bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-100 pb-20" x-data="postsPage">
+    <nav class="bg-gray-900/50 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center space-x-4">
+            <a href="/{{ companySlug }}/admin/dashboard" class="p-2 hover:bg-gray-800 rounded-full transition-colors">
+                <twig:ux:icon name="lucide:arrow-left" class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+            </a>
+            <h1 class="text-2xl font-bold bg-linear-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent flex items-center">
+                <twig:ux:icon name="lucide:panels-top-left" class="mr-3 h-6 w-6 text-cyan-400" />
+                Posts &amp; Permissions
+            </h1>
+        </div>
+        <div class="text-sm text-gray-400 dark:text-gray-500">
+            Logged in as: <span class="text-cyan-400 font-bold" x-text="user?.roles?.join(', ')"></span>
+        </div>
+    </nav>
+
+    <main class="p-8 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-1">
+            <twig:Card class="bg-gray-900/40 border-gray-800/50 backdrop-blur-sm sticky top-24">
+                <twig:Card:Header>
+                    <twig:Card:Title class="text-xl font-bold flex items-center">
+                        <twig:ux:icon name="lucide:plus" class="mr-2 h-5 w-5 text-cyan-400" />
+                        Create Post
+                    </twig:Card:Title>
+                </twig:Card:Header>
+                <twig:Card:Content>
+                    <form @submit.prevent="handleCreate()" class="space-y-4">
+                        <twig:Input placeholder="Title" x-model="newTitle" required />
+                        <textarea class="w-full bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 transition-all outline-none min-h-[120px]"
+                                  placeholder="Content..." x-model="newContent" required></textarea>
+                        <twig:Button class="w-full bg-cyan-600 hover:bg-cyan-500 text-gray-900 dark:text-white rounded-xl" loading="isSubmitting">
+                            <twig:ux:icon name="lucide:send" class="mr-2 h-4 w-4" />
+                            Publish
+                        </twig:Button>
+                    </form>
+                </twig:Card:Content>
+            </twig:Card>
+        </div>
+
+        <div class="lg:col-span-2 space-y-6">
+            <h2 class="text-lg font-medium text-gray-500 dark:text-gray-400">All Posts</h2>
+            <template x-if="posts.length === 0">
+                <p class="text-gray-600 italic">No posts available or no permission to view.</p>
+            </template>
+            <template x-for="post in posts" :key="post.id">
+                <twig:Card class="bg-gray-900/40 border-gray-800/50 backdrop-blur-sm group hover:border-cyan-500/20 transition-all">
+                    <twig:Card:Content class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white group-hover:text-cyan-400 transition-colors uppercase tracking-tight" x-text="post.title"></h3>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center">
+                                    By <span class="text-gray-500 dark:text-gray-400 font-bold ml-1" x-text="post.author"></span>
+                                </p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <template x-if="canEdit(post)">
+                                    <twig:Button size="sm" variant="ghost" class="h-9 w-9 text-gray-400 dark:text-gray-500 hover:text-cyan-400 hover:bg-cyan-400/10 rounded-xl" x-on:click="handleEditStart(post)">
+                                        <twig:ux:icon name="lucide:pen" class="h-4 w-4" />
+                                    </twig:Button>
+                                </template>
+                                <template x-if="isSuperAdmin">
+                                    <twig:Button size="sm" variant="ghost" class="h-9 w-9 text-gray-400 dark:text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-xl" x-on:click="handleDelete(post.id)">
+                                        <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />
+                                    </twig:Button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <template x-if="editingPost?.id === post.id">
+                            <form @submit.prevent="handleUpdate()" class="mt-4 space-y-4 bg-gray-800/30 p-4 rounded-2xl border border-gray-700/50">
+                                <twig:Input x-model="editTitle" required class="bg-gray-900/50" />
+                                <textarea class="w-full bg-gray-900/50 border border-gray-300 dark:border-gray-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 transition-all outline-none min-h-[100px]"
+                                          x-model="editContent" required></textarea>
+                                <div class="flex space-x-2">
+                                    <twig:Button size="sm" class="bg-cyan-600 hover:bg-cyan-500" loading="isSubmitting">Update</twig:Button>
+                                    <twig:Button size="sm" variant="ghost" type="button" x-on:click="editingPost = null">Cancel</twig:Button>
+                                </div>
+                            </form>
+                        </template>
+                        <template x-if="editingPost?.id !== post.id">
+                            <p class="text-gray-500 dark:text-gray-400 leading-relaxed text-sm" x-text="post.content"></p>
+                        </template>
+                    </twig:Card:Content>
+                </twig:Card>
+            </template>
+        </div>
+    </main>
+</div>
+{% endblock %}

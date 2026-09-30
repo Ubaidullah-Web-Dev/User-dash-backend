@@ -1,0 +1,115 @@
+{# Port of admin/reagents/ReagentForm.tsx, rendered by new/page.tsx and [id]/edit/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-reagent-form{% endblock %}
+{% set fieldClass = 'bg-secondary/30 border-border rounded-2xl h-14 font-bold text-lg focus:ring-2 focus:ring-primary/20 transition-all' %}
+{% set labelClass = 'text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1' %}
+{% block content %}
+<div x-data="reagentFormPage">
+    <template x-if="pageLoading">
+        <div class="flex h-[60vh] items-center justify-center">
+            <twig:ux:icon name="lucide:loader-circle" class="h-12 w-12 animate-spin text-primary" />
+        </div>
+    </template>
+    <template x-if="!pageLoading && isEditing && !reagent">
+        <div class="flex h-[60vh] flex-col items-center justify-center gap-4">
+            <p class="text-xl font-bold text-muted-foreground uppercase tracking-widest">Reagent not found</p>
+        </div>
+    </template>
+    <template x-if="!pageLoading && (!isEditing || reagent)">
+        <div class="p-8">
+            <div class="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div class="flex items-center gap-4">
+                    <twig:Button variant="ghost" size="icon" x-on:click="back()" class="rounded-full hover:bg-secondary/80">
+                        <twig:ux:icon name="lucide:arrow-left" class="h-6 w-6" />
+                    </twig:Button>
+                    <div>
+                        <h1 class="text-4xl font-black text-foreground tracking-tighter uppercase italic"><span x-text="isEditing ? 'EDIT' : 'NEW'"></span> <span class="text-primary not-italic">REAGENT</span></h1>
+                        <p class="text-muted-foreground font-medium uppercase text-[10px] tracking-widest" x-text="isEditing ? 'Modify existing reagent details' : 'Register a new laboratory reagent to inventory'"></p>
+                        <p class="text-[10px] font-black text-primary uppercase mt-2" x-text="`Debug: ${categories.length} categories found. URL Segment: ${urlSegment}`"></p>
+                    </div>
+                </div>
+
+                <twig:Card class="bg-card border-border shadow-2xl rounded-[2.5rem] overflow-hidden">
+                    <form @submit.prevent="handleSubmit()">
+                        <twig:Card:Content class="p-10 space-y-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="space-y-3">
+                                    <twig:Label class="{{ labelClass }}">Product Name <span class="text-red-500">*</span></twig:Label>
+                                    <twig:Input name="name" required x-bind:value="formData.name || ''" x-on:input="setField($event)" class="{{ fieldClass }}" placeholder="Enter reagent name..." />
+                                </div>
+                                <div class="space-y-3">
+                                    <twig:Label class="{{ labelClass }}">Company Name</twig:Label>
+                                    <twig:Input name="companyName" x-bind:value="formData.companyName || ''" x-on:input="setField($event)" class="{{ fieldClass }}" placeholder="Manufacturer / Brand" />
+                                </div>
+                                <div class="space-y-3">
+                                    <twig:Label class="{{ labelClass }}">Category <span class="text-red-500">*</span></twig:Label>
+                                    <twig:Select model="categoryId" options="categoryOptions" placeholder="Select Category" emptyText="No categories found"
+                                        triggerClass="{{ fieldClass }}" contentClass="bg-popover text-popover-foreground border-border rounded-xl z-50" />
+                                </div>
+                                <div class="space-y-3">
+                                    <twig:Label class="{{ labelClass }}">Pack Size</twig:Label>
+                                    <twig:Input name="packSize" x-bind:value="formData.packSize || ''" x-on:input="setField($event)" placeholder="e.g. 500ml, 100 Tests" class="{{ fieldClass }}" />
+                                </div>
+                                <div class="space-y-3">
+                                    <twig:Label class="{{ labelClass }}">Purchase Price (PKR)</twig:Label>
+                                    <twig:Input name="purchasePrice" type="number" x-bind:value="formData.purchasePrice || ''" x-on:input="setField($event)" class="{{ fieldClass }}" placeholder="0.00" />
+                                </div>
+                                <div class="space-y-3">
+                                    <twig:Label class="{{ labelClass }}">Sale Price (PKR) <span class="text-red-500">*</span></twig:Label>
+                                    <twig:Input name="price" required type="number" x-bind:value="formData.price || ''" x-on:input="setField($event)" class="{{ fieldClass }}" placeholder="0.00" />
+                                </div>
+                                <div class="space-y-3">
+                                    <twig:Label class="{{ labelClass }}">Available Stock</twig:Label>
+                                    <twig:Input name="stock" required type="number" x-bind:value="formData.stock || '0'" x-on:input="setField($event)" class="{{ fieldClass }}" />
+                                </div>
+                                <div class="space-y-3">
+                                    <twig:Label class="{{ labelClass }}">Min Stock Alert</twig:Label>
+                                    <twig:Input name="minimumStock" type="number" x-bind:value="formData.minimumStock || '0'" x-on:input="setField($event)" class="{{ fieldClass }}" />
+                                </div>
+                                <div class="space-y-3">
+                                    <twig:Label class="{{ labelClass }}">Expiry Date</twig:Label>
+                                    <twig:Input name="expiryDate" type="date" x-bind:value="formData.expiryDate || ''" x-on:input="setField($event)" class="{{ fieldClass }}" />
+                                </div>
+                                <div class="space-y-3">
+                                    <twig:Label class="{{ labelClass }}">Batch Number</twig:Label>
+                                    <twig:Input name="batchNumber" x-bind:value="formData.batchNumber || ''" x-on:input="setField($event)" class="{{ fieldClass }}" placeholder="Batch reference..." />
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <twig:Label class="{{ labelClass }}">Description / Notes</twig:Label>
+                                <textarea name="description" class="w-full bg-secondary/30 border-border rounded-2xl p-6 font-bold text-lg focus:ring-2 focus:ring-primary/20 transition-all min-h-[120px] focus:outline-none"
+                                          x-bind:value="formData.description || ''" x-on:input="setField($event)" placeholder="Additional details or storage instructions..."></textarea>
+                            </div>
+
+                            <div class="pt-6 border-t border-border flex flex-col md:flex-row gap-4">
+                                <template x-if="!isSaved">
+                                    <div class="contents">
+                                        <twig:Button type="submit" disabledWhen="loading" class="flex-1 bg-primary text-white font-black rounded-2xl h-16 text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform active:scale-[0.98]">
+                                            <template x-if="loading"><twig:ux:icon name="lucide:loader-circle" class="mr-2 h-6 w-6 animate-spin" /></template>
+                                            <template x-if="!loading"><twig:ux:icon name="lucide:save" class="mr-2 h-6 w-6" /></template>
+                                            <span x-text="isEditing ? 'UPDATE REAGENT' : 'SAVE NEW REAGENT'"></span>
+                                        </twig:Button>
+                                        <twig:Button type="button" variant="outline" x-on:click="back()" class="md:w-48 bg-secondary/50 border-border font-bold rounded-2xl h-16 text-lg">CANCEL</twig:Button>
+                                    </div>
+                                </template>
+                                <template x-if="isSaved">
+                                    <div class="contents">
+                                        <twig:Button type="button" x-on:click="handleDownloadInvoice()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl h-16 text-lg shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-3 animate-in zoom-in-95 duration-300">
+                                            <twig:ux:icon name="lucide:file-down" class="h-6 w-6" />
+                                            DOWNLOAD INVOICE
+                                        </twig:Button>
+                                        <twig:Button type="button" variant="outline" x-on:click="done()" class="md:w-48 border-emerald-500 text-emerald-600 font-bold rounded-2xl h-16 text-lg flex items-center justify-center gap-2">
+                                            <twig:ux:icon name="lucide:circle-check" class="h-5 w-5" />
+                                            DONE
+                                        </twig:Button>
+                                    </div>
+                                </template>
+                            </div>
+                        </twig:Card:Content>
+                    </form>
+                </twig:Card>
+            </div>
+        </div>
+    </template>
+</div>
+{% endblock %}

@@ -1,0 +1,88 @@
+{# Port of app/(tenant)/[companySlug]/profile/my-ads/page.tsx #}
+{% extends 'base.html.twig' %}
+{% block pages %}my-ads{% endblock %}
+{% block body %}
+<div x-data="myAdsPage">
+    <template x-if="loading">
+        <div class="min-h-screen flex items-center justify-center text-primary font-black uppercase tracking-widest">LOADING YOUR LISTINGS...</div>
+    </template>
+    <template x-if="!loading">
+        <div class="min-h-screen bg-background py-20 px-4">
+            <div class="max-w-6xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-16 gap-8">
+                    <div>
+                        <h1 class="text-5xl font-black text-foreground mb-4 tracking-tighter">MY <span class="text-primary uppercase">ads</span></h1>
+                        <p class="text-muted-foreground font-medium text-lg">Manage your active listings and sales performance.</p>
+                    </div>
+                    <a href="/{{ companySlug }}/marketplace/post-ad">
+                        <twig:Button class="h-16 px-10 bg-primary hover:opacity-90 rounded-2xl text-lg font-black text-primary-foreground shadow-xl shadow-primary/20 transition-all active:scale-[0.98]">
+                            <twig:ux:icon name="lucide:plus" class="mr-3 h-6 w-6" /> POST NEW AD
+                        </twig:Button>
+                    </a>
+                </div>
+
+                <template x-if="ads.length === 0">
+                    <twig:Card class="bg-card border-border border-dashed rounded-[3rem] py-32 text-center shadow-sm relative overflow-hidden group transition-all hover:border-primary/30">
+                        <div class="absolute inset-0 bg-linear-to-b from-primary/5 to-transparent opacity-50"></div>
+                        <div class="relative z-10">
+                            <div class="bg-secondary h-32 w-32 rounded-full flex items-center justify-center mx-auto mb-8 border border-border group-hover:border-primary/30 transition-colors shadow-inner">
+                                <twig:ux:icon name="lucide:package-search" class="h-16 w-16 text-muted-foreground group-hover:text-primary transition-colors opacity-20 group-hover:opacity-100" />
+                            </div>
+                            <h2 class="text-4xl font-black text-foreground mb-4 tracking-tight uppercase">No Active Ads</h2>
+                            <p class="text-muted-foreground font-medium text-lg mb-10 max-w-md mx-auto leading-relaxed italic">It looks like you haven&apos;t posted any items yet. <br />Start selling today on our premium network!</p>
+                            <a href="/{{ companySlug }}/marketplace/post-ad">
+                                <twig:Button class="h-14 px-12 bg-primary hover:opacity-90 transition-all text-primary-foreground rounded-2xl font-black text-lg shadow-xl shadow-primary/20">
+                                    <twig:ux:icon name="lucide:plus" class="mr-3 h-5 w-5" /> CREATE YOUR FIRST AD
+                                </twig:Button>
+                            </a>
+                        </div>
+                    </twig:Card>
+                </template>
+                <template x-if="ads.length > 0">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <template x-for="ad in ads" :key="ad.id">
+                            <twig:Card class="bg-card border-border rounded-[2.5rem] overflow-hidden hover:border-primary/30 transition-all group shadow-sm">
+                                <twig:Card:Content class="p-0">
+                                    <div class="p-8 flex items-center gap-8">
+                                        <div class="h-32 w-32 rounded-3xl overflow-hidden border border-border shrink-0 relative bg-secondary">
+                                            <twig:NextImage src="ad.images[0] || 'https://images.unsplash.com/photo-1526733170371-33157ae37812'" alt="ad.name" class="w-full h-full object-cover" />
+                                            <div class="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                                                <a :href="`/{{ companySlug }}/marketplace/${ad.slug}`"><twig:ux:icon name="lucide:eye" class="h-8 w-8 text-primary" /></a>
+                                            </div>
+                                        </div>
+                                        <div class="flex-1 space-y-2 min-w-0">
+                                            <div class="flex justify-between items-start">
+                                                <h3 class="text-xl font-bold text-foreground truncate pr-4 group-hover:text-primary transition-colors" x-text="ad.name"></h3>
+                                                <twig:Badge class="bg-emerald-500/10 text-emerald-600 border-none text-[10px] font-black tracking-widest">ACTIVE</twig:Badge>
+                                            </div>
+                                            <p class="text-3xl font-black text-foreground tracking-tighter" x-text="`$${parseFloat(ad.price).toLocaleString()}`"></p>
+                                            <div class="flex items-center text-muted-foreground font-medium text-xs gap-4">
+                                                <span>Stock: <span class="text-foreground font-black" x-text="ad.stock"></span></span>
+                                                <span class="h-1 w-1 rounded-full bg-border"></span>
+                                                <span>Posted: <span class="text-foreground font-black" x-text="new Date(ad.createdAt).toLocaleDateString()"></span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-secondary/30 border-t border-border p-4 flex justify-between px-8">
+                                        <div class="flex gap-2">
+                                            <twig:Button variant="ghost" size="sm" class="text-muted-foreground hover:text-foreground hover:bg-background rounded-xl font-black uppercase text-[10px] tracking-widest">
+                                                <twig:ux:icon name="lucide:pen-line" class="mr-2 h-4 w-4 text-primary" /> Edit
+                                            </twig:Button>
+                                            <twig:Button variant="ghost" size="sm" class="text-muted-foreground hover:text-red-500 hover:bg-background rounded-xl font-black uppercase text-[10px] tracking-widest">
+                                                <twig:ux:icon name="lucide:trash-2" class="mr-2 h-4 w-4 text-red-500" /> Delete
+                                            </twig:Button>
+                                        </div>
+                                        <twig:Button variant="ghost" size="icon" class="text-muted-foreground hover:text-foreground">
+                                            <twig:ux:icon name="lucide:ellipsis-vertical" class="h-5 w-5" />
+                                        </twig:Button>
+                                    </div>
+                                </twig:Card:Content>
+                            </twig:Card>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </template>
+</div>
+{% endblock %}

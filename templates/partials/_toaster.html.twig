@@ -1,0 +1,13 @@
+{# Replaces sonner's <Toaster position="top-right" richColors closeButton />.
+   The container is turbo-permanent so open toasts survive navigation (like sonner in the root layout).
+   Server flashes (addFlash('success', 'Title|Description')) are emitted per page by flash_controller;
+   JS raises toasts via assets/lib/toast.js. #}
+<section class="toaster" aria-label="Notifications" data-controller="toaster" data-turbo-permanent id="toaster"></section>
+<div data-controller="flash" hidden>
+    {% for type, messages in app.flashes %}
+        {% for message in messages %}
+            {% set parts = message|split('|', 2) %}
+            <template data-type="{{ type }}" data-title="{{ parts[0] }}" data-description="{{ parts[1] ?? '' }}"></template>
+        {% endfor %}
+    {% endfor %}
+</div>

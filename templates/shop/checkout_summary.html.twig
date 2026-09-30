@@ -1,0 +1,108 @@
+{# Port of app/(tenant)/[companySlug]/checkout/summary/[id]/page.tsx #}
+{% extends 'base.html.twig' %}
+{% block pages %}checkout-summary{% endblock %}
+{% block body %}
+{% set branding = tenant_branding(companySlug) %}
+<div x-data="checkoutSummaryPage">
+    <template x-if="loading">
+        <div class="min-h-screen flex items-center justify-center text-primary font-black uppercase tracking-widest">ORDER SECURED...</div>
+    </template>
+    <template x-if="!loading && !order">
+        <div class="min-h-screen flex items-center justify-center text-muted-foreground font-black">ORDER NOT FOUND</div>
+    </template>
+    <template x-if="!loading && order">
+        <div class="min-h-screen bg-background text-foreground py-12 px-4 animate-in fade-in duration-700">
+            <div class="max-w-4xl mx-auto space-y-12">
+                <div class="flex items-center justify-center">
+                    <img src="{{ branding.logoPath }}" alt="Logo" class="h-10 w-10 rounded-xl object-contain shadow-lg shadow-primary/20" />
+                </div>
+
+                <div class="text-center space-y-4">
+                    <div class="h-24 w-24 bg-emerald-500/10 border-2 border-emerald-500/20 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-inner">
+                        <twig:ux:icon name="lucide:circle-check" class="h-12 w-12 text-emerald-500 animate-in zoom-in duration-500" />
+                    </div>
+                    <h1 class="text-6xl font-black tracking-tighter">ORDER <span class="text-primary uppercase">Confirmed</span></h1>
+                    <p class="text-muted-foreground font-medium max-w-sm mx-auto uppercase text-[10px] tracking-widest leading-loose">Thank you for your purchase. Your order <span class="text-foreground font-black" x-text="`#INV-${order.id}`"></span> has been successfully placed.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                    <twig:Card class="bg-card border-border rounded-[3rem] shadow-2xl overflow-hidden border-t-4 border-t-primary/20">
+                        <twig:Card:Header class="p-10 border-b border-border bg-secondary/30">
+                            <twig:Card:Title class="flex items-center text-xl font-black italic tracking-tight">
+                                <twig:ux:icon name="lucide:shopping-bag" class="mr-3 h-5 w-5 text-primary" />
+                                ORDER DETAILS
+                            </twig:Card:Title>
+                        </twig:Card:Header>
+                        <twig:Card:Content class="p-10 space-y-6">
+                            <div class="space-y-4">
+                                <template x-for="(item, i) in order.items" :key="i">
+                                    <div class="flex justify-between items-center group">
+                                        <div class="min-w-0">
+                                            <p class="font-bold text-foreground group-hover:text-primary transition-colors truncate" x-text="item.productName"></p>
+                                            <p class="text-[10px] text-muted-foreground font-black uppercase tracking-widest" x-text="`Quantity: ${item.quantity}`"></p>
+                                        </div>
+                                        <span class="font-black text-foreground text-sm shrink-0" x-text="`$${(item.price * item.quantity).toLocaleString()}`"></span>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <div class="pt-8 border-t border-border space-y-4">
+                                <div class="flex justify-between text-xs font-black uppercase tracking-widest text-muted-foreground">
+                                    <span>Subtotal</span>
+                                    <span class="text-foreground font-bold" x-text="`$${subtotal.toLocaleString()}`"></span>
+                                </div>
+                                <div class="flex justify-between text-xs font-black uppercase tracking-widest text-muted-foreground">
+                                    <span>Shipping</span>
+                                    <span class="text-emerald-500 font-bold" x-text="shipping === 0 ? 'FREE' : `$${shipping}`"></span>
+                                </div>
+                                <div class="pt-6 flex justify-between items-end">
+                                    <span class="font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Total Paid</span>
+                                    <span class="text-4xl font-black text-foreground tracking-tighter" x-text="`$${total.toLocaleString()}`"></span>
+                                </div>
+                            </div>
+                        </twig:Card:Content>
+                    </twig:Card>
+
+                    <div class="space-y-8">
+                        <twig:Card class="bg-card border-border rounded-[3rem] shadow-2xl overflow-hidden border-t-4 border-t-emerald-500/20">
+                            <twig:Card:Header class="p-10 border-b border-border bg-secondary/30">
+                                <twig:Card:Title class="flex items-center text-xl font-black italic tracking-tight">
+                                    <twig:ux:icon name="lucide:file-text" class="mr-3 h-5 w-5 text-emerald-500" />
+                                    INVOICE ACTION
+                                </twig:Card:Title>
+                            </twig:Card:Header>
+                            <twig:Card:Content class="p-10 space-y-8">
+                                <div class="space-y-6">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Delivering To</label>
+                                        <div class="p-5 bg-secondary/50 rounded-2xl border border-border">
+                                            <p class="font-bold text-foreground mb-1" x-text="user?.name"></p>
+                                            <p class="text-xs text-muted-foreground font-medium leading-relaxed uppercase" x-text="order.address"></p>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Contact Phone</label>
+                                        <p class="font-bold text-foreground px-1" x-text="order.phone"></p>
+                                    </div>
+                                </div>
+
+                                <twig:Button x-on:click="handleDownloadInvoice()" class="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-lg shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98] group">
+                                    <twig:ux:icon name="lucide:download" class="mr-3 h-5 w-5 group-hover:translate-y-0.5 transition-transform" /> DOWNLOAD PDF INVOICE
+                                </twig:Button>
+                            </twig:Card:Content>
+                        </twig:Card>
+
+                        <div class="flex flex-col gap-4">
+                            <a href="/{{ companySlug }}/marketplace" class="w-full">
+                                <twig:Button variant="ghost" class="w-full h-14 bg-secondary/50 hover:bg-secondary text-foreground rounded-2xl font-black uppercase text-xs tracking-widest border border-border group">
+                                    Continue Shopping <twig:ux:icon name="lucide:external-link" class="ml-3 h-4 w-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                </twig:Button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+{% endblock %}

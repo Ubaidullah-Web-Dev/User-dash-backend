@@ -1,0 +1,33 @@
+{# Port of components/ui/button.tsx — same variant/size class strings, merged with tailwind_merge like cn().
+   isLoading: static boolean. loading: Alpine expression (spinner + disabled while truthy).
+   disabledWhen: extra Alpine expression that disables the button (React `disabled` prop). #}
+{% props variant = 'primary', size = 'md', isLoading = false, loading = null, disabledWhen = null, tag = 'button' %}
+{% set button = html_cva(
+    base: 'inline-flex items-center justify-center rounded-xl font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none',
+    variants: {
+        variant: {
+            primary: 'bg-primary text-primary-foreground hover:opacity-90 shadow-lg shadow-primary/20',
+            secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+            outline: 'border-2 border-border bg-transparent hover:bg-accent hover:text-accent-foreground',
+            ghost: 'bg-transparent hover:bg-accent hover:text-accent-foreground text-muted-foreground',
+            danger: 'bg-red-600 text-white hover:bg-red-500',
+            link: 'text-primary underline-offset-4 hover:underline bg-transparent !h-auto !p-0',
+        },
+        size: {
+            sm: 'h-9 px-3 text-xs',
+            md: 'h-11 px-6 text-sm',
+            lg: 'h-14 px-8 text-base font-bold',
+            icon: 'h-10 w-10 px-0',
+        },
+    },
+) %}
+{% set disabledExpr = [loading, disabledWhen]|filter(e => e)|map(e => '(' ~ e ~ ')')|join(' || ') %}
+<{{ tag }} class="{{ button.apply({variant: variant, size: variant == 'link' ? null : size}, attributes.render('class'))|tailwind_merge }}"
+    {{ attributes }}{{ isLoading ? ' disabled' }}{% if disabledExpr %} x-bind:disabled="{{ disabledExpr }}"{% endif %}>
+    {%- if isLoading -%}
+        <div class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+    {%- elseif loading -%}
+        <div x-show="{{ loading }}" class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+    {%- endif -%}
+    {%- block content %}{% endblock -%}
+</{{ tag }}>

@@ -25,4 +25,14 @@ return [
     '@hotwired/turbo' => [
         'version' => '7.3.0',
     ],
+    'alpinejs' => [
+        'version' => '3.17.4',
+    ],
+    'aos' => [
+        'version' => '2.3.4',
+    ],
+    'aos/dist/aos.css' => [
+        'version' => '2.3.4',
+        'type' => 'css',
+    ],
 ];

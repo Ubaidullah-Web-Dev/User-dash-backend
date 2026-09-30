@@ -1,0 +1,69 @@
+{# Port of app/(tenant)/[companySlug]/checkout/address/page.tsx #}
+{% extends 'base.html.twig' %}
+{% block pages %}checkout-address{% endblock %}
+{% block body %}
+{% set branding = tenant_branding(companySlug) %}
+{% if app.user %}
+<div class="min-h-screen bg-background text-foreground py-12 px-4" x-data="checkoutAddressPage">
+    <div class="max-w-2xl mx-auto space-y-12">
+        <div class="flex items-center justify-between">
+            <a href="/{{ companySlug }}/cart" class="flex items-center text-muted-foreground hover:text-primary transition-colors font-bold group">
+                <twig:ux:icon name="lucide:arrow-left" class="mr-2 h-5 w-5 group-hover:-translate-x-1 transition-transform" /> Back to Cart
+            </a>
+            <div class="flex items-center">
+                <img src="{{ branding.logoPath }}" alt="Logo" class="h-8 w-8 rounded-lg object-contain shadow-lg shadow-primary/20" />
+            </div>
+        </div>
+
+        <div class="text-center space-y-4">
+            <h1 class="text-5xl font-black tracking-tighter uppercase">Delivery <span class="text-primary">Details</span></h1>
+            <p class="text-muted-foreground font-medium uppercase text-xs tracking-widest">Provide your information to finalize the order.</p>
+        </div>
+
+        <twig:Card class="bg-card border-border rounded-[2.5rem] shadow-xl overflow-hidden border-t-4 border-t-primary/20">
+            <twig:Card:Header class="p-8 border-b border-border bg-secondary/30">
+                <twig:Card:Title class="flex items-center text-xl font-bold">
+                    <twig:ux:icon name="lucide:map-pin" class="mr-3 h-5 w-5 text-primary" />
+                    Shipping Information
+                </twig:Card:Title>
+            </twig:Card:Header>
+            <twig:Card:Content class="p-10">
+                <form @submit.prevent="handleSubmit()" class="space-y-8">
+                    <div class="space-y-6">
+                        <div class="space-y-2">
+                            <twig:Label class="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Full Name</twig:Label>
+                            <div class="relative">
+                                <twig:ux:icon name="lucide:user" class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <twig:Input x-model="formData.name" class="h-14 pl-12 bg-secondary/50 border-border rounded-2xl font-bold focus:ring-primary/20" placeholder="Your full name" />
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <twig:Label class="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Delivery Address</twig:Label>
+                            <div class="relative">
+                                <twig:ux:icon name="lucide:map-pin" class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <twig:Input x-model="formData.address" class="h-14 pl-12 bg-secondary/50 border-border rounded-2xl font-bold focus:ring-primary/20" placeholder="Enter your street address" required />
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <twig:Label class="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Phone Number</twig:Label>
+                            <div class="relative">
+                                <twig:ux:icon name="lucide:phone" class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <twig:Input x-model="formData.phone" class="h-14 pl-12 bg-secondary/50 border-border rounded-2xl font-bold focus:ring-primary/20" placeholder="+1 (555) 000-0000" required />
+                            </div>
+                        </div>
+                    </div>
+
+                    <twig:Button type="submit" disabledWhen="loading" class="w-full h-16 bg-primary text-primary-foreground hover:opacity-90 rounded-2xl font-black text-lg shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+                        <template x-if="loading"><span>PROCESSING...</span></template>
+                        <template x-if="!loading"><span class="contents">CONFIRM &amp; PLACE ORDER <twig:ux:icon name="lucide:send" class="ml-3 h-5 w-5" /></span></template>
+                    </twig:Button>
+                </form>
+            </twig:Card:Content>
+        </twig:Card>
+    </div>
+</div>
+{% else %}
+{# if (!isAuthenticated) { router.push(`/${companySlug}/login`); return null; } #}
+<div x-data="checkoutAddressPage"></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,116 @@
+{#
+    Port of app/(tenant)/[companySlug]/admin/layout.tsx.
+    Auth/role redirects run server-side (App\Security\AdminAreaGuard), so the
+    "AUTHENTICATING..." / "ACCESS DENIED" interstitials are no longer needed.
+    Sidebar open/compact state: sidebar_controller.js (compact persisted in a cookie).
+#}
+{% extends 'base.html.twig' %}
+
+{% set companySlug = app.request.attributes.get('companySlug') %}
+{% set access = admin_access() %}
+{% set branding = tenant_branding(companySlug) %}
+{% set isCompact = app.request.cookies.get('sidebar_compact') == '1' %}
+{% set pathname = app.request.pathInfo %}
+{% set navItems = [
+    {label: 'Lab Dashboard', icon: 'layout-dashboard', href: '/' ~ companySlug ~ '/admin/dashboard-lab'},
+    {label: 'Reagents',      icon: 'flask-conical',    href: '/' ~ companySlug ~ '/admin/reagents'},
+    {label: 'Users',         icon: 'user',             href: '/' ~ companySlug ~ '/admin/users'},
+    {label: 'Stock Mgr',     icon: 'boxes',            href: '/' ~ companySlug ~ '/admin/stock'},
+    {label: 'Lab Customers', icon: 'users-round',      href: '/' ~ companySlug ~ '/admin/customers-lab'},
+    {label: 'Lab Sales',     icon: 'trending-up',      href: '/' ~ companySlug ~ '/admin/sales-lab'},
+    {label: 'Lab Reports',   icon: 'clipboard-list',   href: '/' ~ companySlug ~ '/admin/reports-lab'},
+    {label: 'Lab Invoices',  icon: 'receipt',          href: '/' ~ companySlug ~ '/admin/invoices-lab'},
+    {label: 'Cash Recovery', icon: 'wallet',           href: '/' ~ companySlug ~ '/admin/cash-recovery'},
+    {label: 'Lab Expenses',  icon: 'wallet',           href: '/' ~ companySlug ~ '/admin/lab-expenses'},
+    {label: 'Settings',      icon: 'settings',         href: '/' ~ companySlug ~ '/admin/settings'},
+] %}
+
+{% block body %}
+<div class="min-h-screen bg-background text-foreground flex overflow-hidden"
+     data-controller="sidebar" data-sidebar-compact-value="{{ isCompact ? 'true' : 'false' }}">
+    <aside data-sidebar-target="aside"
+           class="fixed inset-y-0 left-0 z-50 bg-secondary/50 dark:bg-gray-900/80 border-r border-border backdrop-blur-xl transition-all duration-300 ease-in-out lg:translate-x-0 translate-x-0 {{ isCompact ? 'w-20' : 'w-72' }}">
+        <div class="h-full flex flex-col {{ isCompact ? 'p-4' : 'p-6' }}" data-compact-class="p-4" data-expanded-class="p-6">
+            <div class="flex items-center pb-2 {{ isCompact ? 'justify-center' : 'justify-between px-2' }}" data-compact-class="justify-center" data-expanded-class="justify-between px-2">
+                <div class="flex items-center space-x-1 cursor-default">
+                    <img src="{{ branding.logoPath }}" alt="Logo" class="h-10 rounded-lg w-10" />
+                    <span data-sidebar-target="expandedOnly" {{ isCompact ? 'hidden' }} class="text-lg font-black tracking-tighter text-foreground whitespace-nowrap overflow-hidden">ADMIN</span>
+                </div>
+                <button type="button" data-action="sidebar#close" class="lg:hidden p-2 text-muted-foreground hover:text-foreground">
+                    <twig:ux:icon name="lucide:x" class="h-6 w-6" />
+                </button>
+            </div>
+
+            <nav class="flex-1 space-y-2 overflow-x-hidden">
+                {% for item in navItems %}
+                    {% if access.showsNavItem(item.label, item.href) %}
+                        {% set isActive = pathname == item.href %}
+                        <a href="{{ item.href }}" data-sidebar-target="item" data-label="{{ item.label }}" {% if isCompact %}title="{{ item.label }}"{% endif %}
+                           data-compact-class="justify-center px-0" data-expanded-class="px-4"
+                           class="flex items-center {{ isCompact ? 'justify-center px-0' : 'px-4' }} py-3 rounded-xl transition-all duration-300 group {{ isActive ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:text-foreground hover:bg-secondary' }}">
+                            <twig:ux:icon name="lucide:{{ item.icon }}" data-compact-class="" data-expanded-class="mr-3"
+                                class="{{ isCompact ? '' : 'mr-3' }} h-5 w-5 shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-active:scale-95 {{ isActive ? 'text-primary scale-110' : 'group-hover:text-primary' }}" />
+                            <span data-sidebar-target="expandedOnly" {{ isCompact ? 'hidden' }} class="font-bold text-sm whitespace-nowrap text-clip overflow-hidden transition-transform duration-300 group-active:scale-95">{{ item.label }}</span>
+                            {% if isActive %}
+                                <span data-sidebar-target="expandedOnly" {{ isCompact ? 'hidden' }} class="ml-auto shrink-0">
+                                    <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
+                                </span>
+                            {% endif %}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+            </nav>
+
+            <div class="pt-6 border-t border-border flex flex-col gap-4">
+                {% if branding.showBanner %}
+                    <div data-sidebar-target="expandedOnly" {{ isCompact ? 'hidden' }} class="px-2 animate-in fade-in slide-in-from-bottom-2 duration-500 mb-2">
+                        <twig:AlphasoftBanner variant="compact" />
+                    </div>
+                {% endif %}
+                <div class="flex items-center {{ isCompact ? 'justify-center' : 'px-4 py-1' }}" data-compact-class="justify-center" data-expanded-class="px-4 py-1">
+                    <div class="w-10 h-10 shrink-0 rounded-full bg-secondary border border-border flex items-center justify-center text-xs font-bold text-primary">
+                        {{ app.user.userIdentifier|first|upper }}
+                    </div>
+                    <div data-sidebar-target="expandedOnly" {{ isCompact ? 'hidden' }} class="flex-1 min-w-0 ml-3">
+                        <p class="text-xs font-bold text-foreground truncate">{{ app.user.userIdentifier }}</p>
+                        <p class="text-[10px] text-muted-foreground uppercase font-black tracking-widest leading-none">{{ access.roleLabel }}</p>
+                    </div>
+                </div>
+                <form method="post" action="{{ path('web_logout') }}">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+                    <input type="hidden" name="companySlug" value="{{ companySlug }}">
+                    <twig:Button type="submit" variant="ghost" data-sidebar-target="item" data-label="Sign Out" title="{{ isCompact ? 'Sign Out' : false }}"
+                        data-compact-class="justify-center px-0" data-expanded-class="justify-start px-4"
+                        class="w-full group {{ isCompact ? 'justify-center px-0' : 'justify-start px-4' }} text-red-500 hover:bg-red-500/10 hover:text-red-600 rounded-xl mb-4 transition-all duration-300">
+                        <twig:ux:icon name="lucide:log-out" data-compact-class="" data-expanded-class="mr-3"
+                            class="{{ isCompact ? '' : 'mr-3' }} h-5 w-5 shrink-0 transition-transform duration-300 group-hover:-translate-x-1 group-active:scale-95" />
+                        <span data-sidebar-target="expandedOnly" {{ isCompact ? 'hidden' }} class="transition-transform duration-300 group-active:scale-95">Sign Out</span>
+                    </twig:Button>
+                </form>
+            </div>
+        </div>
+    </aside>
+
+    <div data-sidebar-target="content" class="flex-1 flex flex-col transition-all duration-300 {{ isCompact ? 'lg:pl-20' : 'lg:pl-72' }}">
+        <header class="h-20 border-b border-border bg-background/60 backdrop-blur-xl flex items-center justify-between px-8 sticky top-0 z-40">
+            <div class="flex items-center space-x-2">
+                <button type="button" data-sidebar-target="openButton" data-action="sidebar#open" class="lg:hidden p-2 text-muted-foreground hover:text-foreground hover:scale-110 active:scale-95 transition-all duration-300 hidden">
+                    <twig:ux:icon name="lucide:menu" class="h-6 w-6" />
+                </button>
+                <button type="button" data-action="sidebar#toggleCompact" class="hidden lg:block p-2 text-muted-foreground hover:text-foreground hover:scale-110 active:scale-95 transition-all duration-300">
+                    <span data-sidebar-target="compactOnly" {{ isCompact ? '' : 'hidden' }}><twig:ux:icon name="lucide:panel-left" class="h-6 w-6" /></span>
+                    <span data-sidebar-target="expandedOnly" {{ isCompact ? 'hidden' }}><twig:ux:icon name="lucide:panel-left-close" class="h-6 w-6" /></span>
+                </button>
+                <p class="text-2xl font-bold text-primary ml-2">Dashboard</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <twig:ThemeToggle />
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-12 custom-scrollbar">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+{% endblock %}

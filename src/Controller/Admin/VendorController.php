@@ -2,6 +2,7 @@
 
 namespace App\Controller\Admin;
 
+use App\Presenter\VendorPresenter;
 use App\Entity\Vendor;
 use App\Entity\VendorOrder;
 use App\Entity\Product;
@@ -26,30 +27,14 @@ use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 class VendorController extends AbstractController
 {
     #[Route('/vendors', name: 'admin_vendors_list', methods: ['GET'])]
-    public function listVendors(Request $request, VendorRepository $vendorRepository, TenantContext $tenantContext): JsonResponse
+    public function listVendors(Request $request, VendorRepository $vendorRepository, TenantContext $tenantContext, VendorPresenter $presenter): JsonResponse
     {
         $categoryId = $request->query->get('category');
         $search = $request->query->get('search');
         
         $vendors = $vendorRepository->searchByNameOrCompany($search, $tenantContext->getCurrentCompanyId(), $categoryId ? (int) $categoryId : null);
 
-        $data = [];
-        foreach ($vendors as $vendor) {
-            $data[] = [
-                'id' => $vendor->getId(),
-                'name' => $vendor->getName(),
-                'email' => $vendor->getEmail(),
-                'phone' => $vendor->getPhone(),
-                'companyName' => $vendor->getCompanyName(),
-                'status' => $vendor->getStatus(),
-                'category' => $vendor->getCategory() ? [
-                    'id' => $vendor->getCategory()->getId(),
-                    'name' => $vendor->getCategory()->getName()
-                ] : null
-            ];
-        }
-
-        return $this->json($data);
+        return $this->json(array_map($presenter->toListItem(...), $vendors));
     }
 
     #[Route('/vendors/{id}', name: 'admin_vendors_show', methods: ['GET'])]

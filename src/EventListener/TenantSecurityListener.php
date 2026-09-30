@@ -31,6 +31,12 @@ class TenantSecurityListener
             return;
         }
 
+        // Twig pages (former Next.js routes) are not blocked here — the React pages rendered for any
+        // tenant and only their API calls were rejected; the /api routes keep this check.
+        if (str_starts_with((string) $request->attributes->get('_route'), 'web_')) {
+            return;
+        }
+
         /** @var User|null $user */
         $user = $this->security->getUser();
 

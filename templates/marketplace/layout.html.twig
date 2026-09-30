@@ -1,0 +1,141 @@
+{# Port of app/(tenant)/[companySlug]/marketplace/layout.tsx (logo + banner resolved server-side instead of via /public/company) #}
+{% extends 'base.html.twig' %}
+{% set branding = tenant_branding(companySlug) %}
+{% set categories = ['Lab Equipment', 'Medical Supplies', 'Reagents', 'Diagnostics', 'Surgical', 'Accessories', 'Pharma'] %}
+{% block body %}
+<div class="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-300"
+     x-data="{ search: '', isMenuOpen: false,
+               handleSearch() { if (this.search.trim()) window.location.href = '/{{ companySlug|e('js') }}/marketplace?search=' + encodeURIComponent(this.search.trim()); } }">
+    {# Header #}
+    <header class="sticky top-0 z-50 bg-background/80 backdrop-blur-2xl border-b border-border">
+        <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between gap-6">
+            <a href="/{{ companySlug }}/marketplace" class="flex items-center shrink-0">
+                <img src="{{ branding.logoPath }}" alt="Logo" class="h-10 w-10 rounded-xl object-contain shadow-lg shadow-primary/20" />
+            </a>
+
+            <form @submit.prevent="handleSearch()" class="flex-1 max-w-2xl relative group">
+                <twig:ux:icon name="lucide:search" class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <twig:Input x-model="search" placeholder="Search healthcare products..."
+                    class="w-full bg-secondary/50 border-border pl-12 pr-4 h-11 rounded-2xl focus:ring-2 focus:ring-primary/20 transition-all outline-none text-foreground" />
+            </form>
+
+            <div class="hidden md:flex items-center space-x-4">
+                <twig:ThemeToggle />
+                <a href="/{{ companySlug }}/cart">
+                    <twig:Button variant="ghost" size="icon" class="relative hover:bg-secondary rounded-xl transition-all">
+                        <twig:ux:icon name="lucide:shopping-cart" class="h-6 w-6 text-muted-foreground hover:text-foreground" />
+                        <span class="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-background">0</span>
+                    </twig:Button>
+                </a>
+                <a href="/{{ companySlug }}/profile/settings">
+                    <twig:Button variant="ghost" size="icon" class="hover:bg-secondary rounded-xl transition-all">
+                        <twig:ux:icon name="lucide:user" class="h-6 w-6 text-muted-foreground hover:text-foreground" />
+                    </twig:Button>
+                </a>
+                <a href="/{{ companySlug }}/marketplace/post-ad">
+                    <twig:Button class="bg-primary hover:opacity-90 text-primary-foreground font-bold px-6 rounded-xl shadow-lg shadow-primary/20 transition-all">Post Ad</twig:Button>
+                </a>
+            </div>
+
+            <button type="button" @click="isMenuOpen = !isMenuOpen" class="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors">
+                <template x-if="isMenuOpen"><twig:ux:icon name="lucide:x" class="h-7 w-7" /></template>
+                <template x-if="!isMenuOpen"><twig:ux:icon name="lucide:menu" class="h-7 w-7" /></template>
+            </button>
+        </div>
+
+        {# Categories Bar #}
+        <div class="bg-secondary/30 border-t border-border overflow-x-auto scrollbar-hide">
+            <div class="max-w-7xl mx-auto px-4 flex items-center py-3 space-x-8 whitespace-nowrap text-sm font-medium text-muted-foreground">
+                {% for cat in categories %}
+                    <a href="/{{ companySlug }}/marketplace?category={{ cat|lower }}" class="hover:text-primary transition-colors flex items-center group">
+                        {{ cat }}
+                        <twig:ux:icon name="lucide:chevron-right" class="h-3 w-3 ml-1 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# Mobile Menu #}
+        <template x-if="isMenuOpen">
+            <div class="md:hidden absolute top-20 left-0 w-full bg-background border-b border-border animate-in slide-in-from-top duration-300 z-40 overflow-hidden shadow-2xl">
+                <div class="p-6 space-y-6">
+                    <div class="space-y-4">
+                        <a href="/{{ companySlug }}/cart" @click="isMenuOpen = false" class="flex items-center justify-between p-4 bg-secondary/50 rounded-2xl group active:scale-[0.98] transition-all">
+                            <div class="flex items-center space-x-4">
+                                <twig:ux:icon name="lucide:shopping-cart" class="h-6 w-6 text-primary" />
+                                <span class="font-bold">My Cart</span>
+                            </div>
+                            <twig:ux:icon name="lucide:chevron-right" class="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                        </a>
+                        <a href="/{{ companySlug }}/profile/settings" @click="isMenuOpen = false" class="flex items-center justify-between p-4 bg-secondary/50 rounded-2xl group active:scale-[0.98] transition-all">
+                            <div class="flex items-center space-x-4">
+                                <twig:ux:icon name="lucide:user" class="h-6 w-6 text-primary" />
+                                <span class="font-bold">Account</span>
+                            </div>
+                            <twig:ux:icon name="lucide:chevron-right" class="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                        </a>
+                        <a href="/{{ companySlug }}/marketplace/post-ad" @click="isMenuOpen = false" class="flex items-center justify-between p-4 bg-primary text-primary-foreground rounded-2xl group active:scale-[0.98] transition-all shadow-lg shadow-primary/20">
+                            <span class="font-black italic">POST AD</span>
+                            <twig:ux:icon name="lucide:chevron-right" class="h-5 w-5 opacity-50 group-hover:translate-x-1 transition-transform" />
+                        </a>
+                    </div>
+
+                    <div class="pt-6 border-t border-border flex items-center justify-between">
+                        <span class="font-bold text-muted-foreground uppercase text-xs tracking-widest">Interface Appearance</span>
+                        <twig:ThemeToggle />
+                    </div>
+
+                    <div class="pt-2">
+                        <span class="block font-bold text-muted-foreground uppercase text-[10px] tracking-widest mb-4">Categories</span>
+                        <div class="grid grid-cols-2 gap-3">
+                            {% for cat in categories %}
+                                <a href="/{{ companySlug }}/marketplace?category={{ cat|lower }}" @click="isMenuOpen = false" class="px-4 py-3 bg-secondary/30 rounded-xl text-sm font-bold hover:text-primary transition-colors text-center">{{ cat }}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </header>
+
+    <main class="flex-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% if branding.showBanner %}
+        <div class="max-w-7xl mx-auto px-4 py-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <twig:AlphasoftBanner />
+        </div>
+    {% endif %}
+
+    <footer class="bg-secondary/50 border-t border-border py-12">
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="col-span-1 md:col-span-2">
+                <a href="/{{ companySlug }}/marketplace" class="flex items-center mb-6">
+                    <img src="{{ branding.logoPath }}" alt="Logo" class="h-8 w-8 rounded-lg object-contain shadow-lg shadow-primary/20" />
+                </a>
+                <p class="text-muted-foreground max-w-sm mb-6 font-medium">The ultimate destination for healthcare solutions. Verified sellers, secure payments, and worldwide shipping.</p>
+            </div>
+            <div>
+                <h4 class="font-bold text-foreground mb-4">Quick Links</h4>
+                <ul class="space-y-2 text-muted-foreground text-sm font-medium">
+                    <li><a href="/{{ companySlug }}/marketplace" class="hover:text-primary transition-colors">Browse Ads</a></li>
+                    <li><a href="/{{ companySlug }}/marketplace/post-ad" class="hover:text-primary transition-colors">Sell Something</a></li>
+                    <li><a href="/{{ companySlug }}/profile/my-ads" class="hover:text-primary transition-colors">My Ads</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold text-foreground mb-4">Support</h4>
+                <ul class="space-y-2 text-muted-foreground text-sm font-medium">
+                    <li><a href="#" class="hover:text-primary transition-colors">Help Center</a></li>
+                    <li><a href="#" class="hover:text-primary transition-colors">Terms of Service</a></li>
+                    <li><a href="#" class="hover:text-primary transition-colors">Privacy Policy</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 mt-12 pt-8 border-t border-border text-center text-muted-foreground text-xs font-semibold">
+            &copy; {{ 'now'|date('Y') }} Unique Healthcare Solutions. All rights reserved.
+        </div>
+    </footer>
+</div>
+{% endblock %}

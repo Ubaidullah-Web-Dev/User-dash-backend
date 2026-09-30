@@ -1,0 +1,90 @@
+{# Port of components/CustomerRecoveryModal.tsx (Alpine component: assets/lib/customer-recovery-modal.js) #}
+<div x-data="customerRecoveryModal">
+    <template x-if="isRecoveryOpen">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-300">
+            <div class="bg-card border border-border w-full max-w-5xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
+                <div class="p-8 border-b border-border bg-secondary/10 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-black uppercase italic tracking-tighter">CUSTOMER <span class="text-primary not-italic">Recovery</span></h2>
+                        <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Restore or permanently remove inactive customers</p>
+                    </div>
+                    <twig:Button variant="ghost" size="icon" x-on:click="isRecoveryOpen = false" class="rounded-full hover:bg-secondary h-10 w-10">
+                        <twig:ux:icon name="lucide:x" class="h-5 w-5" />
+                    </twig:Button>
+                </div>
+
+                <div class="p-8 bg-secondary/5 border-b border-border">
+                    <div class="relative">
+                        <twig:ux:icon name="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <twig:Input placeholder="Search by name, phone or lab..." x-model="search" x-on:input="onSearch()" class="pl-10 bg-card border-border rounded-xl h-12 font-bold" />
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-auto p-4">
+                    <twig:Table>
+                        <twig:Table:Header>
+                            <twig:Table:Row class="border-none hover:bg-transparent">
+                                <twig:Table:Head class="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Customer</twig:Table:Head>
+                                <twig:Table:Head class="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Lab/Clinic</twig:Table:Head>
+                                <twig:Table:Head class="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Phone</twig:Table:Head>
+                                <twig:Table:Head class="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Remaining Balance</twig:Table:Head>
+                                <twig:Table:Head class="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Actions</twig:Table:Head>
+                            </twig:Table:Row>
+                        </twig:Table:Header>
+                        <twig:Table:Body>
+                            <template x-if="loading">
+                                <twig:Table:Row>
+                                    <twig:Table:Cell colspan="5" class="h-40 text-center">
+                                        <twig:ux:icon name="lucide:loader-circle" class="h-8 w-8 animate-spin mx-auto text-primary" />
+                                    </twig:Table:Cell>
+                                </twig:Table:Row>
+                            </template>
+                            <template x-if="!loading && customers.length === 0">
+                                <twig:Table:Row>
+                                    <twig:Table:Cell colspan="5" class="h-40 text-center text-muted-foreground italic">No deleted customers found.</twig:Table:Cell>
+                                </twig:Table:Row>
+                            </template>
+                            <template x-for="customer in (loading ? [] : customers)" :key="customer.id">
+                                <twig:Table:Row class="hover:bg-secondary/10 transition-colors border-b border-border last:border-0 group">
+                                    <twig:Table:Cell class="p-4">
+                                        <div>
+                                            <p class="font-bold text-foreground" x-text="customer.name"></p>
+                                            <p class="text-[9px] text-muted-foreground uppercase font-black" x-text="`ID: ${customer.id}`"></p>
+                                        </div>
+                                    </twig:Table:Cell>
+                                    <twig:Table:Cell class="p-4 font-medium text-sm" x-text="customer.labName || 'N/A'"></twig:Table:Cell>
+                                    <twig:Table:Cell class="p-4 text-sm text-muted-foreground font-medium" x-text="customer.phone"></twig:Table:Cell>
+                                    <twig:Table:Cell class="p-4 text-right">
+                                        <span class="font-black text-sm" :class="customer.remainingBalance > 0 ? 'text-red-500' : 'text-emerald-500'" x-text="`PKR ${customer.remainingBalance.toLocaleString()}`"></span>
+                                    </twig:Table:Cell>
+                                    <twig:Table:Cell class="p-4 text-right">
+                                        <div class="flex justify-end gap-2">
+                                            <twig:Button size="sm" variant="secondary" x-on:click="handleRestore(customer.id)" class="rounded-xl font-bold h-9 text-[10px] uppercase tracking-widest bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all shrink-0">
+                                                <twig:ux:icon name="lucide:rotate-ccw" class="h-3.5 w-3.5 mr-2" />
+                                                Restore
+                                            </twig:Button>
+                                            <twig:Button size="sm" variant="ghost" x-on:click="handlePermanentDelete(customer.id)" title="Permanently Delete" class="h-9 w-9 text-muted-foreground hover:bg-red-500/10 hover:text-red-500 rounded-lg border border-transparent hover:border-red-500/20">
+                                                <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />
+                                            </twig:Button>
+                                        </div>
+                                    </twig:Table:Cell>
+                                </twig:Table:Row>
+                            </template>
+                        </twig:Table:Body>
+                    </twig:Table>
+                </div>
+
+                <template x-if="totalPages > 1">
+                    <div class="p-6 border-t border-border bg-secondary/5 flex items-center justify-between">
+                        <div class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground" x-text="`Total ${totalItems} items`"></div>
+                        <div class="flex items-center gap-2">
+                            <twig:Button variant="outline" size="sm" x-on:click="goTo(Math.max(1, page - 1))" disabledWhen="page === 1 || loading" class="rounded-xl font-bold h-9 text-[10px] uppercase tracking-widest">Previous</twig:Button>
+                            <span class="text-xs font-black px-4" x-text="`${page} / ${totalPages}`"></span>
+                            <twig:Button variant="outline" size="sm" x-on:click="goTo(Math.min(totalPages, page + 1))" disabledWhen="page === totalPages || loading" class="rounded-xl font-bold h-9 text-[10px] uppercase tracking-widest">Next</twig:Button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </template>
+</div>

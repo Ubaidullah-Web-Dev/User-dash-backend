@@ -1,0 +1,221 @@
+{# Port of app/(tenant)/[companySlug]/admin/customers-lab/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-customers-lab{% endblock %}
+{% block content %}
+<div class="space-y-10 animate-in fade-in duration-700" x-data="customersLab">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+            <h1 class="text-4xl font-black text-foreground tracking-tighter mb-2 uppercase italic">CUSTOMER <span class="text-primary not-italic">Registry</span></h1>
+            <p class="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">Manage Lab &amp; Pharmacy Customers.</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <twig:Button variant="outline" x-on:click="isRecoveryOpen = true" class="border-primary/20 hover:border-primary text-muted-foreground hover:text-primary font-black px-6 rounded-2xl h-14 flex items-center gap-3 transition-all uppercase italic">
+                <twig:ux:icon name="lucide:history" class="h-5 w-5" />
+                RECOVERY
+            </twig:Button>
+            <a href="/{{ companySlug }}/admin/customers-lab/new">
+                <twig:Button class="bg-primary hover:opacity-90 text-primary-foreground font-black px-8 rounded-2xl h-14 shadow-lg shadow-primary/20 flex items-center gap-3 uppercase italic">
+                    <twig:ux:icon name="lucide:plus" class="h-5 w-5" />
+                    REGISTER NEW CUSTOMER
+                </twig:Button>
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-[2.5rem] p-8 shadow-sm">
+        <div class="flex flex-col md:flex-row items-center gap-6">
+            <div class="flex-1 w-full space-y-2">
+                <twig:Label class="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Search Database</twig:Label>
+                <div class="relative">
+                    <twig:ux:icon name="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <twig:Input placeholder="Search by name, phone or lab..." x-model="search" x-on:input="handleSearchChange()" class="pl-10 bg-secondary/30 border-border rounded-xl h-12 font-bold" />
+                </div>
+            </div>
+            <div class="w-full md:w-64 space-y-2">
+                <twig:Label class="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Filter by Status</twig:Label>
+                <twig:Select model="pendingFilter" options="filterOptions" placeholder="All Customers" onChange="onFilterChange(value)"
+                    triggerClass="bg-secondary/30 border-border rounded-xl h-12 font-bold" contentClass="bg-popover border-border rounded-xl font-bold font-sans" />
+            </div>
+        </div>
+    </div>
+
+    <twig:Card class="bg-card border-border rounded-[2.5rem] shadow-sm overflow-hidden">
+        <twig:Card:Header class="p-8 border-b border-border bg-secondary/10">
+            <twig:Card:Title class="text-xl font-black flex items-center gap-3">
+                <twig:ux:icon name="lucide:user" class="h-6 w-6 text-primary" />
+                REGISTERED CLIENTS
+            </twig:Card:Title>
+        </twig:Card:Header>
+        <twig:Card:Content class="p-0">
+            <twig:Table>
+                <twig:Table:Header>
+                    <twig:Table:Row class="border-none">
+                        <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Customer / Identity</twig:Table:Head>
+                        <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Laboratory / Clinic</twig:Table:Head>
+                        <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Contact Info</twig:Table:Head>
+                        <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Location</twig:Table:Head>
+                        <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right border-l border-border/10">Total Spent</twig:Table:Head>
+                        <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-emerald-500 text-right border-l border-border/10">Total Discount</twig:Table:Head>
+                        <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-red-500 text-right border-l border-border/10">Pending Amount</twig:Table:Head>
+                        <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-10">Actions</twig:Table:Head>
+                    </twig:Table:Row>
+                </twig:Table:Header>
+                <twig:Table:Body>
+                    <template x-if="loading">
+                        <twig:Table:Row>
+                            <twig:Table:Cell colspan="6" class="h-40 text-center text-muted-foreground animate-pulse font-bold">Loading customer data...</twig:Table:Cell>
+                        </twig:Table:Row>
+                    </template>
+                    <template x-if="!loading && customers.length === 0">
+                        <twig:Table:Row>
+                            <twig:Table:Cell colspan="7" class="h-40 text-center text-muted-foreground italic">No customers found in registry.</twig:Table:Cell>
+                        </twig:Table:Row>
+                    </template>
+                    <template x-for="customer in (loading ? [] : customers)" :key="customer.id">
+                        <twig:Table:Row class="hover:bg-secondary/10 transition-colors border-b border-border last:border-0 group">
+                            <twig:Table:Cell class="p-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-xs uppercase tracking-tighter" x-text="customer.name[0]"></div>
+                                    <div>
+                                        <p class="font-bold text-foreground" x-text="customer.name"></p>
+                                        <p class="text-[10px] text-muted-foreground uppercase font-black" x-text="`ID: ${customer.id}`"></p>
+                                    </div>
+                                </div>
+                            </twig:Table:Cell>
+                            <twig:Table:Cell class="p-6 font-bold text-sm" x-text="customer.labName || 'N/A'"></twig:Table:Cell>
+                            <twig:Table:Cell class="p-6 text-sm text-muted-foreground font-medium">
+                                <div class="flex items-center gap-2">
+                                    <twig:ux:icon name="lucide:phone" class="h-3.5 w-3.5 text-primary" />
+                                    <span x-text="customer.phone"></span>
+                                </div>
+                            </twig:Table:Cell>
+                            <twig:Table:Cell class="p-6 text-sm text-muted-foreground font-medium uppercase tracking-tight" x-text="customer.city || 'N/A'"></twig:Table:Cell>
+                            <twig:Table:Cell class="p-6 text-right border-l border-border/10">
+                                <span class="font-black text-foreground" x-text="`PKR ${customer.totalSpent.toLocaleString()}`"></span>
+                            </twig:Table:Cell>
+                            <twig:Table:Cell class="p-6 text-right border-l border-border/10">
+                                <span class="font-black text-emerald-500" x-text="`PKR ${(customer.totalDiscount || 0).toLocaleString()}`"></span>
+                            </twig:Table:Cell>
+                            <twig:Table:Cell class="p-6 text-right border-l border-border/10">
+                                <span class="font-black" :class="customer.remainingBalance > 0 ? 'text-red-500' : 'text-emerald-500'" x-text="`PKR ${(customer.remainingBalance || 0).toLocaleString()}`"></span>
+                            </twig:Table:Cell>
+                            <twig:Table:Cell class="p-6 text-right pr-10">
+                                <div class="flex justify-end gap-2">
+                                    <twig:Button variant="secondary" class="rounded-xl font-bold h-9 text-[10px] uppercase tracking-widest hover:bg-primary hover:text-primary-foreground transition-all shrink-0"
+                                        x-on:click="selectedCustomer = customer; isLedgerOpen = true">
+                                        <twig:ux:icon name="lucide:file-text" class="h-3.5 w-3.5 mr-2" />
+                                        View Sales
+                                    </twig:Button>
+                                    <a :href="`/{{ companySlug }}/admin/customers-lab/${customer.id}/edit`">
+                                        <twig:Button variant="ghost" size="icon" title="Edit Customer" class="h-9 w-9 text-muted-foreground hover:bg-primary/10 hover:text-primary rounded-lg border border-transparent hover:border-primary/20">
+                                            <twig:ux:icon name="lucide:pen" class="h-4 w-4" />
+                                        </twig:Button>
+                                    </a>
+                                    <twig:Button variant="ghost" size="icon" title="Delete Customer" class="h-9 w-9 text-muted-foreground hover:bg-red-500/10 hover:text-red-500 rounded-lg border border-transparent hover:border-red-500/20" x-on:click="handleDelete(customer.id)">
+                                        <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />
+                                    </twig:Button>
+                                </div>
+                            </twig:Table:Cell>
+                        </twig:Table:Row>
+                    </template>
+                </twig:Table:Body>
+            </twig:Table>
+
+            <template x-if="totalPages > 1">
+                <div class="p-6 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        Showing <span class="text-foreground" x-text="(page - 1) * 10 + 1"></span> to <span class="text-foreground" x-text="Math.min(page * 10, totalItems)"></span> of <span class="text-foreground" x-text="totalItems"></span> entries
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <twig:Button variant="outline" size="sm" x-on:click="page = Math.max(1, page - 1)" disabledWhen="page === 1 || loading" class="rounded-xl font-bold h-9 text-[10px] uppercase tracking-widest">Previous</twig:Button>
+                        <div class="px-4 py-2 rounded-xl bg-secondary/30 text-xs font-black" x-text="`Page ${page} of ${totalPages}`"></div>
+                        <twig:Button variant="outline" size="sm" x-on:click="page = Math.min(totalPages, page + 1)" disabledWhen="page === totalPages || loading" class="rounded-xl font-bold h-9 text-[10px] uppercase tracking-widest">Next</twig:Button>
+                    </div>
+                </div>
+            </template>
+        </twig:Card:Content>
+    </twig:Card>
+
+    {# LEDGER SELECTION MODAL #}
+    <template x-if="isLedgerOpen">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-300">
+            <div class="bg-card border border-border w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                <div class="p-8 border-b border-border bg-secondary/10 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-black uppercase italic tracking-tighter">ACCOUNT <span class="text-primary not-italic">Ledger</span></h2>
+                        <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1" x-text="`Select period for ${selectedCustomer?.name}`"></p>
+                    </div>
+                    <twig:Button variant="ghost" size="icon" x-on:click="isLedgerOpen = false" class="rounded-full hover:bg-secondary">
+                        <twig:ux:icon name="lucide:x" class="h-5 w-5" />
+                    </twig:Button>
+                </div>
+
+                <div class="p-8 space-y-8">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="space-y-2">
+                            <twig:Label class="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Range Initiation</twig:Label>
+                            <input type="date" x-model="startDate" class="w-full bg-secondary/30 border border-border rounded-xl h-12 px-4 font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
+                        </div>
+                        <div class="space-y-2">
+                            <twig:Label class="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Range Termination</twig:Label>
+                            <input type="date" x-model="endDate" class="w-full bg-secondary/30 border border-border rounded-xl h-12 px-4 font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-secondary/20 rounded-2xl">
+                        <div class="flex flex-col">
+                            <twig:Label class="text-[10px] font-black uppercase tracking-widest text-foreground">Header &amp; Footer</twig:Label>
+                            <p class="text-[9px] text-muted-foreground font-medium uppercase tracking-tighter">Include UHS branding in PDF</p>
+                        </div>
+                        <twig:Switch model="showHeader" class="data-[state=checked]:bg-primary" />
+                    </div>
+
+                    <div class="flex gap-3 mt-4">
+                        <twig:Button class="flex-1 bg-secondary text-foreground hover:bg-secondary/80 font-black h-16 rounded-3xl flex items-center justify-center gap-3 uppercase italic text-sm group"
+                            x-on:click="handlePreviewLedger()" disabledWhen="previewing || downloading">
+                            <template x-if="previewing"><twig:ux:icon name="lucide:loader-circle" class="h-5 w-5 animate-spin" /></template>
+                            <template x-if="!previewing"><twig:ux:icon name="lucide:search" class="h-5 w-5 group-hover:scale-110 transition-transform" /></template>
+                            PREVIEW
+                        </twig:Button>
+                        <twig:Button class="flex-[2] bg-primary hover:opacity-90 text-primary-foreground font-black h-16 rounded-3xl shadow-xl shadow-primary/20 flex items-center justify-center gap-3 uppercase italic text-sm group"
+                            x-on:click="handleDownloadLedger()" disabledWhen="downloading || previewing">
+                            <template x-if="downloading"><twig:ux:icon name="lucide:loader-circle" class="h-5 w-5 animate-spin" /></template>
+                            <template x-if="!downloading"><twig:ux:icon name="lucide:download" class="h-5 w-5 group-hover:translate-y-0.5 transition-transform" /></template>
+                            DOWNLOAD NOW
+                        </twig:Button>
+                    </div>
+
+                    <p class="text-[9px] text-center text-muted-foreground font-medium px-4 uppercase tracking-tighter opacity-60">Ledgers are generated as secure PDF documents showing all purchase history and inventory usage for the selected period.</p>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    {# FULL SCREEN PDF PREVIEW MODAL #}
+    <template x-if="previewUrl">
+        <div class="fixed inset-0 z-[100] flex flex-col bg-background/95 backdrop-blur-sm animate-in fade-in duration-300">
+            <div class="p-4 border-b border-border flex justify-between items-center bg-card shadow-sm">
+                <div>
+                    <h2 class="text-xl font-black uppercase italic tracking-tighter">LEDGER <span class="text-primary not-italic">Preview</span></h2>
+                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Reviewing document before download</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <twig:Button x-on:click="downloadPreview()" class="bg-primary hover:opacity-90 text-primary-foreground font-black px-6 rounded-xl flex items-center gap-2 uppercase italic shadow-lg shadow-primary/20 h-10">
+                        <twig:ux:icon name="lucide:download" class="h-4 w-4" />
+                        DOWNLOAD PDF
+                    </twig:Button>
+                    <div class="w-px h-8 bg-border"></div>
+                    <twig:Button variant="ghost" size="icon" x-on:click="closePreview()" class="rounded-full bg-secondary/50 hover:bg-secondary h-10 w-10 shrink-0">
+                        <twig:ux:icon name="lucide:x" class="h-5 w-5" />
+                    </twig:Button>
+                </div>
+            </div>
+            <div class="flex-1 w-full p-4 md:p-8 bg-secondary/5 overflow-hidden">
+                <iframe :src="previewUrl" class="w-full h-full rounded-2xl shadow-2xl border border-border bg-white"></iframe>
+            </div>
+        </div>
+    </template>
+
+    {{ include('admin/_customer_recovery_modal.html.twig') }}
+</div>
+{% endblock %}

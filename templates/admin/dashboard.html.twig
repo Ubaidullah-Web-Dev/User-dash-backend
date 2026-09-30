@@ -1,0 +1,73 @@
+{# Port of app/(tenant)/[companySlug]/admin/dashboard/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-dashboard{% endblock %}
+{% block content %}
+<div class="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700" x-data="adminDashboard">
+    <div>
+        <h1 class="text-4xl font-black text-foreground tracking-tighter mb-2">ADMIN <span class="text-primary">DASHBOARD</span></h1>
+        <p class="text-muted-foreground font-medium">Overview of your marketplace ecosystem.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {# The static class list keeps Tailwind's scanner aware of the dynamic gradient classes #}
+        <template x-for="(stat, i) in statCards" :key="i">
+            <twig:Card class="bg-card border-border p-8 rounded-3xl relative overflow-hidden group hover:border-primary/30 transition-all shadow-sm hover:shadow-md">
+                <div class="relative z-10">
+                    <p class="text-muted-foreground text-xs font-black uppercase tracking-widest mb-4" x-text="stat.label"></p>
+                    <h3 class="text-4xl font-black bg-linear-to-r bg-clip-text text-transparent mb-2" :class="stat.color" x-text="stat.value"></h3>
+                    <div class="text-2xl mt-4 opacity-20 group-hover:opacity-100 transition-opacity absolute top-0 right-0" x-text="stat.icon"></div>
+                </div>
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-linear-to-br opacity-5 blur-3xl" :class="stat.color"></div>
+            </twig:Card>
+        </template>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <twig:Card class="lg:col-span-2 bg-card border-border rounded-3xl p-10 shadow-sm">
+            <h3 class="text-2xl font-black text-foreground mb-8">Recent Activity</h3>
+            <div class="space-y-6">
+                {% for item in [
+                    {icon: '🛒', text: 'New sale: MacBook Pro M3'},
+                    {icon: '👤', text: 'New user registered: sarah@example.com'},
+                    {icon: '📦', text: 'Stock low: iPhone 15 Pro'},
+                ] %}
+                    <div class="flex items-center gap-6 p-4 rounded-2xl hover:bg-secondary/50 transition-all cursor-pointer border border-transparent hover:border-border">
+                        <div class="h-12 w-12 rounded-xl bg-secondary flex items-center justify-center font-bold">{{ item.icon }}</div>
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-foreground">{{ item.text }}</p>
+                            <p class="text-xs text-muted-foreground font-medium">2 hours ago</p>
+                        </div>
+                        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4 text-muted-foreground" />
+                    </div>
+                {% endfor %}
+            </div>
+        </twig:Card>
+
+        <twig:Card class="bg-card border-border rounded-3xl p-10 shadow-sm">
+            <h3 class="text-2xl font-black text-foreground mb-8">System Health</h3>
+            <div class="space-y-8">
+                <div>
+                    <div class="flex justify-between text-xs font-black uppercase tracking-widest mb-3">
+                        <span class="text-muted-foreground">Server Load</span>
+                        <span class="text-emerald-500">Optimal</span>
+                    </div>
+                    <div class="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                        <div class="h-full w-[24%] bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs font-black uppercase tracking-widest mb-3">
+                        <span class="text-muted-foreground">API Latency</span>
+                        <span class="text-primary font-bold">12ms</span>
+                    </div>
+                    <div class="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                        <div class="h-full w-[12%] bg-primary rounded-full shadow-[0_0_8px_rgba(14,165,233,0.3)]"></div>
+                    </div>
+                </div>
+            </div>
+            <twig:Button variant="outline" class="w-full mt-10 border-border rounded-xl h-12 font-bold hover:bg-secondary transition-all">View System Logs</twig:Button>
+        </twig:Card>
+    </div>
+    {# tailwind: from-primary to-blue-600 from-purple-500 to-pink-600 from-emerald-500 to-teal-600 from-amber-500 to-orange-600 #}
+</div>
+{% endblock %}

@@ -1,0 +1,422 @@
+{# Port of app/(tenant)/[companySlug]/page.tsx #}
+{% extends 'base.html.twig' %}
+{% block pages %}tenant-home{% endblock %}
+{% block body %}
+<div class="min-h-screen bg-background text-foreground transition-colors duration-500 selection:bg-primary/30" x-data="tenantHome">
+    {# Decorative Background Elements #}
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
+        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/10 blur-[150px] rounded-full animate-pulse-slow"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/10 blur-[150px] rounded-full animate-pulse-slow delay-700"></div>
+        <div class="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-teal-500/5 blur-[120px] rounded-full animate-pulse-slow delay-1000"></div>
+    </div>
+
+    {# Navigation Layer #}
+    <nav class="sticky top-0 z-50 w-full glass-morphism transition-all duration-500 flex flex-col items-center">
+        <div class="max-w-7xl w-full mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex flex-row items-center space-x-3">
+                <twig:Magnetic>
+                    <img :src="logoPath" src="/images/logo.png" alt="Logo" class="h-10 w-10 rounded-lg shadow-lg" />
+                </twig:Magnetic>
+                <p class="text-base font-semibold text-primary tracking-tight" x-text="companyInfo?.name || 'Unique HealthCare Solution'">Unique HealthCare Solution</p>
+            </div>
+
+            {# Desktop Navigation #}
+            <div class="hidden lg:flex flex-row items-center space-x-8 text-sm font-medium text-muted-foreground mr-auto ml-12">
+                <twig:Magnetic><a href="#story" class="hover:text-primary transition-colors">Our Story</a></twig:Magnetic>
+                <twig:Magnetic><a href="#team" class="hover:text-primary transition-colors">The Team</a></twig:Magnetic>
+                <twig:Magnetic><a href="#resources" class="hover:text-primary transition-colors">Resources</a></twig:Magnetic>
+            </div>
+
+            <div class="flex flex-row items-center space-x-3">
+                <div class="hidden sm:flex flex-row items-center space-x-3">
+                    <twig:ThemeToggle />
+                    {% if not app.user %}
+                        <twig:Magnetic>
+                            <a href="/{{ companySlug }}/login" class="px-6 py-2.5 bg-primary text-primary-foreground rounded-full text-sm font-bold transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 block">Login</a>
+                        </twig:Magnetic>
+                    {% else %}
+                        <div class="relative">
+                            <twig:Magnetic>
+                                <button type="button" @click="isProfileOpen = !isProfileOpen" class="flex flex-row items-center space-x-2 p-1.5 bg-secondary/50 hover:bg-secondary rounded-full border border-border transition-all">
+                                    <div class="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center text-primary">
+                                        <twig:ux:icon name="lucide:user" class="w-4 h-4" />
+                                    </div>
+                                    <twig:ux:icon name="lucide:chevron-down" class="w-4 h-4 text-muted-foreground transition-transform duration-300" x-bind:class="isProfileOpen ? 'rotate-180' : ''" />
+                                </button>
+                            </twig:Magnetic>
+
+                            <template x-if="isProfileOpen">
+                                <div>
+                                    <div class="fixed inset-0 z-40" @click="isProfileOpen = false"></div>
+                                    <div class="absolute right-0 mt-3 w-64 bg-background border border-border rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div class="p-4 border-b border-border bg-secondary/20">
+                                            <p class="text-sm font-bold text-foreground truncate" x-text="user?.name"></p>
+                                            <p class="text-xs text-muted-foreground truncate" x-text="user?.email"></p>
+                                        </div>
+                                        <div class="p-2">
+                                            <button type="button" @click="isProfileOpen = false; logout()" class="w-full flex flex-row items-center space-x-3 p-3 text-sm font-medium text-red-500 hover:bg-red-500/10 rounded-xl transition-colors group">
+                                                <twig:ux:icon name="lucide:log-out" class="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                                                Sign Out
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    {% endif %}
+                </div>
+
+                {# Mobile Menu Toggle #}
+                <div class="lg:hidden flex flex-row items-center space-x-3">
+                    <div class="sm:hidden">
+                        <twig:ThemeToggle />
+                    </div>
+                    <button type="button" @click="isMenuOpen = !isMenuOpen" class="p-2 bg-secondary/50 rounded-xl border border-border/50 text-foreground">
+                        <template x-if="isMenuOpen"><twig:ux:icon name="lucide:x" class="w-6 h-6" /></template>
+                        <template x-if="!isMenuOpen"><twig:ux:icon name="lucide:menu" class="w-6 h-6" /></template>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {# Mobile Dropdown Menu #}
+        <template x-if="isMenuOpen">
+            <div class="lg:hidden absolute top-20 left-0 w-full bg-background border-b border-border shadow-2xl animate-in slide-in-from-top-4 duration-300">
+                <div class="p-6 space-y-6">
+                    <div class="flex flex-col space-y-4">
+                        <a href="#story" @click="isMenuOpen = false" class="text-lg font-bold p-4 bg-secondary/30 rounded-2xl hover:bg-primary/10 hover:text-primary transition-all">Our Story</a>
+                        <a href="#team" @click="isMenuOpen = false" class="text-lg font-bold p-4 bg-secondary/30 rounded-2xl hover:bg-primary/10 hover:text-primary transition-all">The Team</a>
+                        <a href="#resources" @click="isMenuOpen = false" class="text-lg font-bold p-4 bg-secondary/30 rounded-2xl hover:bg-primary/10 hover:text-primary transition-all">Resources</a>
+                    </div>
+
+                    <div class="pt-6 border-t border-border">
+                        {% if not app.user %}
+                            <div class="flex flex-col space-y-4">
+                                <a href="/{{ companySlug }}/login" class="flex items-center justify-center p-4 bg-primary text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/20">Login</a>
+                            </div>
+                        {% else %}
+                            <div class="space-y-4">
+                                <div class="flex flex-row items-center space-x-4 p-4 bg-secondary/30 rounded-2xl border border-border/50">
+                                    <div class="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center text-primary">
+                                        <twig:ux:icon name="lucide:user" class="w-6 h-6" />
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="font-bold text-foreground truncate" x-text="user?.name"></p>
+                                        <p class="text-sm text-muted-foreground truncate" x-text="user?.email"></p>
+                                    </div>
+                                </div>
+                                <button type="button" @click="logout()" class="w-full flex flex-row items-center justify-center space-x-3 p-4 bg-red-500 text-white rounded-2xl font-bold shadow-lg shadow-red-500/20 active:scale-95 transition-all">
+                                    <twig:ux:icon name="lucide:log-out" class="w-5 h-5" />
+                                    Sign Out
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template x-if="showBanner">
+            <div class="w-full max-w-4xl px-6 pb-6 animate-in slide-in-from-top-8 duration-1000 ease-out">
+                <div class="relative group/banner scale-95 hover:scale-100 transition-all duration-700">
+                    <twig:AlphasoftBanner />
+                    <div class="absolute inset-0 bg-primary/5 blur-2xl rounded-3xl -z-10 group-hover/banner:bg-primary/10 transition-colors opacity-0 group-hover/banner:opacity-100 duration-1000"></div>
+                </div>
+            </div>
+        </template>
+    </nav>
+
+    <main class="overflow-hidden">
+        {# Hero Section #}
+        <section class="relative w-full min-h-[85vh] bg-background border-b border-border/20 overflow-hidden">
+            <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
+            <div class="absolute bottom-0 left-[-100px] w-[300px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none z-0"></div>
+
+            <div class="relative z-10 grid grid-cols-1 lg:grid-cols-2 h-full min-h-[85vh] max-w-screen-2xl mx-auto">
+
+                {# Left Column - Content #}
+                <div class="flex flex-col justify-center px-8 py-16 lg:py-24 lg:pl-20 xl:pl-32 space-y-8 mt-8 lg:mt-0" data-aos="fade-up-right">
+                    <div class="inline-flex flex-row items-center space-x-2 px-4 py-2 bg-secondary/80 backdrop-blur-md border border-border/50 rounded-full text-xs font-bold uppercase tracking-widest text-foreground w-fit shadow-sm">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-60"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                        </span>
+                        <span x-text="companyInfo?.name || 'Unique Healthcare Solutions'">Unique Healthcare Solutions</span>
+                    </div>
+
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-foreground leading-[1.1]">
+                        Modernize Your <br />
+                        <span class="animate-gradient-text font-black relative inline-block mt-2">Laboratory</span> <br />
+                        Operations.
+                    </h1>
+
+                    <p class="text-base md:text-lg text-muted-foreground leading-relaxed max-w-lg font-medium">
+                        Equip your facility with innovative diagnostic analyzers and high-precision chemical reagents. Speed, accuracy, and continuous excellence built right in.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 pt-2">
+                        <twig:Magnetic class="w-full sm:w-auto">
+                            <a href="#story" class="w-full sm:w-auto px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-semibold text-sm flex flex-row items-center justify-center space-x-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 group">
+                                Discover Our Story
+                                <twig:ux:icon name="lucide:chevron-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            </a>
+                        </twig:Magnetic>
+                        <twig:Magnetic class="w-full sm:w-auto">
+                            <a href="#resources" class="w-full sm:w-auto px-8 py-4 bg-secondary hover:bg-secondary/80 text-foreground border border-border/50 rounded-2xl font-semibold text-sm flex flex-row items-center justify-center space-x-2 transition-all group">
+                                View Resources
+                                <twig:ux:icon name="lucide:download" class="w-4 h-4 text-muted-foreground group-hover:translate-y-0.5 transition-transform" />
+                            </a>
+                        </twig:Magnetic>
+                    </div>
+
+                    <div class="flex flex-row items-center space-x-6 pt-8 md:pt-12 border-t border-border/40 max-w-md w-full">
+                        <div class="space-y-1">
+                            <p class="text-2xl font-black text-foreground"><span x-counter="100"></span><span class="text-primary">+</span></p>
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Partners</p>
+                        </div>
+                        <div class="w-px h-10 bg-border/50"></div>
+                        <div class="space-y-1">
+                            <p class="text-2xl font-black text-foreground"><span x-counter="99.9"></span><span class="text-primary">%</span></p>
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Accuracy</p>
+                        </div>
+                        <div class="w-px h-10 bg-border/50"></div>
+                        <div class="space-y-1">
+                            <p class="text-2xl font-black text-foreground"><span x-counter="24"></span><span class="text-primary">/</span>7</p>
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Support</p>
+                        </div>
+                    </div>
+                </div>
+
+                {# Right Column - Image Carousel #}
+                <div class="relative flex items-center justify-center p-6 lg:p-12 min-h-[50vh] lg:h-auto" data-aos="fade-up-left">
+                    <div class="relative w-full h-full max-h-[600px] xl:max-h-[700px] rounded-[2rem] lg:rounded-[3rem] overflow-hidden shadow-2xl border border-border bg-secondary/20">
+                        <div class="absolute inset-0">
+                            <template x-for="(img, i) in heroImages" :key="i">
+                                <div class="absolute inset-0 transition-all duration-[1200ms] ease-[cubic-bezier(0.23,1,0.32,1)]"
+                                     :class="i === heroImageIndex ? 'opacity-100 scale-100 blur-0' : 'opacity-0 scale-105 blur-[2px]'">
+                                    <img :src="img" :alt="`Hero Carousel ${i + 1}`" class="w-full h-full object-cover" @error="heroFallback($event, i)" />
+                                    <div class="absolute inset-0 shadow-[inset_0_0_100px_rgba(0,0,0,0.3)] pointer-events-none"></div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="absolute bottom-6 md:bottom-8 right-6 md:right-8 flex flex-row items-center space-x-3 z-30">
+                            <button type="button" @click="prevHero()" class="p-3 bg-background/60 backdrop-blur-xl border border-white/20 rounded-xl hover:bg-background hover:scale-105 transition-all text-foreground shadow-xl group border-border">
+                                <twig:ux:icon name="lucide:chevron-right" class="w-5 h-5 rotate-180 group-hover:-translate-x-0.5 transition-transform" />
+                            </button>
+                            <button type="button" @click="nextHero()" class="p-3 bg-background/60 backdrop-blur-xl border border-white/20 rounded-xl hover:bg-background hover:scale-105 transition-all text-foreground shadow-xl group border-border">
+                                <twig:ux:icon name="lucide:chevron-right" class="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div x-ref="card"
+                         class="absolute top-14 md:top-24 left-4 md:left-2 bg-background/80 backdrop-blur-2xl border border-border p-4 rounded-2xl shadow-2xl hidden sm:flex flex-row items-center space-x-4 z-40"
+                         :class="isCardVisible ? 'animate-slide-in-left' : 'opacity-0'">
+                        <div class="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center text-primary">
+                            <twig:ux:icon name="lucide:target" class="w-6 h-6" />
+                        </div>
+                        <div class="pr-4">
+                            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Precision</p>
+                            <p class="text-sm font-black text-foreground">Highest Guarantee</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="max-w-7xl mx-auto px-6 py-8 space-y-14">
+            {# Numbers Section #}
+            <section class="flex flex-wrap justify-center items-center space-x-12 md:space-x-0 md:space-y-0 flex-row gap-y-12 md:gap-x-24 opacity-80 py-8 border-y border-border/40" data-aos="zoom-in-up" data-aos-delay="100">
+                {% for stat in [
+                    {label: 'Active Users', value: 250, suffix: 'K+'},
+                    {label: 'Enterprises', value: 450, suffix: '+'},
+                    {label: 'Global Offices', value: 12, suffix: ''},
+                    {label: 'Success Rate', value: 99.9, suffix: '%'},
+                ] %}
+                    <div class="text-center">
+                        <div class="text-3xl font-semibold text-primary mb-1"><span x-counter="{{ stat.value }}"></span>{{ stat.suffix }}</div>
+                        <div class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{{ stat.label }}</div>
+                    </div>
+                {% endfor %}
+            </section>
+
+            {# Company Story Section #}
+            <section id="story" class="max-w-4xl mx-auto space-y-8" data-aos="fade-up">
+                <div class="space-y-3 text-center">
+                    <h2 class="text-2xl md:text-3xl font-semibold tracking-tight">Our Mission &amp; Story</h2>
+                    <div class="h-1 w-12 bg-primary mx-auto rounded-full"></div>
+                </div>
+                <div class="prose prose-lg dark:prose-invert max-w-none text-muted-foreground leading-relaxed space-y-6">
+                    <p class="text-xl text-foreground font-medium leading-normal italic">
+                        &quot;We don&apos;t just supply laboratory products. We support discovery, research, and better healthcare.&quot;
+                    </p>
+                    <p>
+                        Founded in 2024, our journey began with a simple goal: to make reliable laboratory supplies and pharmaceutical products easily accessible to professionals, researchers, and healthcare providers. Our team is passionate about supporting scientific progress by providing high-quality reagents, laboratory materials, and trusted pharmacy products.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 my-10">
+                        <div class="p-6 bg-secondary/20 rounded-xl border border-border/50 shadow-sm space-y-3" data-aos="fade-up-right">
+                            <twig:ux:icon name="lucide:target" class="w-8 h-8 text-primary/80" />
+                            <h4 class="text-xl font-semibold text-foreground">The Vision</h4>
+                            <p class="text-md leading-relaxed text-muted-foreground">To become a trusted supplier of laboratory reagents, pharmaceutical products, and scientific materials that empower laboratories, students, researchers, and healthcare professionals.</p>
+                        </div>
+                        <div class="p-6 bg-secondary/20 rounded-xl border border-border/50 shadow-sm space-y-3" data-aos="fade-up-left" data-aos-delay="100">
+                            <twig:ux:icon name="lucide:trending-up" class="w-8 h-8 text-blue-500/80" />
+                            <h4 class="text-xl font-semibold text-foreground">The Growth</h4>
+                            <p class="text-md leading-relaxed text-muted-foreground">From a small local operation, we are steadily expanding our range of laboratory reagents, chemicals, and pharmaceutical products to serve research labs, educational institutions, and healthcare providers.</p>
+                        </div>
+                    </div>
+                    <p>
+                        Today, we continue to focus on quality, reliability, and scientific integrity. Our mission remains simple: provide dependable laboratory reagents, pharmaceutical supplies, and professional service that support research, diagnostics, and innovation.
+                    </p>
+                </div>
+            </section>
+
+            {# Team Section #}
+            <section id="team" class="space-y-10" data-aos="fade-up">
+                <div class="text-center space-y-2">
+                    <h2 class="text-2xl md:text-4xl font-semibold tracking-tight">The Minds Behind</h2>
+                    <p class="text-muted-foreground text-lg">A multidisciplinary team of innovators, dreamers, and builders.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    {% for member in [
+                        {name: 'Ahmad Hassan', role: 'Founder & CEO', img: '/tenants/' ~ companySlug ~ '/images/ceo.jpg', contact: '0304 7025098'},
+                        {name: 'Faizan Zahid', role: 'Managing Director', img: '/tenants/' ~ companySlug ~ '/images/managing-director.jpg', contact: '0305 6131924'},
+                    ] %}
+                        <div class="relative aspect-3/5 rounded-2xl bg-secondary/30 border border-border/50 overflow-hidden group transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl hover:shadow-primary/20 hover:border-primary/50 cursor-pointer" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
+                            <img src="{{ member.img }}" alt="{{ member.name }}" class="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" @error="teamFallback($event, {{ loop.index0 }})" />
+                            <div class="absolute inset-0 bg-linear-to-t from-background/90 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            <div class="absolute inset-0 bg-linear-to-r from-transparent via-white/30 dark:via-white/30 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000"></div>
+                            <div class="absolute bottom-4 left-4 right-4 p-5 bg-background/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl transition-all duration-500 group-hover:bg-background/80 group-hover:-translate-y-1">
+                                <h3 class="text-xl font-black tracking-tight mb-1">{{ member.name }}</h3>
+                                <div class="space-y-1.5">
+                                    <p class="text-[15px] font-black uppercase tracking-[0.2em] text-transparent bg-clip-text bg-linear-to-r from-indigo-400 via-purple-400 to-pink-400">{{ member.role }}</p>
+                                    <p class="text-[15px] font-bold text-muted-foreground/60 uppercase tracking-[0.25em] flex flex-row items-center space-x-2">
+                                        <span class="w-1.5 h-px bg-primary/30"></span>
+                                        {{ member.contact }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            {# Resources Section #}
+            <section id="resources" class="py-16 px-2 bg-secondary/10 rounded-2xl border border-border/40 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] pointer-events-none"></div>
+
+                <div class="relative z-10 max-w-5xl mx-auto space-y-10">
+                    <div class="text-center space-y-3 max-w-2xl mx-auto">
+                        <h2 class="text-2xl md:text-3xl font-semibold tracking-tight">Corporate Resources</h2>
+                        <p class="text-muted-foreground text-sm leading-relaxed">Access official documentation, brand guidelines, and product catalogues.</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <template x-for="(doc, i) in pdfDocs" :key="i">
+                            <div class="border border-border/40 rounded-2xl overflow-hidden transition-all duration-300"
+                                 :class="activePdf === i ? 'bg-background shadow-lg' : 'bg-background/40 hover:bg-background/60'"
+                                 data-aos="fade-up" :data-aos-delay="i * 100">
+                                <button type="button" @click="activePdf = activePdf === i ? null : i" class="w-full p-5 flex items-center justify-between text-left group">
+                                    <div class="flex flex-row items-center space-x-4">
+                                        <div class="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300" :class="activePdf === i ? 'bg-primary text-primary-foreground' : 'bg-secondary'">
+                                            <twig:ux:icon name="lucide:file-text" class="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h5 class="text-base font-semibold tracking-tight" x-text="doc.name"></h5>
+                                            <p class="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider" x-text="`${doc.size} • PDF`"></p>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-row items-center space-x-4">
+                                        <a :href="doc.file" download @click.stop class="p-3 bg-secondary/50 hover:bg-primary hover:text-primary-foreground rounded-xl transition-all" title="Download PDF">
+                                            <twig:ux:icon name="lucide:download" class="w-5 h-5" />
+                                        </a>
+                                        <template x-if="activePdf === i"><twig:ux:icon name="lucide:chevron-up" class="w-6 h-6 text-primary" /></template>
+                                        <template x-if="activePdf !== i"><twig:ux:icon name="lucide:chevron-down" class="w-6 h-6 text-muted-foreground" /></template>
+                                    </div>
+                                </button>
+
+                                <template x-if="activePdf === i">
+                                    <div class="px-6 pb-6 animate-in slide-in-from-top-4 duration-500">
+                                        <div class="h-[600px] w-full bg-secondary/30 rounded-2xl border border-border overflow-hidden relative group shadow-inner">
+                                            <iframe :src="`${doc.file}#toolbar=0&view=FitH`" class="w-full h-full border-none" :title="doc.name"></iframe>
+                                            <div class="absolute inset-0 pointer-events-none border border-primary/10 rounded-2xl"></div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="pt-8 border-t border-border/50 flex flex-col md:flex-row items-center justify-center space-y-8 md:space-y-0 md:space-x-8">
+                        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=uniquehealthcaresolution.swl@gmail.com" target="_blank" rel="noopener noreferrer"
+                           class="flex items-center gap-3 border border-primary/30 rounded-2xl p-4 w-full md:w-auto overflow-hidden hover:bg-primary/5 transition-all cursor-pointer group shadow-sm hover:shadow-md hover:border-primary/60">
+                            <twig:ux:icon name="lucide:users" class="w-8 h-8 text-primary shrink-0 group-hover:scale-110 transition-transform" />
+                            <div class="min-w-0">
+                                <p class="text-[12px] uppercase font-bold tracking-widest text-muted-foreground/60 group-hover:text-primary/80 transition-colors">Company Gmail</p>
+                                <p class="font-semibold text-base md:text-lg break-all group-hover:text-primary transition-colors">uniquehealthcaresolution.swl@gmail.com</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    {# Brands Footer Section #}
+    <footer class="relative bg-background pt-16 border-t border-border/60 mt-10 overflow-hidden" data-aos="fade-up">
+        <div class="absolute inset-0 pointer-events-none opacity-[0.2] dark:opacity-[0.1]">
+            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <pattern id="concentric-circles" width="120" height="120" patternUnits="userSpaceOnUse">
+                        <circle cx="60" cy="60" r="15" fill="none" stroke="currentColor" stroke-width="1" />
+                        <circle cx="60" cy="60" r="30" fill="none" stroke="currentColor" stroke-width="1" />
+                        <circle cx="60" cy="60" r="45" fill="none" stroke="currentColor" stroke-width="1" />
+                        <circle cx="60" cy="60" r="60" fill="none" stroke="currentColor" stroke-width="1" />
+                    </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#concentric-circles)" />
+            </svg>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-6 pb-12">
+            <div class="text-center mb-10">
+                <h2 class="text-2xl md:text-3xl font-bold tracking-tight text-foreground uppercase">Partner Associate Brands</h2>
+                <div class="h-1 w-12 bg-primary mx-auto rounded-full mt-3"></div>
+            </div>
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12">
+                {% for p in [
+                    {name: 'DiaSys', path: '/partner-logos/diasys.png'},
+                    {name: 'Human', path: '/partner-logos/human.png'},
+                    {name: 'Erba Mannheim', path: '/partner-logos/erba.png'},
+                    {name: 'Martin Dow', path: '/partner-logos/martindow.png'},
+                    {name: 'Sysmex', path: '/partner-logos/sysmex.png'},
+                    {name: 'Mindray', path: '/partner-logos/mindray.png'},
+                    {name: 'MERCK', path: '/partner-logos/merck.png'},
+                    {name: 'Rayto', path: '/partner-logos/rayto.png'},
+                    {name: 'BioMed', path: '/partner-logos/biomed.png'},
+                    {name: 'BioHermes', path: '/partner-logos/biohermes.png'},
+                    {name: 'Getein Biotech', path: '/partner-logos/getein.png'},
+                    {name: 'DIAGAST', path: '/partner-logos/diagast.png'},
+                    {name: 'Daitron', path: '/partner-logos/daitron.png'},
+                    {name: 'Lifotronic', path: '/partner-logos/lifotronic.png'},
+                    {name: 'Yhlo', path: '/partner-logos/yhlo.png'},
+                ] %}
+                    <div class="group relative flex items-center justify-center p-4 h-28 bg-linear-to-b from-secondary/40 to-background/40 backdrop-blur-sm rounded-2xl border border-border/50 shadow-sm hover:shadow-md hover:border-primary/30 hover:-translate-y-1 transition-all overflow-hidden">
+                        <div class="absolute inset-0 bg-linear-to-r from-transparent via-white/10 dark:via-white/5 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000"></div>
+                        <img src="{{ p.path }}" alt="{{ p.name }}"
+                             class="relative z-10 max-h-[5.5rem] max-w-full object-contain opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300 drop-shadow-sm"
+                             @error="$el.style.display = 'none'; $el.nextElementSibling?.classList.remove('hidden')" />
+                        <span class="hidden font-black text-foreground text-lg md:text-xl uppercase tracking-wider text-center relative z-10">{{ p.name }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <p class="text-center font-bold text-primary uppercase md:text-lg lg:text-xl tracking-wide leading-relaxed max-w-5xl mx-auto">
+                WHOLESALE DISTRIBUTOR OF LAB DISPOSABLE ITEMS &amp; DIAGNOSTIC REAGENTS LABORATORY, RADIOLOGY &amp; HOSPITAL EQUIPMENT, BIOMEDICAL SERVICES &amp; GENERAL ORDER SUPPLIER
+            </p>
+        </div>
+    </footer>
+</div>
+{% endblock %}

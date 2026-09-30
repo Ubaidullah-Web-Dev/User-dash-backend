@@ -1,0 +1,4 @@
+symfonycasts_tailwind:
+    # Same Tailwind version the Next.js frontend was built with (frontend/package-lock.json)
+    binary_version: 'v4.2.1'
+    input_css: 'assets/styles/app.css'

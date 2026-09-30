@@ -1,0 +1,5 @@
+{# Port of components/SpotlightCard.tsx. Like the React component, extra props (e.g. data-aos) are NOT forwarded. #}
+<div class="group relative overflow-hidden transition-all duration-300 {{ attributes.render('class') }}" x-spotlight>
+    <div data-spotlight class="pointer-events-none absolute -inset-px rounded-3xl opacity-0 transition duration-300 group-hover:opacity-100"></div>
+    <div class="relative z-10 h-full">{% block content %}{% endblock %}</div>
+</div>

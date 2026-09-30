@@ -1,0 +1,100 @@
+{# Port of app/(tenant)/[companySlug]/admin/dashboard-lab/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-dashboard-lab{% endblock %}
+{% block content %}
+<div class="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700" x-data="labDashboard">
+    <div>
+        <h1 class="text-4xl font-black text-foreground tracking-tighter mb-2 uppercase">LAB <span class="text-primary">DASHBOARD</span></h1>
+        <p class="text-muted-foreground font-medium">Pharmacy &amp; Reagent Inventory Overview.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        <template x-for="(stat, i) in statCards" :key="i">
+            <twig:Card class="bg-card border-border p-8 rounded-3xl relative overflow-hidden group hover:border-primary/30 transition-all shadow-sm hover:shadow-md h-full">
+                <div class="relative z-10 h-full flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <p class="text-muted-foreground text-[10px] font-black uppercase tracking-widest" x-text="stat.label"></p>
+                            <template x-if="stat.timeframeKey">
+                                <div class="contents">
+                                    <twig:Select model="$data[stat.timeframeKey]" options="[{value: 'today', label: 'Today'}, {value: 'total', label: 'Total'}]"
+                                        triggerClass="h-6 w-20 text-[9px] font-black uppercase tracking-tighter bg-secondary/50 border-none rounded-lg focus:ring-0"
+                                        contentClass="rounded-xl border-border bg-card" itemClass="text-[10px] font-black uppercase" />
+                                </div>
+                            </template>
+                        </div>
+                        <h3 class="font-black bg-gradient-to-r bg-clip-text text-transparent mb-2 break-all leading-tight"
+                            :class="[fontSizeClass(stat.value), stat.color]" x-text="stat.value"></h3>
+                    </div>
+                    <div class="text-2xl opacity-20 group-hover:opacity-100 transition-opacity self-end">
+                        <template x-if="stat.icon === 'package'"><twig:ux:icon name="lucide:package" class="h-6 w-6" /></template>
+                        <template x-if="stat.icon === 'activity'"><twig:ux:icon name="lucide:activity" class="h-6 w-6" /></template>
+                        <template x-if="stat.icon === 'shopping-bag'"><twig:ux:icon name="lucide:shopping-bag" class="h-6 w-6" /></template>
+                        <template x-if="stat.icon === 'wallet'"><twig:ux:icon name="lucide:wallet" class="h-6 w-6" /></template>
+                    </div>
+                </div>
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-gradient-to-br opacity-5 blur-3xl" :class="stat.color"></div>
+            </twig:Card>
+        </template>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <twig:Card class="lg:col-span-2 bg-card border-border rounded-3xl p-10 shadow-sm">
+            <div class="flex items-center justify-between mb-8">
+                <h3 class="text-2xl font-black text-foreground">Recent Transactions</h3>
+                <twig:Button variant="ghost" class="text-primary hover:bg-primary/10 rounded-xl" x-on:click="go('/admin/sales-lab')">
+                    New Sale <twig:ux:icon name="lucide:chevron-right" class="ml-1 h-4 w-4" />
+                </twig:Button>
+            </div>
+
+            <div class="space-y-6">
+                <template x-for="sale in (stats?.recentSales || [])" :key="sale.id">
+                            <div class="flex items-center gap-6 p-4 rounded-2xl hover:bg-secondary/50 transition-all cursor-pointer border border-transparent hover:border-border">
+                                <div class="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+                                    <twig:ux:icon name="lucide:shopping-bag" class="h-6 w-6" />
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-bold text-foreground" x-text="sale.customerName"></p>
+                                    <p class="text-xs text-muted-foreground font-medium" x-text="new Date(sale.createdAt).toLocaleString()"></p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-black text-primary" x-text="`PKR ${Math.round(sale.total).toLocaleString()}`"></p>
+                                    <p class="text-[10px] text-muted-foreground uppercase font-black">Paid</p>
+                                </div>
+                            </div>
+                </template>
+                <template x-if="!(stats?.recentSales && stats.recentSales.length > 0)">
+                    <div class="text-center py-10 text-muted-foreground font-medium italic">No recent sales found.</div>
+                </template>
+            </div>
+        </twig:Card>
+
+        <twig:Card class="bg-card border-border rounded-3xl p-10 shadow-sm">
+            <h3 class="text-2xl font-black text-foreground mb-8">Inventory Alerts</h3>
+            <div class="space-y-8">
+                <template x-if="stats?.lowStockCount && stats.lowStockCount > 0">
+                    <div class="p-6 bg-red-500/10 border border-red-500/20 rounded-2xl">
+                        <p class="text-red-500 font-black text-sm uppercase tracking-tighter mb-1">Low Stock Warning</p>
+                        <p class="text-xs text-red-500/80 font-bold mb-4" x-text="`${stats.lowStockCount} items are below minimum stock levels.`"></p>
+                        <twig:Button class="w-full bg-red-500 hover:bg-red-600 text-white font-bold h-10 rounded-xl" x-on:click="go('/admin/stock/low')">Refill Stock</twig:Button>
+                    </div>
+                </template>
+                <template x-if="!(stats?.lowStockCount && stats.lowStockCount > 0)">
+                    <div class="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-center">
+                        <p class="text-emerald-500 font-black text-sm uppercase tracking-tighter">All Good</p>
+                        <p class="text-xs text-emerald-500/80 font-medium">Stock levels are healthy.</p>
+                    </div>
+                </template>
+
+                <div class="pt-6 border-t border-border">
+                    <h4 class="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Quick Links</h4>
+                    <div class="grid grid-cols-1 gap-2">
+                        <twig:Button variant="secondary" class="justify-start rounded-xl font-bold h-12" x-on:click="go('/admin/reagents')">Manage Reagents</twig:Button>
+                        <twig:Button variant="secondary" class="justify-start rounded-xl font-bold h-12" x-on:click="go('/admin/reports-lab')">Inventory Reports</twig:Button>
+                    </div>
+                </div>
+            </div>
+        </twig:Card>
+    </div>
+</div>
+{% endblock %}

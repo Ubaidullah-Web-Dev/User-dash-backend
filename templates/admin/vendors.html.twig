@@ -1,0 +1,92 @@
+{# Port of app/(tenant)/[companySlug]/admin/vendors/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-vendors{% endblock %}
+{% block content %}
+<div x-data="vendorsPage">
+    <template x-if="loading">
+        <div class="py-20 text-center font-black animate-pulse text-primary tracking-widest uppercase">Initializing Marketplace Ecosystem...</div>
+    </template>
+    <template x-if="!loading">
+        <div class="space-y-12 animate-in fade-in duration-700">
+            <div>
+                <h1 class="text-4xl font-black text-foreground tracking-tighter mb-2">VENDOR <span class="text-primary uppercase tracking-tight">Management</span></h1>
+                <p class="text-muted-foreground font-medium uppercase text-[10px] tracking-widest leading-loose">Supply Chain control: Manage your partners and inventory intake.</p>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <template x-for="cat in categories" :key="cat.id">
+                    <button type="button" @click="selectedCategory = cat"
+                            class="p-6 rounded-3xl border transition-all flex flex-col items-center justify-center space-y-3 group"
+                            :class="selectedCategory?.id === cat.id ? 'bg-primary/20 border-primary shadow-lg shadow-primary/10' : 'bg-card border-border hover:border-primary/50'">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center transition-colors"
+                             :class="selectedCategory?.id === cat.id ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'">
+                            <twig:ux:icon name="lucide:layout-grid" class="h-6 w-6" />
+                        </div>
+                        <span class="text-xs font-black uppercase tracking-widest" x-text="cat.name"></span>
+                    </button>
+                </template>
+            </div>
+
+            <template x-if="selectedCategory">
+                <twig:Card class="bg-card border-border rounded-[3rem] shadow-2xl overflow-hidden border-t-4 border-t-primary/20">
+                    <twig:Card:Header class="p-10 border-b border-border bg-secondary/30 flex flex-row items-center justify-between space-y-0 text-foreground">
+                        <twig:Card:Title class="text-2xl font-black tracking-tight flex items-center italic">
+                            <twig:ux:icon name="lucide:users" class="mr-4 h-6 w-6 text-primary" />
+                            <span x-text="`${selectedCategory.name.toUpperCase()} VENDORS`"></span>
+                        </twig:Card:Title>
+                        <a href="/{{ companySlug }}/admin/vendors/new">
+                            <twig:Button class="bg-primary hover:opacity-90 rounded-2xl h-11 font-bold px-6 text-primary-foreground">
+                                <twig:ux:icon name="lucide:circle-plus" class="mr-2 h-4 w-4" /> Add Vendor
+                            </twig:Button>
+                        </a>
+                    </twig:Card:Header>
+                    <twig:Card:Content class="p-0">
+                        <template x-if="vendorsLoading">
+                            <div class="p-20 text-center text-primary font-black animate-pulse uppercase tracking-[0.2em] italic">Accessing Supplier Database...</div>
+                        </template>
+                        <template x-if="!vendorsLoading && vendors.length === 0">
+                            <div class="p-20 text-center text-muted-foreground font-black uppercase tracking-widest opacity-50">NO VENDORS REGISTERED FOR THIS CATEGORY</div>
+                        </template>
+                        <template x-if="!vendorsLoading && vendors.length > 0">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="border-b border-border bg-background/50">
+                                        <th class="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Supplier Details</th>
+                                        <th class="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Company</th>
+                                        <th class="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground text-right">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-border">
+                                    <template x-for="v in vendors" :key="v.id">
+                                        <tr class="hover:bg-secondary/50 transition-colors group">
+                                            <td class="p-6">
+                                                <div class="flex flex-col">
+                                                    <span class="font-black text-foreground group-hover:text-primary transition-colors tracking-tight" x-text="v.name"></span>
+                                                    <span class="text-xs text-muted-foreground font-medium" x-text="v.email"></span>
+                                                </div>
+                                            </td>
+                                            <td class="p-6">
+                                                <span class="text-xs font-bold text-foreground bg-secondary/70 px-3 py-1.5 rounded-xl border border-border" x-text="v.companyName || 'N/A'"></span>
+                                            </td>
+                                            <td class="p-6 text-right">
+                                                <span class="text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-current"
+                                                      :class="v.status === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'" x-text="v.status"></span>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </template>
+                    </twig:Card:Content>
+                </twig:Card>
+            </template>
+            <template x-if="!selectedCategory">
+                <div class="h-64 rounded-[3rem] border-4 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground p-12 text-center">
+                    <twig:ux:icon name="lucide:layout-grid" class="h-12 w-12 mb-4 opacity-20" />
+                    <p class="font-black uppercase tracking-widest italic opacity-40">Select a category above to manage component suppliers</p>
+                </div>
+            </template>
+        </div>
+    </template>
+</div>
+{% endblock %}

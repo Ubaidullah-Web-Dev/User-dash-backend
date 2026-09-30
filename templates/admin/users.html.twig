@@ -1,0 +1,196 @@
+{# Port of app/(tenant)/[companySlug]/admin/users/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-users{% endblock %}
+{% block content %}
+<div class="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500" x-data="adminUsers">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative">
+        <div class="space-y-0.5">
+            <h1 class="text-2xl font-bold text-foreground tracking-tight uppercase flex items-center gap-3">
+                <twig:ux:icon name="lucide:users" class="h-6 w-6 text-primary" />
+                USER <span class="text-primary font-normal">Identity</span>
+            </h1>
+            <p class="text-muted-foreground font-medium uppercase text-[9px] tracking-widest flex items-center gap-1.5">
+                <twig:ux:icon name="lucide:shield-check" class="h-2.5 w-2.5 text-emerald-500" /> Directory Management
+            </p>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="bg-secondary/30 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-border/40 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                <twig:ux:icon name="lucide:circle-check" class="h-2.5 w-2.5 text-primary" />
+                Total: <span class="text-primary" x-text="totalUsers"></span>
+            </div>
+            <twig:Button x-on:click="isCreateModalOpen = true" class="rounded-xl h-9 px-4 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-primary/20">
+                <twig:ux:icon name="lucide:user-plus" class="h-3.5 w-3.5" />
+                Create User
+            </twig:Button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div class="lg:col-span-12 bg-card/30 backdrop-blur-md border border-border p-4 rounded-3xl shadow-sm flex flex-col md:flex-row gap-4 items-end">
+            <div class="flex-1 w-full space-y-1.5">
+                <twig:Label class="text-[9px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Search</twig:Label>
+                <div class="relative group">
+                    <twig:ux:icon name="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
+                    <twig:Input placeholder="Email or name..." x-model="searchQuery" x-on:input="handleSearchChange()"
+                        class="pl-10 bg-secondary/20 border-border group-hover:border-primary/40 rounded-xl h-10 font-medium transition-all focus:ring-primary/10 text-xs" />
+                </div>
+            </div>
+            <div class="w-full md:w-52 space-y-1.5">
+                <twig:Label class="text-[9px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Protocol</twig:Label>
+                <twig:Select model="roleFilter" options="filterOptions" placeholder="ROLE" onChange="handleRoleFilterChange(value)"
+                    triggerClass="bg-secondary/20 border-border h-10 rounded-xl font-bold text-[9px] tracking-widest uppercase transition-all"
+                    contentClass="bg-popover border-border rounded-xl shadow-xl" />
+            </div>
+        </div>
+    </div>
+
+    <div class="relative">
+        <twig:Card class="bg-card/40 backdrop-blur-xl border-border rounded-3xl shadow-xl overflow-hidden border-t-4 border-t-primary/10">
+            <twig:Card:Header class="p-6 border-b border-border bg-secondary/10 flex flex-row items-center justify-between">
+                <twig:Card:Title class="text-sm font-bold tracking-tight flex items-center text-foreground uppercase">
+                    <twig:ux:icon name="lucide:list" class="mr-3 h-5 w-5 text-primary" />
+                    Directory
+                </twig:Card:Title>
+                <div class="flex items-center gap-2">
+                    <template x-if="loading"><twig:ux:icon name="lucide:loader-circle" class="h-3.5 w-3.5 text-primary animate-spin" /></template>
+                    <span class="text-[8px] font-bold text-muted-foreground uppercase tracking-widest bg-secondary px-2.5 py-1 rounded-lg border border-border" x-text="`P. ${currentPage} / ${totalPages}`"></span>
+                </div>
+            </twig:Card:Header>
+            <twig:Card:Content class="p-0">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-border bg-background/20">
+                                <th class="p-4 px-6 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Entity</th>
+                                <th class="p-4 px-6 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Clearance</th>
+                                <th class="p-4 px-6 text-[9px] font-bold uppercase tracking-widest text-muted-foreground text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border/30">
+                            <template x-if="loading && users.length === 0">
+                                <tr>
+                                    <td colspan="3" class="p-16 text-center">
+                                        <div class="flex flex-col items-center gap-2">
+                                            <twig:ux:icon name="lucide:loader-circle" class="h-6 w-6 text-primary animate-spin" />
+                                            <p class="text-[10px] font-bold uppercase tracking-widest text-primary/60">Syncing...</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                            <template x-if="!(loading && users.length === 0) && users.length === 0">
+                                <tr>
+                                    <td colspan="3" class="p-16 text-center text-muted-foreground">
+                                        <div class="flex flex-col items-center gap-2 opacity-30">
+                                            <twig:ux:icon name="lucide:circle-alert" class="h-8 w-8" />
+                                            <p class="text-[10px] font-bold uppercase tracking-widest">No entries found</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                            <template x-for="u in (users.length === 0 ? [] : visibleUsers)" :key="u.id">
+                                <tr class="hover:bg-primary/2 transition-colors group" x-data="{ role: defaultRole(u) }">
+                                    <td class="p-4 px-6">
+                                        <div class="flex items-center">
+                                            <div class="h-9 w-9 rounded-lg bg-secondary/50 border border-border/50 flex items-center justify-center font-bold text-primary mr-3 shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                                                <span class="text-sm uppercase font-bold" x-text="u.name?.[0] || u.email[0].toUpperCase()"></span>
+                                            </div>
+                                            <div class="flex flex-col min-w-0">
+                                                <span class="font-bold text-foreground group-hover:text-primary transition-colors tracking-tight uppercase text-xs truncate" x-text="u.name || 'ANONYMOUS'"></span>
+                                                <div class="flex items-center space-x-1.5 text-muted-foreground/60 text-[9px] font-medium tracking-wide">
+                                                    <twig:ux:icon name="lucide:at-sign" class="h-2.5 w-2.5" />
+                                                    <span class="truncate" x-text="u.email"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="p-4 px-6">
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <template x-for="r in u.roles" :key="r">
+                                                <div class="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-md border text-[8px] font-bold uppercase tracking-wider"
+                                                     :class="r.includes('ADMIN') ? 'bg-primary/5 text-primary border-primary/10' : 'bg-secondary/40 text-muted-foreground border-border/50'">
+                                                    <template x-if="r.includes('ADMIN')"><twig:ux:icon name="lucide:shield-check" class="h-2.5 w-2.5" /></template>
+                                                    <template x-if="!r.includes('ADMIN')"><twig:ux:icon name="lucide:shield" class="h-2.5 w-2.5" /></template>
+                                                    <span x-text="r.replace('ROLE_', '')"></span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </td>
+                                    <td class="p-4 px-6 text-right">
+                                        <div class="flex justify-end items-center gap-2">
+                                            <template x-if="updating === u.id"><twig:ux:icon name="lucide:loader-circle" class="h-3 w-3 text-primary animate-spin" /></template>
+                                            <twig:Select model="role" options="roleOptions" placeholder="ACCESS" disabled="updating === u.id" onChange="handleRoleUpdate(u.id, value)"
+                                                triggerClass="w-36 bg-secondary/30 border-border rounded-lg h-8 font-bold text-[8px] tracking-widest text-foreground uppercase px-3 transition-all"
+                                                contentClass="bg-popover border-border rounded-xl shadow-2xl font-bold" />
+                                            <twig:Button variant="outline" size="sm" disabledWhen="deletingIds.includes(u.id)" x-on:click="handleDeleteUser(u.id)"
+                                                class="h-8 w-8 rounded-lg border-border bg-card p-0 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/50 transition-all disabled:opacity-30">
+                                                <template x-if="deletingIds.includes(u.id)"><twig:ux:icon name="lucide:loader-circle" class="h-3.5 w-3.5 animate-spin" /></template>
+                                                <template x-if="!deletingIds.includes(u.id)"><twig:ux:icon name="lucide:trash-2" class="h-3.5 w-3.5" /></template>
+                                            </twig:Button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </twig:Card:Content>
+
+            <div class="p-6 border-t border-border bg-secondary/5 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="text-[9px] font-medium uppercase tracking-widest text-muted-foreground">
+                    Viewing <span class="text-primary font-bold" x-text="users.length"></span> / <span class="text-primary font-bold" x-text="totalUsers"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <twig:Button variant="outline" size="sm" x-on:click="handlePageChange(currentPage - 1)" disabledWhen="currentPage === 1 || loading"
+                        class="h-8 w-8 rounded-lg border-border bg-card p-0 hover:bg-primary/5 hover:text-primary disabled:opacity-30">
+                        <twig:ux:icon name="lucide:chevron-left" class="h-4 w-4" />
+                    </twig:Button>
+                    <div class="flex items-center gap-1">
+                        <template x-for="n in pageWindow" :key="n">
+                            <div class="contents">
+                                <template x-if="currentPage === n">
+                                    <twig:Button variant="primary" size="sm" x-on:click="handlePageChange(n)" disabledWhen="loading" class="h-8 w-8 rounded-lg font-bold text-[9px] transition-all shadow-none" x-text="n"></twig:Button>
+                                </template>
+                                <template x-if="currentPage !== n">
+                                    <twig:Button variant="outline" size="sm" x-on:click="handlePageChange(n)" disabledWhen="loading" class="h-8 w-8 rounded-lg font-bold text-[9px] transition-all bg-card" x-text="n"></twig:Button>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <twig:Button variant="outline" size="sm" x-on:click="handlePageChange(currentPage + 1)" disabledWhen="currentPage === totalPages || loading"
+                        class="h-8 w-8 rounded-lg border-border bg-card p-0 hover:bg-primary/5 hover:text-primary disabled:opacity-30">
+                        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+                    </twig:Button>
+                </div>
+            </div>
+        </twig:Card>
+    </div>
+
+    <twig:Dialog open="isCreateModalOpen" close="!isCreating && (isCreateModalOpen = false)" title="'Initialize New User'" description="'Securely add a new entity to the system directory'">
+        <form @submit.prevent="handleCreateUser()" class="space-y-4">
+            <div class="space-y-1.5">
+                <twig:Label class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Full Name</twig:Label>
+                <twig:Input required placeholder="John Doe" x-model="formData.name" class="bg-secondary/20 border-border rounded-xl h-11 font-medium transition-all focus:ring-primary/10 text-xs" />
+            </div>
+            <div class="space-y-1.5">
+                <twig:Label class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Email Address</twig:Label>
+                <twig:Input required type="email" placeholder="user@gmail.com" x-model="formData.email" class="bg-secondary/20 border-border rounded-xl h-11 font-medium transition-all focus:ring-primary/10 text-xs" />
+                <p class="text-[8px] text-muted-foreground font-medium uppercase tracking-widest ml-1 mt-1">Only Gmail, Outlook, and Yahoo are supported</p>
+            </div>
+            <div class="space-y-1.5">
+                <twig:Label class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Security Protocol (Role)</twig:Label>
+                <twig:Select model="formData.role" options="createRoleOptions" placeholder="SELECT ROLE"
+                    triggerClass="bg-secondary/20 border-border h-11 rounded-xl font-bold text-[10px] tracking-widest uppercase transition-all"
+                    contentClass="bg-popover border-border rounded-xl shadow-xl" />
+            </div>
+            <div class="space-y-1.5">
+                <twig:Label class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Access Password</twig:Label>
+                <twig:Input required type="password" placeholder="••••••••" x-model="formData.password" class="bg-secondary/20 border-border rounded-xl h-11 font-medium transition-all focus:ring-primary/10 text-xs" />
+            </div>
+            <div class="pt-4 flex gap-3">
+                <twig:Button type="button" variant="outline" x-on:click="isCreateModalOpen = false" disabledWhen="isCreating" class="flex-1 rounded-xl uppercase text-[10px] font-bold tracking-widest">Cancel</twig:Button>
+                <twig:Button type="submit" loading="isCreating" class="flex-1 rounded-xl uppercase text-[10px] font-bold tracking-widest">Create Entity</twig:Button>
+            </div>
+        </form>
+    </twig:Dialog>
+</div>
+{% endblock %}

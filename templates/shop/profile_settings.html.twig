@@ -1,0 +1,94 @@
+{# Port of app/(tenant)/[companySlug]/profile/settings/page.tsx #}
+{% extends 'base.html.twig' %}
+{% block pages %}profile-settings{% endblock %}
+{% block body %}
+<div class="min-h-screen bg-background text-foreground" x-data="profileSettingsPage">
+    <div class="py-20 px-4 max-w-4xl mx-auto">
+        <div class="mb-12 text-center">
+            <div class="inline-block p-4 rounded-3xl bg-primary/10 border border-primary/20 mb-6">
+                <twig:ux:icon name="lucide:user" class="h-12 w-12 text-primary" />
+            </div>
+            <h1 class="text-5xl font-black text-foreground mb-4 tracking-tighter">ACCOUNT <span class="text-primary font-black">SETTINGS</span></h1>
+            <p class="text-muted-foreground font-medium text-lg">Manage your identity and security preferences.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="md:col-span-1 space-y-4">
+                <twig:Card class="bg-card border-border rounded-3xl overflow-hidden shadow-sm">
+                    <twig:Card:Content class="p-4 space-y-2">
+                        <twig:Button variant="ghost" class="w-full justify-start text-primary bg-primary/10 rounded-2xl font-black h-12">
+                            <twig:ux:icon name="lucide:user" class="mr-3 h-5 w-5" /> Account Details
+                        </twig:Button>
+                        <a href="/{{ companySlug }}/profile/my-ads">
+                            <twig:Button variant="ghost" class="w-full justify-start text-muted-foreground hover:text-foreground rounded-2xl h-12 font-bold">
+                                <twig:ux:icon name="lucide:sparkles" class="mr-3 h-5 w-5" /> My Listings
+                            </twig:Button>
+                        </a>
+                        <div class="pt-4 border-t border-border mt-4">
+                            <twig:Button variant="ghost" class="w-full justify-start text-red-500 hover:bg-red-500/10 rounded-2xl h-12 font-bold" x-on:click="logout()">
+                                <twig:ux:icon name="lucide:log-out" class="mr-3 h-5 w-5" /> Sign Out
+                            </twig:Button>
+                        </div>
+                    </twig:Card:Content>
+                </twig:Card>
+            </div>
+
+            <div class="md:col-span-2">
+                <form @submit.prevent="handleSubmit()" class="space-y-8">
+                    <twig:Card class="bg-card border-border rounded-[2.5rem] overflow-hidden shadow-xl">
+                        <twig:Card:Header class="p-10 border-b border-border pb-8">
+                            <twig:Card:Title class="text-2xl font-black uppercase tracking-tight">Personal Information</twig:Card:Title>
+                            <twig:Card:Description class="text-muted-foreground font-medium">Update your public profile details.</twig:Card:Description>
+                        </twig:Card:Header>
+                        <twig:Card:Content class="p-10 space-y-8">
+                            <div class="space-y-3">
+                                <twig:Label for="name" class="text-muted-foreground font-black uppercase text-[10px] tracking-widest pl-1">Full Name</twig:Label>
+                                <div class="relative">
+                                    <twig:ux:icon name="lucide:user" class="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                    <twig:Input id="name" name="name" x-model="formData.name" placeholder="John Doe" class="h-16 bg-secondary/50 border-border rounded-2xl pl-16 pr-6 focus:ring-primary/20 text-foreground font-bold" />
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <twig:Label class="text-muted-foreground font-black uppercase text-[10px] tracking-widest pl-1">Email Address</twig:Label>
+                                <twig:Input disabled value="{{ app.user ? app.user.userIdentifier : '' }}" class="h-16 bg-secondary/30 border-border rounded-2xl px-6 text-muted-foreground cursor-not-allowed font-medium" />
+                                <p class="text-[10px] text-muted-foreground/60 font-medium pl-1 italic">Email cannot be changed for security purposes.</p>
+                            </div>
+                        </twig:Card:Content>
+                    </twig:Card>
+
+                    <twig:Card class="bg-card border-border rounded-[2.5rem] overflow-hidden shadow-xl">
+                        <twig:Card:Header class="p-10 border-b border-border pb-8">
+                            <twig:Card:Title class="text-2xl font-black uppercase tracking-tight">Security</twig:Card:Title>
+                            <twig:Card:Description class="text-muted-foreground font-medium">Change your password to keep your account safe.</twig:Card:Description>
+                        </twig:Card:Header>
+                        <twig:Card:Content class="p-10 space-y-8">
+                            <div class="space-y-3">
+                                <twig:Label for="password" class="text-muted-foreground font-black uppercase text-[10px] tracking-widest pl-1">New Password</twig:Label>
+                                <div class="relative">
+                                    <twig:ux:icon name="lucide:lock" class="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                    <twig:Input id="password" name="password" type="password" x-model="formData.password" placeholder="Leave blank to keep current" class="h-16 bg-secondary/50 border-border rounded-2xl pl-16 pr-6 focus:ring-primary/20 text-foreground font-bold" />
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <twig:Label for="confirmPassword" class="text-muted-foreground font-black uppercase text-[10px] tracking-widest pl-1">Confirm Password</twig:Label>
+                                <div class="relative">
+                                    <twig:ux:icon name="lucide:lock" class="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                    <twig:Input id="confirmPassword" name="confirmPassword" type="password" x-model="formData.confirmPassword" placeholder="Repeat new password" class="h-16 bg-secondary/50 border-border rounded-2xl pl-16 pr-6 focus:ring-primary/20 text-foreground font-bold" />
+                                </div>
+                            </div>
+                        </twig:Card:Content>
+                    </twig:Card>
+
+                    <div class="flex justify-end gap-4">
+                        <twig:Button type="submit" class="h-16 bg-primary hover:opacity-90 rounded-2xl font-black text-primary-foreground px-12 shadow-xl shadow-primary/20 transition-all active:scale-[0.98]" disabledWhen="loading">
+                            <template x-if="loading"><twig:ux:icon name="lucide:loader-circle" class="animate-spin mr-3" width="24" height="24" /></template>
+                            <template x-if="!loading"><twig:ux:icon name="lucide:save" class="mr-3" width="24" height="24" /></template>
+                            SAVE CHANGES
+                        </twig:Button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

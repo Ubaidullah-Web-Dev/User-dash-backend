@@ -1,0 +1,4 @@
+{# next/image with `fill`: an absolutely positioned <img> covering its parent. src is an Alpine expression. #}
+{% props src, alt = '' %}
+<img x-bind:src="{{ src }}" x-bind:alt="{{ alt }}" loading="lazy" decoding="async" data-nimg="fill"
+     style="position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent" {{ attributes }} />

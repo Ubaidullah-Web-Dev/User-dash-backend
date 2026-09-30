@@ -1,0 +1,57 @@
+{#
+    Port of components/ui/select.tsx (Radix Select, position="popper").
+    <twig:Select model="form.categoryId" options="categories.map(c => ({value: String(c.id), label: c.name}))"
+                 placeholder="Select…" triggerClass="…" contentClass="…" itemClass="…" disabled="isBusy" required />
+    model / options / disabled / onChange are Alpine expressions; options is a list of {value, label, class?, suffix?, suffixClass?};
+    placeholderExpr: optional Alpine expression overriding the static placeholder; triggerIcon: lucide icon shown before the value;
+    onChange runs after the model updates, with the new `value` (Radix onValueChange).
+#}
+{% props model, options, placeholder = '', triggerClass = '', contentClass = '', disabled = 'false', itemClass = '', required = false, onChange = null, emptyText = null, emptyClass = 'p-4 text-center text-xs text-muted-foreground font-bold uppercase italic', placeholderExpr = null, triggerIcon = null, triggerIconClass = 'mr-3 h-5 w-5 text-primary' %}
+{% set placeholderJs = placeholderExpr ?? placeholder|json_encode %}
+{% set selectedJs = '((' ~ options ~ ') || []).find(o => String(o.value) === String(value))' %}
+<div x-data="uiSelect" x-modelable="value" x-model="{{ model }}" class="contents"{% if onChange %} x-on:ui-change.stop="$nextTick(() => (value => { {{ onChange }} })($event.detail))"{% endif %}>
+    {% if required %}
+    {# Radix renders a visually-hidden native <select required> so the browser validates the form #}
+    <select required aria-hidden="true" tabindex="-1" x-model="value" @focus="$refs.trigger.focus()"
+            style="position: absolute; border: 0; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; word-wrap: normal;">
+        <option value=""></option>
+        <template x-for="opt in (({{ options }}) || [])" :key="String(opt.value)"><option :value="String(opt.value)" x-text="opt.label"></option></template>
+    </select>
+    {% endif %}
+    <button type="button" x-ref="trigger" role="combobox" :aria-expanded="open" :data-state="open ? 'open' : 'closed'"
+            :disabled="{{ disabled }}" @click="toggle()" @keydown="triggerKey($event)"
+            :data-placeholder="(({{ options }}) || []).some(o => String(o.value) === String(value)) ? null : ''"
+            class="{{ ('flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 ' ~ triggerClass)|tailwind_merge }}">
+        {% set valueSpan %}<span style="pointer-events: none;"><span x-text="({{ selectedJs }} || {}).label ?? ({{ placeholderJs }})"></span><template x-if="({{ selectedJs }} || {}).suffix"><span x-bind:class="{{ selectedJs }}.suffixClass" x-text="' ' + {{ selectedJs }}.suffix"></span></template></span>{% endset %}
+        {% if triggerIcon %}
+            <div class="flex items-center">{{ ux_icon('lucide:' ~ triggerIcon, {class: triggerIconClass}) }}{{ valueSpan }}</div>
+        {% else %}
+            {{ valueSpan }}
+        {% endif %}
+        {{ ux_icon('lucide:chevron-down', {class: 'h-4 w-4 opacity-50', 'aria-hidden': 'true'}) }}
+    </button>
+    <template x-teleport="body">
+        <div x-show="open" @click="close(false)" class="fixed inset-0 z-50" style="pointer-events: auto;"></div>
+    </template>
+    <template x-teleport="body">
+        <div x-show="open" x-ref="content" role="listbox" :data-state="open ? 'open' : 'closed'" :data-side="side"
+             @keydown="onKey($event)"
+             :style="`position: fixed; z-index: 50; left: ${pos.left}px; ${pos.top !== null ? 'top: ' + pos.top + 'px;' : 'bottom: ' + pos.bottom + 'px;'} min-width: ${pos.width}px; max-height: ${pos.maxHeight}px; display: flex; flex-direction: column;`"
+             class="{{ ('relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md ' ~ contentClass)|tailwind_merge }}">
+            <div class="p-1 w-full" style="position: relative; flex: 1; overflow: auto;">
+                {% if emptyText %}<template x-if="((({{ options }}) || []).length === 0)"><div class="{{ emptyClass }}">{{ emptyText }}</div></template>{% endif %}
+                <template x-for="opt in (({{ options }}) || [])" :key="String(opt.value)">
+                    <div role="option" tabindex="-1" :data-value="String(opt.value)" :aria-selected="String(opt.value) === String(value)"
+                         :data-state="String(opt.value) === String(value) ? 'checked' : 'unchecked'"
+                         @click="choose(String(opt.value))" @pointermove="$el.focus()" :class="opt.class || ''"
+                         class="{{ ('relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ' ~ itemClass)|tailwind_merge }}">
+                        <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+                            <span x-show="String(opt.value) === String(value)">{{ ux_icon('lucide:check', {class: 'h-4 w-4'}) }}</span>
+                        </span>
+                        <span><span x-text="opt.label"></span><template x-if="opt.suffix"><span :class="opt.suffixClass" x-text="' ' + opt.suffix"></span></template></span>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </template>
+</div>

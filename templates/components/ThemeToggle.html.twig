@@ -1,0 +1,7 @@
+{# Port of components/ThemeToggle.tsx. Starts disabled like the unmounted React button; the controller enables it. #}
+<twig:Button variant="ghost" size="icon" aria-label="Toggle theme" disabled
+    class="theme-toggle-btn relative group hover:bg-gray-200 dark:hover:bg-white/5 hover:scale-110 active:scale-95 rounded-xl transition-all duration-300 {{ attributes.render('class') }}"
+    data-controller="theme-toggle" data-action="theme-toggle#toggle">
+    <twig:ux:icon name="lucide:sun" class="h-6 w-6 text-gray-700 dark:text-gray-300 transition-all duration-500 ease-out scale-100 rotate-0 group-hover:rotate-[15deg] dark:scale-0 dark:-rotate-90" />
+    <twig:ux:icon name="lucide:moon" class="absolute h-6 w-6 text-gray-700 dark:text-gray-300 transition-all duration-500 ease-out scale-0 rotate-90 dark:scale-100 dark:rotate-0 dark:group-hover:-rotate-[15deg]" />
+</twig:Button>

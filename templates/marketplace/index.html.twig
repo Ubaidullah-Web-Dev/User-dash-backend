@@ -1,0 +1,85 @@
+{# Port of app/(tenant)/[companySlug]/marketplace/page.tsx #}
+{% extends 'marketplace/layout.html.twig' %}
+{% block pages %}marketplace{% endblock %}
+{% block content %}
+<div x-data="marketplacePage">
+    <template x-if="loading">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-8">
+            {% for i in 1..8 %}
+                <div class="space-y-4">
+                    <twig:Skeleton class="h-64 w-full rounded-2xl bg-gray-50 dark:bg-gray-900" />
+                    <twig:Skeleton class="h-4 w-2/3 bg-gray-50 dark:bg-gray-900" />
+                    <twig:Skeleton class="h-4 w-1/3 bg-gray-50 dark:bg-gray-900" />
+                </div>
+            {% endfor %}
+        </div>
+    </template>
+
+    <template x-if="!loading">
+        <div class="p-8 max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-10 space-y-6 md:space-y-0 md:space-x-6">
+                <div>
+                    <h1 class="text-3xl font-black text-foreground mb-2" x-text="heading"></h1>
+                    <p class="text-muted-foreground font-medium" x-text="`${products.length} premium items found`"></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <template x-if="products.length === 0">
+                    <div class="col-span-full py-20 text-center">
+                        <div class="text-6xl mb-4">🔍</div>
+                        <h3 class="text-2xl font-bold text-muted-foreground mb-2">No products found</h3>
+                        <p class="text-muted-foreground/80">Try adjusting your search or filters.</p>
+                    </div>
+                </template>
+                <template x-for="product in products" :key="product.id">
+                    <a :href="`/{{ companySlug }}/marketplace/${product.slug}`">
+                        <twig:Card class="bg-card border-border hover:border-primary/30 transition-all group overflow-hidden h-full flex flex-col rounded-3xl shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-primary/5">
+                            <twig:Card:Content class="p-0 flex-1 flex flex-col">
+                                <div class="relative aspect-square overflow-hidden bg-secondary/50">
+                                    <twig:NextImage src="getImageUrl(product.images[0])" alt="product.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
+                                    <template x-if="product.isRecommended">
+                                        <twig:Badge class="absolute top-4 left-4 bg-linear-to-r from-amber-400 to-orange-500 text-white font-black border-none px-3 py-1 shadow-xl">FEATURED</twig:Badge>
+                                    </template>
+                                    <template x-if="product.isOutOfStock">
+                                        <twig:Badge class="absolute top-4 right-4 bg-red-500 text-white font-black border-none px-3 py-1 shadow-xl">OUT OF STOCK</twig:Badge>
+                                    </template>
+                                    <div class="absolute inset-0 bg-linear-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
+                                        <twig:Button class="w-full bg-primary/90 hover:bg-primary text-primary-foreground rounded-xl backdrop-blur-md border border-primary/20 font-bold">Quick View</twig:Button>
+                                    </div>
+                                </div>
+
+                                <div class="p-6 space-y-3 flex-1 flex flex-col">
+                                    <div class="flex justify-between items-start">
+                                        <div class="space-y-1">
+                                            <p class="text-[10px] font-black text-primary tracking-widest uppercase" x-text="product.category.name"></p>
+                                            <h3 class="text-lg font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1" x-text="product.name"></h3>
+                                        </div>
+                                        <div class="flex items-center text-amber-500 text-xs font-bold">
+                                            <twig:ux:icon name="lucide:star" class="h-3 w-3 fill-amber-500 mr-1" />
+                                            4.9
+                                        </div>
+                                    </div>
+                                    <p class="text-muted-foreground text-sm line-clamp-2 flex-1 font-medium" x-text="product.description"></p>
+                                    <div class="pt-4 flex justify-between items-center border-t border-border mt-auto" :class="product.isOutOfStock ? 'opacity-50 grayscale' : ''">
+                                        <div class="flex flex-row items-center flex-wrap space-x-2">
+                                            <span class="text-2xl font-black text-foreground" x-text="`$${parseFloat(product.price).toLocaleString()}`"></span>
+                                            <template x-if="product.unit">
+                                                <twig:Badge variant="outline" class="text-[9px] font-black px-2 py-0.5 rounded-lg border-border text-muted-foreground bg-secondary/30 uppercase tracking-tighter" x-text="product.unit"></twig:Badge>
+                                            </template>
+                                        </div>
+                                        <div class="h-8 w-8 rounded-full border border-border flex items-center justify-center group-hover:border-primary/50 group-hover:bg-primary/10 transition-all font-black text-foreground">
+                                            <template x-if="product.isOutOfStock"><span>!</span></template>
+                                            <template x-if="!product.isOutOfStock"><twig:ux:icon name="lucide:arrow-right" class="h-4 w-4 text-muted-foreground group-hover:text-primary" /></template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </twig:Card:Content>
+                        </twig:Card>
+                    </a>
+                </template>
+            </div>
+        </div>
+    </template>
+</div>
+{% endblock %}

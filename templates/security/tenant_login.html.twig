@@ -1,0 +1,6 @@
+{# Port of app/(tenant)/[companySlug]/login/page.tsx #}
+{% extends 'base.html.twig' %}
+{% block pages %}login{% endblock %}
+{% block body %}
+    {{ include('security/_login_card.html.twig', {endpoint: path('web_tenant_login', {companySlug: companySlug}), tenant: true, forgotHref: '/' ~ companySlug ~ '/forgot-password', footerClass: 'flex flex-col gap-4'}) }}
+{% endblock %}

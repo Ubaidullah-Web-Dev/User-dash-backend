@@ -1,0 +1,14 @@
+{#
+    Port of components/ui/switch.tsx (Radix Switch).
+      Two-way:     <twig:Switch model="form.isActive" />
+      Controlled:  <twig:Switch checked="p.isActive" onChange="toggleActive(p.id, value)" />   (value = the new state)
+    All props are Alpine expressions.
+#}
+{% props model = null, checked = null, onChange = null, disabled = 'false' %}
+{% set isOn = model ?? checked %}
+{% set handler = model ? model ~ ' = value' ~ (onChange ? '; ' ~ onChange : '') : onChange %}
+<button type="button" role="switch" x-bind:aria-checked="!!({{ isOn }})" x-bind:data-state="({{ isOn }}) ? 'checked' : 'unchecked'"
+        x-bind:disabled="{{ disabled }}" x-on:click="(value => { {{ handler }} })(!({{ isOn }}))"
+        class="{{ ('peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input ' ~ attributes.render('class'))|tailwind_merge }}" {{ attributes }}>
+    <span x-bind:data-state="({{ isOn }}) ? 'checked' : 'unchecked'" class="pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"></span>
+</button>

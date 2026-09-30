@@ -1,3 +1,225 @@
-body {
-    background-color: skyblue;
+@import "tailwindcss";
+@source "../../templates";
+@source "../controllers";
+@source "../pages";
+@source "../lib";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-border: var(--border);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --animate-slide-in-left: slide-in-left 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+    @keyframes slide-in-left {
+        0% {
+            transform: translateX(-70px);
+            opacity: 0;
+            filter: blur(4px);
+        }
+
+        100% {
+            transform: translateX(0);
+            opacity: 1;
+            filter: blur(0);
+        }
+    }
+}
+
+:root {
+    --background: #f8fafc;
+    /* Slate 50 */
+    --foreground: #0f172a;
+    /* Slate 900 */
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --popover: #ffffff;
+    --popover-foreground: #0f172a;
+    --primary: #0ea5e9;
+    --primary-rgb: 14, 165, 233;
+    /* Cyan 500 */
+    --primary-foreground: #ffffff;
+    --secondary: #f1f5f9;
+    /* Slate 100 */
+    --secondary-foreground: #0f172a;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    /* Slate 500 */
+    --accent: #f1f5f9;
+    --accent-foreground: #0f172a;
+    --border: #e2e8f0;
+    /* Slate 200 */
+    --input: #e2e8f0;
+    --ring: #0ea5e9;
+    --radius: 0.75rem;
+}
+
+.dark {
+    --background: #020617;
+    /* Gray 950 */
+    --foreground: #f8fafc;
+    /* Slate 50 */
+    --card: rgba(17, 24, 39, 0.4);
+    /* Gray 900/40 */
+    --card-foreground: #f8fafc;
+    --popover: #020617;
+    --popover-foreground: #f8fafc;
+    --primary: #0ea5e9;
+    --primary-rgb: 14, 165, 233;
+    --primary-foreground: #ffffff;
+    --secondary: #1e293b;
+    /* Slate 800 */
+    --secondary-foreground: #f8fafc;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+    /* Slate 400 */
+    --accent: #1e293b;
+    --accent-foreground: #f8fafc;
+    --border: rgba(31, 41, 55, 0.5);
+    /* Gray 800/50 */
+    --input: #1f2937;
+    --ring: #0ea5e9;
+}
+
+@layer base {
+    * {
+        border-color: var(--border);
+    }
+
+    body {
+        background-color: var(--background);
+        color: var(--foreground);
+    }
+}
+
+/* Disable all inner CSS transitions so the snapshot captures a perfect frozen state */
+html.theme-transitioning * {
+    transition: none !important;
+}
+
+/* ...except for the toggle button itself, which should run its own native icon morph transitions! */
+html.theme-transitioning .theme-toggle-btn,
+html.theme-transitioning .theme-toggle-btn * {
+    transition: all 0.5s ease-out !important;
+}
+
+/* Premium Animated Gradient Text */
+@keyframes gradient-flow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.animate-gradient-text {
+    background: linear-gradient(
+        -45deg, 
+        #4f46e5, 
+        #9333ea, 
+        #ec4899, 
+        #3b82f6
+    );
+    background-size: 300% 300%;
+    background-clip: text;
+    color: transparent;
+    animation: gradient-flow 6s ease infinite;
+}
+
+.dark .animate-gradient-text {
+    background: linear-gradient(
+        -45deg, 
+        #818cf8, 
+        #c084fc, 
+        #f472b6, 
+        #60a5fa
+    );
+    background-size: 300% 300%;
+    background-clip: text;
+    color: transparent;
+}
+
+/* Premium Glassmorphism Utility */
+.glass-morphism {
+    @apply backdrop-blur-3xl bg-white/10 dark:bg-black/10 border-t border-white/20 dark:border-white/10 shadow-2xl;
+}
+
+/* View Transition Theme Animations */
+::view-transition-group(root) {
+    animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+::view-transition-new(root),
+::view-transition-old(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+
+/* Entering dark mode */
+.dark::view-transition-old(root) {
+    z-index: 1;
+}
+
+.dark::view-transition-new(root) {
+    z-index: 2147483646;
+    /* Prevent 1-frame flash before JS takes over */
+    clip-path: circle(0px at var(--x, 50vw) var(--y, 50vh));
+}
+
+/* Entering light mode */
+::view-transition-old(root) {
+    z-index: 2147483646;
+}
+
+::view-transition-new(root) {
+    z-index: 1;
+}
+/* ---- Twig port additions ---- */
+
+/* Turbo Frame loading states (replaces React `xxxLoading` flags) */
+turbo-frame[busy] .frame-loading { display: block !important; }
+turbo-frame[busy] .frame-content { display: none; }
+
+/* Toaster (replaces sonner, position="top-right" richColors closeButton). No dark variant:
+   the Next.js <Toaster> had no theme prop, so sonner always rendered its light theme. */
+.toaster { position: fixed; top: 24px; right: 24px; z-index: 999999999; display: flex; flex-direction: column; gap: 14px; width: 356px; max-width: calc(100vw - 48px); pointer-events: none; }
+.toast { pointer-events: auto; position: relative; display: flex; align-items: center; gap: 6px; padding: 16px; border-radius: 8px; border: 1px solid; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,.1); font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; transition: transform .4s, opacity .4s; transform: translateY(-100%); opacity: 0; }
+.toast[data-mounted] { transform: none; opacity: 1; }
+.toast[data-removed] { transform: translateY(-100%); opacity: 0; }
+.toast .toast-content { display: flex; flex-direction: column; gap: 2px; }
+.toast .toast-title { font-weight: 500; line-height: 1.5; }
+.toast .toast-description { font-weight: 400; line-height: 1.4; }
+.toast-normal .toast-description { color: #3f3f3f; }
+.toast .toast-icon { display: flex; position: relative; justify-content: flex-start; align-items: center; flex-shrink: 0; width: 16px; height: 16px; margin-left: -3px; margin-right: 4px; }
+.toast .toast-icon svg { flex-shrink: 0; margin-left: -1px; }
+.toast .toast-close { position: absolute; left: 0; top: 0; z-index: 1; width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center; transform: translate(-35%, -35%); border-radius: 50%; border: 1px solid; border-color: inherit; background: inherit; color: inherit; cursor: pointer; transition: opacity 100ms, background 200ms, border-color 200ms; }
+@media (max-width: 600px) {
+    .toaster { top: 16px; left: 16px; right: 16px; width: auto; max-width: none; }
+}
+.toast-normal  { background: #fff;    border-color: hsl(0,0%,93%);     color: hsl(0,0%,9%); }
+.toast-success { background: hsl(143,85%,96%); border-color: hsl(145,92%,87%); color: hsl(140,100%,27%); }
+.toast-info    { background: hsl(208,100%,97%); border-color: hsl(221,91%,93%); color: hsl(210,92%,45%); }
+.toast-warning { background: hsl(49,100%,97%);  border-color: hsl(49,91%,84%);  color: hsl(31,92%,45%); }
+.toast-error   { background: hsl(359,100%,97%); border-color: hsl(359,100%,94%); color: hsl(360,100%,45%); }
+
+/* Alpine keeps <template> tags (x-if / x-for) in the DOM. Tailwind v4's space and divide utilities
+   use :not(:last-child), so an element followed only by <template>s would wrongly get the spacing
+   that React never rendered. Treat "last child apart from trailing templates" as the last child.
+   Zero specificity (:where) inside the utilities layer, so explicit margin/border classes still win. */
+@layer utilities {
+    :where([class*="space-y-"] > :not(template):not(:has(~ :not(template)))) { margin-block-end: 0; }
+    :where([class*="space-x-"] > :not(template):not(:has(~ :not(template)))) { margin-inline-end: 0; }
+    :where([class*="divide-y"] > :not(template):not(:has(~ :not(template)))) { border-bottom-width: 0; }
+    :where([class*="divide-x"] > :not(template):not(:has(~ :not(template)))) { border-inline-end-width: 0; }
 }

@@ -1,0 +1,157 @@
+{# Port of app/(tenant)/[companySlug]/admin/categories/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-categories{% endblock %}
+{% block content %}
+<div x-data="adminCategories">
+    <template x-if="loading">
+        <div class="py-20 text-center font-black animate-pulse text-primary tracking-widest uppercase italic border-2 border-dashed border-primary/20 rounded-3xl">Synchronizing Taxonomy Engine...</div>
+    </template>
+    <template x-if="!loading">
+        <div class="space-y-10 animate-in fade-in duration-700 pb-20">
+            <div class="flex flex-col gap-10">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div>
+                        <div class="flex items-center gap-3 mb-3">
+                            <twig:Badge class="bg-primary/10 text-primary border-primary/20 font-black text-[9px] tracking-[0.2em] px-3 py-1 rounded-lg uppercase">SYSTEM_NODE</twig:Badge>
+                            <span class="h-px w-8 bg-primary/20"></span>
+                            <span class="text-muted-foreground font-black text-[9px] uppercase tracking-widest opacity-30 italic">Global Registry</span>
+                        </div>
+                        <h1 class="text-4xl font-black text-foreground tracking-tighter italic uppercase leading-none">Taxonomy <span class="text-primary not-italic">Control</span></h1>
+                    </div>
+                    <twig:Button x-on:click="resetForm(); isCreateModalOpen = true"
+                        class="bg-primary hover:opacity-90 text-primary-foreground font-black px-8 rounded-2xl h-14 shadow-2xl shadow-primary/20 transition-all active:scale-95 flex items-center gap-3 text-[10px] tracking-widest uppercase group">
+                        <twig:ux:icon name="lucide:folder-plus" class="h-5 w-5 group-hover:rotate-12 transition-transform" />
+                        REGISTER NEW NODE
+                    </twig:Button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <template x-if="categories.length === 0">
+                    <div class="col-span-full py-24 text-center border-2 border-dashed border-border rounded-4xl uppercase tracking-widest text-[10px] font-black opacity-30 italic">No nodes matching current criteria found</div>
+                </template>
+                <template x-for="category in categories" :key="category.id">
+                    <twig:Card class="bg-card border-border rounded-4xl shadow-xl overflow-hidden border-t-4 border-t-primary/20 hover:shadow-primary/5 transition-all group relative">
+                        <div class="p-8 border-b border-border bg-linear-to-br from-secondary/30 to-transparent flex flex-row items-start justify-between">
+                            <div class="z-10">
+                                <h3 class="text-xl font-black italic uppercase tracking-tighter text-foreground group-hover:text-primary transition-colors mb-1 leading-none" x-text="category.name"></h3>
+                                <div class="flex items-center gap-2">
+                                    <twig:Badge variant="outline" class="text-[7px] font-black uppercase tracking-widest border-primary/20 text-muted-foreground py-0.5" x-text="`SEGMENT: ${category.slug}`"></twig:Badge>
+                                    <span class="h-1 w-1 rounded-full bg-primary/20"></span>
+                                    <span class="text-[7px] font-black text-muted-foreground uppercase opacity-50 tracking-widest" x-text="`ID: ${category.id}`"></span>
+                                </div>
+                            </div>
+                            <div class="h-12 w-12 rounded-xl bg-primary/5 border border-primary/10 flex flex-col items-center justify-center -mr-1 -mt-1 z-10">
+                                <span class="text-lg font-black italic text-primary leading-none" x-text="category.productCount"></span>
+                                <span class="text-[6px] font-black uppercase tracking-widest text-muted-foreground opacity-50">UNITS</span>
+                            </div>
+                        </div>
+                        <twig:Card:Content class="p-8 relative z-10">
+                            <a :href="`/{{ companySlug }}/admin/categories/${category.id}`">
+                                <twig:Button variant="outline" class="w-full rounded-3xl h-12 font-black uppercase text-[9px] tracking-widest border-border hover:border-primary hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all flex items-center justify-center gap-3 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary shadow-lg group-hover:shadow-primary/20">
+                                    <twig:ux:icon name="lucide:square-pen" class="h-4 w-4" /> ACCESS MODULE <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 -translate-x-3 group-hover:translate-x-0 transition-all" />
+                                </twig:Button>
+                            </a>
+                        </twig:Card:Content>
+                    </twig:Card>
+                </template>
+            </div>
+
+            <template x-if="totalPages > 1">
+                <div class="flex items-center justify-center gap-4 pt-8">
+                    <twig:Button variant="outline" x-on:click="currentPage = Math.max(1, currentPage - 1)" disabledWhen="currentPage === 1"
+                        class="h-10 w-10 rounded-xl border-border hover:border-primary hover:bg-primary/5 group disabled:opacity-30">
+                        <twig:ux:icon name="lucide:chevron-left" class="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </twig:Button>
+                    <div class="flex items-center bg-secondary/30 rounded-xl px-4 h-10 border border-border/50">
+                        <template x-for="page in pages" :key="page">
+                            <button type="button" @click="currentPage = page" x-text="page"
+                                    class="w-8 h-8 rounded-lg font-black text-[10px] transition-all mx-0.5"
+                                    :class="page === currentPage ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105' : 'text-muted-foreground hover:bg-primary/10 hover:text-primary'"></button>
+                        </template>
+                    </div>
+                    <twig:Button variant="outline" x-on:click="currentPage = Math.min(totalPages, currentPage + 1)" disabledWhen="currentPage === totalPages"
+                        class="h-10 w-10 rounded-xl border-border hover:border-primary hover:bg-primary/5 group disabled:opacity-30">
+                        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </twig:Button>
+                </div>
+            </template>
+
+            <template x-if="isCreateModalOpen">
+                <div class="fixed inset-0 z-100 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div class="w-full max-w-2xl bg-card border border-border rounded-4xl shadow-2xl overflow-hidden border-t-4 border-t-primary/20 animate-in zoom-in-95 duration-300 h-[80vh] flex flex-col relative">
+                        <div class="px-8 py-6 border-b border-border bg-linear-to-br from-secondary/30 to-transparent flex items-center justify-between flex-none">
+                            <div>
+                                <h3 class="text-xl font-black italic uppercase tracking-tighter leading-none mb-1">Initialize <span class="text-primary not-italic">Category</span></h3>
+                                <p class="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-50">Taxonomy Protocol Node Registration</p>
+                            </div>
+                            <button type="button" @click="isCreateModalOpen = false" class="h-10 w-10 rounded-full hover:bg-secondary flex items-center justify-center transition-colors group">
+                                <twig:ux:icon name="lucide:x" class="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                            </button>
+                        </div>
+
+                        <div class="p-8 pb-4 space-y-6 flex-none">
+                            <div class="space-y-3">
+                                <twig:Label class="text-[9px] font-black uppercase tracking-[0.2em] ml-1 text-primary/80 italic">Node Designation</twig:Label>
+                                <twig:Input placeholder="Enter category name..." x-model="categoryName" x-init="$nextTick(() => $el.focus())"
+                                    class="bg-secondary/30 border-none rounded-xl h-14 font-black text-xl px-6 focus-visible:ring-2 focus-visible:ring-primary/10 transition-all" />
+                            </div>
+                            <div class="space-y-3">
+                                <twig:Label class="text-[9px] font-black uppercase tracking-[0.2em] ml-1 text-primary/80 italic">Initial Linkage Matrix</twig:Label>
+                                <div class="relative group">
+                                    <twig:ux:icon name="lucide:search" class="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                    <twig:Input placeholder="Scan catalog..." x-model="productSearch"
+                                        class="pl-14 bg-secondary/30 border-none rounded-xl h-12 font-bold text-base focus-visible:ring-2 focus-visible:ring-primary/10 transition-all" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto px-8 py-4 custom-scrollbar space-y-3">
+                            <template x-if="filteredProductsForCreation.length === 0">
+                                <div class="text-center py-12 bg-secondary/10 rounded-4xl border-2 border-dashed border-border/50 uppercase tracking-widest text-[9px] font-black opacity-30 italic">No compatible units found</div>
+                            </template>
+                            <template x-for="product in filteredProductsForCreation" :key="product.id">
+                                <div @click="toggleProduct(product.id)"
+                                     class="p-4 border rounded-4xl cursor-pointer transition-all flex items-center justify-between group"
+                                     :class="selectedProductIds.includes(product.id) ? 'bg-primary/5 border-primary shadow-lg shadow-primary/10' : 'hover:bg-secondary/50 border-transparent hover:border-border'">
+                                    <div class="flex items-center gap-4">
+                                        <div class="h-12 w-12 rounded-xl flex items-center justify-center font-black text-base transition-all"
+                                             :class="selectedProductIds.includes(product.id) ? 'bg-primary text-primary-foreground rotate-3' : 'bg-secondary text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'">
+                                            <template x-if="selectedProductIds.includes(product.id)"><twig:ux:icon name="lucide:circle-check-big" class="h-6 w-6" /></template>
+                                            <template x-if="!selectedProductIds.includes(product.id)"><span x-text="product.name[0].toUpperCase()"></span></template>
+                                        </div>
+                                        <div>
+                                            <p class="text-base font-black uppercase tracking-tighter italic leading-none mb-1" x-text="product.name"></p>
+                                            <p class="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50" x-text="`Current: ${product.category?.name || 'Independent'}`"></p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-base font-black text-primary italic leading-none mb-1" x-text="`$${parseFloat(product.price).toLocaleString()}`"></p>
+                                        <p class="text-[8px] font-black uppercase text-muted-foreground opacity-50 tracking-widest" x-text="`STOCK: ${product.stock}`"></p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="p-8 border-t border-border flex items-center justify-between bg-linear-to-tr from-secondary/40 to-transparent flex-none">
+                            <div>
+                                <p class="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1 opacity-50">Matrix Status:</p>
+                                <p class="text-base font-black italic text-primary leading-none uppercase" x-text="`${selectedProductIds.length} LINKS READY`"></p>
+                            </div>
+                            <div class="flex gap-3">
+                                <twig:Button variant="ghost" class="h-12 font-black uppercase tracking-widest rounded-xl px-6 border border-border hover:bg-destructive/5 hover:text-destructive hover:border-destructive/20 transition-all text-[10px]" x-on:click="isCreateModalOpen = false">ABORT</twig:Button>
+                                <twig:Button class="bg-primary hover:opacity-90 text-primary-foreground font-black uppercase tracking-widest rounded-3xl px-8 shadow-xl shadow-primary/20 h-12 text-[10px] transition-all active:scale-95"
+                                    x-on:click="handleCreate()" disabledWhen="isProcessing || !categoryName.trim()">
+                                    <template x-if="isProcessing"><twig:ux:icon name="lucide:loader-circle" class="h-4 w-4 animate-spin mr-2" /></template>
+                                    <template x-if="!isProcessing"><twig:ux:icon name="lucide:zap" class="h-4 w-4 mr-2" /></template>
+                                    COMMIT NODE
+                                </twig:Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </template>
+</div>
+{% endblock %}

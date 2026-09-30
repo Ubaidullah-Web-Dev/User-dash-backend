@@ -1,0 +1,159 @@
+{# Port of app/(tenant)/[companySlug]/admin/reagents/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-reagents{% endblock %}
+{% block content %}
+<div class="space-y-10 animate-in fade-in duration-700" x-data="reagentsPage">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+            <h1 class="text-4xl font-black text-foreground tracking-tighter mb-2 uppercase italic">REAGENTS <span class="text-primary not-italic">&amp; Inventory</span></h1>
+            <p class="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">Laboratory Reagents &amp; Pharmacy Stock Management.</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <twig:Button x-on:click="document.getElementById('category-section')?.scrollIntoView({ behavior: 'smooth' })" variant="outline"
+                class="border-primary/20 hover:border-primary text-muted-foreground hover:text-primary font-black px-6 rounded-2xl h-14 flex items-center gap-3 transition-all">
+                <twig:ux:icon name="lucide:settings-2" class="h-5 w-5" />
+                MANAGE CATEGORIES
+            </twig:Button>
+            <twig:Button variant="outline" x-on:click="isRecoveryOpen = true" class="border-primary/20 hover:border-primary text-muted-foreground hover:text-primary font-black px-6 rounded-2xl h-14 flex items-center gap-3 transition-all uppercase italic">
+                <twig:ux:icon name="lucide:history" class="h-5 w-5" />
+                RECOVERY
+            </twig:Button>
+            <a href="/{{ companySlug }}/admin/reagents/new">
+                <twig:Button class="bg-primary hover:opacity-90 text-primary-foreground font-black px-8 rounded-2xl h-14 shadow-lg shadow-primary/20 flex items-center gap-3">
+                    <twig:ux:icon name="lucide:plus" class="h-5 w-5" />
+                    ADD NEW REAGENT
+                </twig:Button>
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-[2.5rem] p-8 shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="space-y-2">
+                <twig:Label class="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Search Reagent</twig:Label>
+                <div class="relative">
+                    <twig:ux:icon name="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <twig:Input placeholder="Name or batch..." x-model="searchName" x-on:input="currentPage = 1" class="pl-10 bg-secondary/30 border-border rounded-xl h-11 font-bold" />
+                </div>
+            </div>
+            <div class="space-y-2">
+                <twig:Label class="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Category</twig:Label>
+                <twig:Select model="selectedCategory" options="categoryOptions" placeholder="All Categories" onChange="currentPage = 1"
+                    triggerClass="bg-secondary/30 border-border h-11 rounded-xl" contentClass="dark:bg-slate-900 border-border" />
+            </div>
+            <div class="flex items-end">
+                <twig:Button variant="ghost" x-on:click="resetFilters()" class="text-muted-foreground hover:text-foreground h-11 px-6 rounded-xl font-bold flex items-center gap-2">
+                    <twig:ux:icon name="lucide:funnel-x" class="h-4 w-4" /> Reset
+                </twig:Button>
+            </div>
+        </div>
+    </div>
+
+    <twig:Card class="bg-card border-border rounded-[2.5rem] shadow-sm overflow-hidden text-foreground">
+        <twig:Card:Header class="p-8 border-b border-border bg-secondary/10">
+            <twig:Card:Title class="text-xl font-black flex items-center gap-3">
+                <twig:ux:icon name="lucide:package" class="h-6 w-6 text-primary" />
+                INVENTORY LIST
+            </twig:Card:Title>
+        </twig:Card:Header>
+        <twig:Card:Content class="p-0">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-secondary/5 border-b border-border">
+                        <tr>
+                            <th class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Reagent / Product</th>
+                            <th class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Company</th>
+                            <th class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pack Size</th>
+                            <th class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Purchase Price</th>
+                            <th class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Sale Price</th>
+                            <th class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Stock</th>
+                            <th class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Expiry</th>
+                            <th class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        <template x-for="product in products" :key="product.id">
+                            <tr class="hover:bg-secondary/20 transition-all border-b border-border dark:border-slate-800">
+                                <td class="p-6">
+                                    <div class="flex items-center gap-4">
+                                        <div class="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary" x-text="product.name?.[0].toUpperCase()"></div>
+                                        <div>
+                                            <p class="font-bold text-foreground" x-text="product.name"></p>
+                                            <p class="text-[10px] text-muted-foreground uppercase font-black" x-text="`Batch: ${product.batchNumber || 'N/A'}`"></p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="p-6 text-sm font-medium text-muted-foreground" x-text="product.companyName || '—'"></td>
+                                <td class="p-6 text-sm font-medium text-muted-foreground" x-text="product.packSize || '—'"></td>
+                                <td class="p-6 text-center text-sm font-bold text-primary" x-text="product.purchasePrice ? `PKR ${Math.round(parseFloat(product.purchasePrice)).toLocaleString()}` : '—'"></td>
+                                <td class="p-6 text-center text-sm font-bold text-foreground" x-text="product.price ? `PKR ${Math.round(parseFloat(product.price)).toLocaleString()}` : '—'"></td>
+                                <td class="p-6 text-center">
+                                    <div class="flex flex-col items-center">
+                                        <span class="font-black text-base" :class="product.stock <= product.minimumStock ? 'text-red-500 animate-pulse' : 'text-foreground'" x-text="product.stock"></span>
+                                        <template x-if="product.stock <= product.minimumStock">
+                                            <span class="text-[8px] font-black text-red-500 uppercase tracking-tighter">LOW STOCK</span>
+                                        </template>
+                                    </div>
+                                </td>
+                                <td class="p-6 text-center">
+                                    <div class="flex flex-col items-center">
+                                        <span class="text-xs font-bold" :class="isExpired(product) ? 'text-red-500' : 'text-muted-foreground'" x-text="product.expiryDate || '—'"></span>
+                                        <template x-if="isExpired(product)">
+                                            <twig:ux:icon name="lucide:triangle-alert" class="h-3 w-3 text-red-500 mt-1" />
+                                        </template>
+                                    </div>
+                                </td>
+                                <td class="p-6 text-right">
+                                    <div class="flex justify-end gap-2">
+                                        <a :href="`/{{ companySlug }}/admin/reagents/${product.id}/edit`">
+                                            <twig:Button variant="ghost" size="icon" class="h-9 w-9 text-muted-foreground hover:bg-primary/10 hover:text-primary rounded-lg">
+                                                <twig:ux:icon name="lucide:pen" class="h-4 w-4" />
+                                            </twig:Button>
+                                        </a>
+                                        <twig:Button variant="ghost" size="icon" class="h-9 w-9 text-muted-foreground hover:bg-red-500/10 hover:text-red-500 rounded-lg" x-on:click="handleDelete(product.id)">
+                                            <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />
+                                        </twig:Button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-8 border-t border-border bg-secondary/5 flex flex-col md:flex-row items-center justify-between gap-6">
+                <p class="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                    Showing <span class="text-foreground" x-text="products.length"></span> of <span class="text-foreground" x-text="totalItems"></span> reagents
+                </p>
+                <div class="flex items-center gap-2">
+                    <twig:Button variant="outline" size="icon" x-on:click="currentPage = 1" disabledWhen="currentPage === 1 || loading" class="h-10 w-10 rounded-xl border-border bg-card hover:bg-secondary/20 disabled:opacity-50">
+                        <twig:ux:icon name="lucide:chevrons-left" class="h-4 w-4" />
+                    </twig:Button>
+                    <twig:Button variant="outline" size="icon" x-on:click="currentPage = Math.max(1, currentPage - 1)" disabledWhen="currentPage === 1 || loading" class="h-10 w-10 rounded-xl border-border bg-card hover:bg-secondary/20 disabled:opacity-50">
+                        <twig:ux:icon name="lucide:chevron-left" class="h-4 w-4" />
+                    </twig:Button>
+                    <div class="flex items-center gap-1 mx-2">
+                        <span class="text-xs font-black text-muted-foreground uppercase">Page</span>
+                        <div class="h-10 px-4 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                            <span class="text-sm font-black text-primary" x-text="currentPage"></span>
+                        </div>
+                        <span class="text-xs font-black text-muted-foreground uppercase" x-text="`of ${totalPages}`"></span>
+                    </div>
+                    <twig:Button variant="outline" size="icon" x-on:click="currentPage = Math.min(totalPages, currentPage + 1)" disabledWhen="currentPage === totalPages || loading" class="h-10 w-10 rounded-xl border-border bg-card hover:bg-secondary/20 disabled:opacity-50">
+                        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+                    </twig:Button>
+                    <twig:Button variant="outline" size="icon" x-on:click="currentPage = totalPages" disabledWhen="currentPage === totalPages || loading" class="h-10 w-10 rounded-xl border-border bg-card hover:bg-secondary/20 disabled:opacity-50">
+                        <twig:ux:icon name="lucide:chevrons-right" class="h-4 w-4" />
+                    </twig:Button>
+                </div>
+            </div>
+        </twig:Card:Content>
+    </twig:Card>
+
+    <div class="pt-10 border-t border-border/50">
+        {{ include('admin/_category_management.html.twig') }}
+    </div>
+
+    {{ include('admin/_reagent_recovery_modal.html.twig') }}
+</div>
+{% endblock %}

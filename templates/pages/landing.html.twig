@@ -1,0 +1,178 @@
+{# Port of app/page.tsx #}
+{% extends 'base.html.twig' %}
+{% block pages %}landing{% endblock %}
+{% block body %}
+<div class="flex flex-col min-h-screen" x-data>
+    {# Navigation #}
+    <nav class="sticky top-0 z-50 w-full glass-morphism transition-all duration-500">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex flex-row items-center space-x-2">
+                <twig:Magnetic>
+                    <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/20">A</div>
+                </twig:Magnetic>
+                <span class="font-bold text-xl tracking-tight">AlphaSoft360</span>
+            </div>
+            <div class="hidden md:flex flex-row items-center space-x-8">
+                <twig:Magnetic><a href="#features" class="text-sm font-medium text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-white transition-colors">Features</a></twig:Magnetic>
+                <twig:Magnetic><a href="#solutions" class="text-sm font-medium text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-white transition-colors">Solutions</a></twig:Magnetic>
+                <twig:Magnetic><a href="#about" class="text-sm font-medium text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-white transition-colors">About</a></twig:Magnetic>
+            </div>
+            <div class="flex flex-row items-center space-x-4">
+                <twig:Magnetic>
+                    <a href="/login" class="px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-all shadow-md hover:shadow-indigo-500/30 block">Sign In</a>
+                </twig:Magnetic>
+            </div>
+        </div>
+    </nav>
+
+    <main class="grow">
+        {# Hero Section #}
+        <section class="relative pt-20 pb-32 overflow-hidden">
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] opacity-10 dark:opacity-20 pointer-events-none">
+                <div class="absolute top-0 left-1/4 w-72 h-72 bg-indigo-500 rounded-full blur-[128px]"></div>
+                <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500 rounded-full blur-[128px]"></div>
+            </div>
+
+            <div class="container mx-auto px-4 relative z-10 text-center">
+                <div class="inline-flex flex-row items-center space-x-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-bold mb-8 animate-fade-in" data-aos="fade-down">
+                    {{ ux_icon('lucide:zap', {width: 14, height: 14, class: 'fill-current'}) }}
+                    <span>THE FUTURE OF ENTERPRISE MANAGEMENT</span>
+                </div>
+                <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6" data-aos="fade-up">
+                    Elevate Your Business with <br />
+                    <span class="animate-gradient-text">AlphaSoft360</span>
+                </h1>
+                <p class="max-w-2xl mx-auto text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-10 leading-relaxed" data-aos="fade-up" data-aos-delay="100">
+                    Experience a unified digital ecosystem designed to scale your operations,
+                    streamline workflows, and drive unprecedented growth.
+                </p>
+                <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4" data-aos="fade-up" data-aos-delay="200">
+                    <twig:Magnetic class="w-full sm:w-auto">
+                        <a href="/login" class="group w-full sm:w-auto px-8 py-4 rounded-xl bg-indigo-600 text-white font-bold text-lg flex flex-row items-center justify-center space-x-2 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/20">
+                            <div class="flex flex-row items-center justify-center space-x-2">
+                                Get Started Now
+                                {{ ux_icon('lucide:arrow-right', {width: 20, height: 20, class: 'group-hover:translate-x-1 transition-transform'}) }}
+                            </div>
+                        </a>
+                    </twig:Magnetic>
+                    <twig:Magnetic class="w-full sm:w-auto">
+                        <a href="#features" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold text-lg border border-gray-200 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-900 transition-all block">Learn More</a>
+                    </twig:Magnetic>
+                </div>
+            </div>
+        </section>
+
+        {# Features Grid #}
+        <section id="features" class="py-24 bg-gray-50 dark:bg-gray-900/50">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4">Enterprise-Grade Solutions</h2>
+                    <p class="text-gray-600 dark:text-gray-400">Built for scale, designed for simplicity.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    {% for feature in [
+                        {icon: 'layout-dashboard', title: 'Core Engine 360', description: 'A centralized dashboard giving you a bird’s eye view of your entire laboratory logistics.'},
+                        {icon: 'package', title: 'Smart Inventory', description: 'Real-time tracking of reagents and supplies with predictive restock alerts.'},
+                        {icon: 'flask-conical', title: 'Diagnostic Hub', description: 'Seamless integration with diagnostic analyzers for rapid and accurate results.'},
+                        {icon: 'shield-check', title: 'Enterprise Security', description: 'Bank-grade encryption ensuring your research and patient data remains private.'},
+                    ] %}
+                        <twig:Spotlight class="px-8 py-12 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl hover:border-indigo-500/30 transition-all text-center">
+                            <div class="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-6">
+                                {{ ux_icon('lucide:' ~ feature.icon, {width: 32, height: 32}) }}
+                            </div>
+                            <h3 class="text-xl font-bold mb-4">{{ feature.title }}</h3>
+                            <p class="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">{{ feature.description }}</p>
+                        </twig:Spotlight>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        {# About / Stats #}
+        <section id="solutions" class="py-24 overflow-hidden">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col lg:flex-row items-center space-y-16 lg:space-y-0 lg:space-x-16">
+                    <div class="lg:w-1/2" data-aos="fade-right">
+                        <h2 class="text-4xl md:text-5xl font-bold mb-8 leading-tight">
+                            Driving Innovation for <br />
+                            <span class="text-indigo-600">Modern Businesses</span>
+                        </h2>
+                        <div class="space-y-6">
+                            {% for item in [
+                                'Unified dashboard for all your operations',
+                                'Advanced user management and role-based access',
+                                'Responsive design for mobile and desktop access',
+                                'Dedicated support team and comprehensive documentation',
+                            ] %}
+                                <div class="flex flex-row items-start space-x-3" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
+                                    {{ ux_icon('lucide:circle-check', {width: 20, height: 20, class: 'text-emerald-500 mt-1 shrink-0'}) }}
+                                    <p class="text-lg text-gray-700 dark:text-gray-300 font-medium">{{ item }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="lg:w-1/2 relative" data-aos="zoom-in" data-aos-delay="200">
+                        <div class="absolute -inset-4 bg-linear-to-tr from-indigo-500 to-purple-500 rounded-3xl blur-2xl opacity-10 dark:opacity-20 animate-pulse"></div>
+                        <div class="relative aspect-video rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 overflow-hidden shadow-2xl flex items-center justify-center">
+                            <div class="flex flex-col space-y-4">
+                                {{ ux_icon('lucide:users', {width: 64, height: 64, class: 'text-indigo-600'}) }}
+                                <div class="text-4xl font-bold"><span x-counter="10000"></span>+</div>
+                                <div class="text-gray-500 uppercase tracking-widest text-sm font-bold">Active Users</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# CTA Section #}
+        <section class="py-24" data-aos="zoom-up" data-aos-delay="200">
+            <div class="container mx-auto px-4">
+                <div class="relative p-8 md:p-16 rounded-3xl bg-indigo-600 text-white overflow-hidden shadow-2xl">
+                    <div class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-96 h-96 bg-white/10 rounded-full blur-[100px]"></div>
+                    <div class="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/4 w-64 h-64 bg-indigo-400/20 rounded-full blur-[80px]"></div>
+                    <div class="relative z-10 text-center max-w-3xl mx-auto">
+                        <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Transform Your Business?</h2>
+                        <p class="text-xl text-indigo-100 mb-10">Join hundreds of forward-thinking companies already using AlphaSoft360 to scale their operations.</p>
+                        <twig:Magnetic class="mx-auto">
+                            <a href="/login" class="inline-flex flex-row items-center space-x-2 px-10 py-5 rounded-xl bg-white text-indigo-600 font-bold text-xl hover:bg-gray-100 transition-all shadow-xl">
+                                Start Your Journey
+                                {{ ux_icon('lucide:arrow-right', {width: 22, height: 22}) }}
+                            </a>
+                        </twig:Magnetic>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    {# Footer #}
+    <footer class="py-12 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row items-center justify-between space-y-8 md:space-y-0 md:space-x-8">
+                <div class="flex flex-row items-center space-x-2">
+                    <div class="w-8 h-8 rounded bg-indigo-600 flex items-center justify-center text-white font-bold text-lg">A</div>
+                    <span class="font-bold text-lg">AlphaSoft360</span>
+                </div>
+                <p class="text-gray-500 text-sm">&copy; {{ 'now'|date('Y') }} AlphaSoft360. All rights reserved.</p>
+                <div class="flex flex-row items-center space-x-6">
+                    <a href="#" class="text-gray-500 hover:text-indigo-600 transition-colors text-sm">Privacy</a>
+                    <a href="#" class="text-gray-500 hover:text-indigo-600 transition-colors text-sm">Terms</a>
+                    <a href="#" class="text-gray-500 hover:text-indigo-600 transition-colors text-sm">Contact</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <style>
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.8s ease-out forwards;
+        }
+    </style>
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{# Port of admin/customers-lab/CustomerForm.tsx, rendered by new/page.tsx and [id]/edit/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-customer-form{% endblock %}
+{% block content %}
+<div x-data="customerFormPage">
+    <template x-if="pageLoading">
+        <div class="h-[60vh] flex items-center justify-center">
+            <twig:ux:icon name="lucide:loader-circle" class="h-10 w-10 animate-spin text-primary" />
+        </div>
+    </template>
+    <template x-if="!pageLoading && isEditing && !customer">
+        <div class="h-[60vh] flex items-center justify-center font-bold text-muted-foreground">Customer not found.</div>
+    </template>
+    <template x-if="!pageLoading && (!isEditing || customer)">
+        <div class="py-6">
+            <div class="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div class="flex items-center gap-4">
+                    <twig:Button variant="ghost" size="icon" x-on:click="back()" class="rounded-full h-12 w-12 hover:bg-secondary/50">
+                        <twig:ux:icon name="lucide:chevron-left" class="h-6 w-6" />
+                    </twig:Button>
+                    <div>
+                        <h1 class="text-3xl font-black text-foreground tracking-tighter uppercase italic">
+                            <span x-text="isEditing ? 'MODIFY' : 'REGISTER'"></span> <span class="text-primary not-italic text-2xl">Customer Record</span>
+                        </h1>
+                        <p class="text-muted-foreground font-medium uppercase text-[10px] tracking-widest" x-text="isEditing ? 'Update existing client profile details.' : 'Create a new profile for lab or pharmacy client.'"></p>
+                    </div>
+                </div>
+
+                <twig:Card class="bg-card border-border rounded-[2.5rem] shadow-xl overflow-hidden border-t-8 border-t-primary/20">
+                    <twig:Card:Header class="p-8 border-b border-border bg-secondary/5">
+                        <twig:Card:Title class="text-xl font-black flex items-center gap-3">
+                            <twig:ux:icon name="lucide:user" class="h-6 w-6 text-primary" />
+                            CLIENT IDENTITY &amp; INFORMATION
+                        </twig:Card:Title>
+                    </twig:Card:Header>
+                    <form @submit.prevent="handleSubmit()">
+                        <twig:Card:Content class="p-8 space-y-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="space-y-3">
+                                    <twig:Label class="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Full Name / Primary Contact</twig:Label>
+                                    <div class="relative">
+                                        <twig:ux:icon name="lucide:user" class="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <twig:Input required x-model="formData.name" placeholder="John Doe" class="pl-12 bg-secondary/30 border-border h-14 rounded-2xl font-bold focus:ring-primary/20" />
+                                    </div>
+                                </div>
+                                <div class="space-y-3">
+                                    <twig:Label class="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Phone Number</twig:Label>
+                                    <div class="relative">
+                                        <twig:ux:icon name="lucide:phone" class="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <twig:Input required x-model="formData.phone" placeholder="+1 234 567 890" class="pl-12 bg-secondary/30 border-border h-14 rounded-2xl font-bold focus:ring-primary/20" />
+                                    </div>
+                                </div>
+                                <div class="space-y-3">
+                                    <twig:Label class="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Laboratory / Clinic (Optional)</twig:Label>
+                                    <div class="relative">
+                                        <twig:ux:icon name="lucide:building" class="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <twig:Input x-model="formData.labName" placeholder="City Hospital / Green Lab" class="pl-12 bg-secondary/30 border-border h-14 rounded-2xl font-bold focus:ring-primary/20" />
+                                    </div>
+                                </div>
+                                <div class="space-y-3">
+                                    <twig:Label class="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">City / Region</twig:Label>
+                                    <div class="relative">
+                                        <twig:ux:icon name="lucide:map-pin" class="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <twig:Input x-model="formData.city" placeholder="New York, NY" class="pl-12 bg-secondary/30 border-border h-14 rounded-2xl font-bold focus:ring-primary/20" />
+                                    </div>
+                                </div>
+
+                                <template x-if="isEditing">
+                                    <div class="space-y-3">
+                                        <twig:Label class="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Current Pending Amount (PKR)</twig:Label>
+                                        <div class="relative">
+                                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-muted-foreground">PKR</span>
+                                            <twig:Input type="number" readonly x-bind:value="formData.remainingBalance === undefined ? '' : formData.remainingBalance" class="pl-12 bg-secondary/30 border-border h-14 rounded-2xl font-bold opacity-70 cursor-not-allowed" />
+                                        </div>
+                                    </div>
+                                </template>
+                                <template x-if="isEditing">
+                                    <div class="space-y-3 animate-in slide-in-from-left-2 duration-300">
+                                        <twig:Label class="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Payment Received Now (Subtracts from Balance)</twig:Label>
+                                        <div class="relative group">
+                                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-primary group-focus-within:scale-110 transition-transform">- PKR</span>
+                                            <twig:Input type="number" x-model="paymentAmount" placeholder="Enter payment amount..." class="pl-16 bg-primary/5 border-primary/20 h-14 rounded-2xl font-black text-primary focus:ring-primary/40 placeholder:text-primary/30" />
+                                        </div>
+                                    </div>
+                                </template>
+                                <template x-if="isEditing">
+                                    <div class="md:col-span-2 p-6 bg-secondary/20 rounded-[2rem] border border-dashed border-border flex items-center justify-between animate-in zoom-in-95 duration-500">
+                                        <div>
+                                            <p class="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-70">Resulting Balance Preview</p>
+                                            <p class="text-2xl font-black italic tracking-tighter mt-1">
+                                                <span x-text="`PKR ${Math.round(formData.remainingBalance || 0).toLocaleString()}`"></span>
+                                                <span class="text-primary mx-3">→</span>
+                                                <span :class="resultingBalance > 0 ? 'text-red-500' : 'text-emerald-500'" x-text="`PKR ${Math.round(resultingBalance).toLocaleString()}`"></span>
+                                            </p>
+                                        </div>
+                                        <div class="h-12 w-12 rounded-2xl flex items-center justify-center"
+                                             :class="((formData.remainingBalance || 0) - (parseFloat(paymentAmount) || 0)) <= 0 ? 'bg-emerald-500/20 text-emerald-500' : 'bg-primary/10 text-primary'">
+                                            <twig:ux:icon name="lucide:save" class="h-6 w-6" />
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <div class="space-y-3 md:col-span-2">
+                                    <twig:Label class="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Full Shipping / Billing Address</twig:Label>
+                                    <textarea x-model="formData.address" placeholder="Enter complete address details here..."
+                                              class="w-full bg-secondary/30 border-border rounded-2xl p-5 font-bold focus:ring-primary/20 min-h-[120px] transition-all resize-none border focus:outline-none"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 flex gap-4">
+                                <twig:Button variant="ghost" type="button" x-on:click="back()" class="rounded-2xl font-black h-14 px-10 border border-border">CANCEL</twig:Button>
+                                <twig:Button type="submit" disabledWhen="loading" class="flex-1 bg-primary text-primary-foreground font-black rounded-2xl h-14 px-12 shadow-xl shadow-primary/20 flex items-center justify-center gap-2">
+                                    <template x-if="loading"><twig:ux:icon name="lucide:loader-circle" class="h-5 w-5 animate-spin" /></template>
+                                    <template x-if="!loading"><span class="contents"><twig:ux:icon name="lucide:save" class="h-5 w-5" /><span x-text="isEditing ? 'UPDATE CUSTOMER RECORD' : 'SAVE NEW CUSTOMER'"></span></span></template>
+                                </twig:Button>
+                            </div>
+                        </twig:Card:Content>
+                    </form>
+                </twig:Card>
+            </div>
+        </div>
+    </template>
+</div>
+{% endblock %}

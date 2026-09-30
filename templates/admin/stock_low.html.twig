@@ -1,0 +1,85 @@
+{# Port of app/(tenant)/[companySlug]/admin/stock/low/page.tsx #}
+{% extends 'admin/layout.html.twig' %}
+{% block pages %}admin-stock-low{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700" x-data="lowStockPage">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+            <h1 class="text-4xl font-black text-foreground tracking-tighter mb-2 uppercase italic">LOW STOCK <span class="text-red-500 not-italic">Alerts</span></h1>
+            <p class="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">Reagents currently below minimum inventory levels.</p>
+        </div>
+        <a href="/{{ companySlug }}/admin/dashboard-lab">
+            <twig:Button variant="ghost" class="flex items-center gap-2 font-bold uppercase text-xs tracking-widest text-muted-foreground hover:text-primary transition-colors">
+                <twig:ux:icon name="lucide:arrow-left" class="h-4 w-4" />
+                Back to Dashboard
+            </twig:Button>
+        </a>
+    </div>
+
+    <twig:Card class="bg-card border-border rounded-[3rem] shadow-2xl overflow-hidden border-t-8 border-t-red-500/20">
+        <twig:Card:Header class="p-10 border-b border-border bg-secondary/5">
+            <div class="flex items-center gap-4">
+                <div class="h-12 w-12 rounded-2xl bg-red-500/10 flex items-center justify-center">
+                    <twig:ux:icon name="lucide:triangle-alert" class="h-6 w-6 text-red-500" />
+                </div>
+                <div>
+                    <twig:Card:Title class="text-2xl font-black uppercase italic">Critical Inventory</twig:Card:Title>
+                    <twig:Card:Description class="text-[10px] font-black uppercase tracking-widest text-muted-foreground">These items require immediate restocking to avoid lab downtime.</twig:Card:Description>
+                </div>
+            </div>
+        </twig:Card:Header>
+        <twig:Card:Content class="p-0">
+            <div class="overflow-x-auto">
+                <twig:Table>
+                    <twig:Table:Header class="bg-secondary/5 border-b border-border">
+                        <twig:Table:Row class="border-none">
+                            <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Product Name</twig:Table:Head>
+                            <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Supplier</twig:Table:Head>
+                            <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Current Stock</twig:Table:Head>
+                            <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Minimum Required</twig:Table:Head>
+                            <twig:Table:Head class="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Action</twig:Table:Head>
+                        </twig:Table:Row>
+                    </twig:Table:Header>
+                    <twig:Table:Body>
+                        <template x-if="loading">
+                            <twig:Table:Row>
+                                <twig:Table:Cell colspan="5" class="p-20 text-center">
+                                    <twig:ux:icon name="lucide:loader-circle" class="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading low stock data...</p>
+                                </twig:Table:Cell>
+                            </twig:Table:Row>
+                        </template>
+                        <template x-if="!loading && lowStockItems.length === 0">
+                            <twig:Table:Row>
+                                <twig:Table:Cell colspan="5" class="p-20 text-center">
+                                    <twig:ux:icon name="lucide:package" class="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">All reagent levels are currently healthy.</p>
+                                </twig:Table:Cell>
+                            </twig:Table:Row>
+                        </template>
+                        <template x-for="item in (loading ? [] : lowStockItems)" :key="item.id">
+                            <twig:Table:Row class="hover:bg-secondary/10 transition-colors border-b border-border last:border-0">
+                                <twig:Table:Cell class="p-6"><p class="font-black text-foreground uppercase tracking-tight text-sm" x-text="item.name"></p></twig:Table:Cell>
+                                <twig:Table:Cell class="p-6"><p class="text-[10px] font-bold text-muted-foreground uppercase" x-text="item.companyName || 'Unknown'"></p></twig:Table:Cell>
+                                <twig:Table:Cell class="p-6 text-center">
+                                    <span class="text-lg font-black text-red-500" x-text="item.stock"></span>
+                                    <span class="text-[8px] block font-black uppercase tracking-tighter text-muted-foreground">Units</span>
+                                </twig:Table:Cell>
+                                <twig:Table:Cell class="p-6 text-center text-sm font-bold text-muted-foreground" x-text="item.minimumStock"></twig:Table:Cell>
+                                <twig:Table:Cell class="p-6 text-right">
+                                    <a :href="`/{{ companySlug }}/admin/stock/${item.id}/in`">
+                                        <twig:Button class="bg-primary hover:bg-primary/90 text-primary-foreground font-black text-[10px] uppercase rounded-xl h-10 px-6 shadow-lg shadow-primary/20 flex items-center gap-2 ml-auto">
+                                            <twig:ux:icon name="lucide:trending-up" class="h-4 w-4" />
+                                            Refill Stock
+                                        </twig:Button>
+                                    </a>
+                                </twig:Table:Cell>
+                            </twig:Table:Row>
+                        </template>
+                    </twig:Table:Body>
+                </twig:Table>
+            </div>
+        </twig:Card:Content>
+    </twig:Card>
+</div>
+{% endblock %}
