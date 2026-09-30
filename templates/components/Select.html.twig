@@ -3,33 +3,33 @@
     <twig:Select model="form.categoryId" options="categories.map(c => ({value: String(c.id), label: c.name}))"
                  placeholder="Select…" triggerClass="…" contentClass="…" itemClass="…" disabled="isBusy" required />
     model / options / disabled / onChange are Alpine expressions; options is a list of {value, label, class?, suffix?, suffixClass?};
-    placeholderExpr: optional Alpine expression overriding the static placeholder; triggerIcon: lucide icon shown before the value;
+    placeholderExpr: optional Alpine expression overriding the static placeholder; triggerIcon: lucide icon shown before the value (wrapped in triggerIconWrapClass);
     onChange runs after the model updates, with the new `value` (Radix onValueChange).
 #}
-{% props model, options, placeholder = '', triggerClass = '', contentClass = '', disabled = 'false', itemClass = '', required = false, onChange = null, emptyText = null, emptyClass = 'p-4 text-center text-xs text-muted-foreground font-bold uppercase italic', placeholderExpr = null, triggerIcon = null, triggerIconClass = 'mr-3 h-5 w-5 text-primary' %}
+{% props model, options, placeholder = '', triggerClass = '', contentClass = '', disabled = 'false', itemClass = '', required = false, onChange = null, emptyText = null, emptyClass = 'p-4 text-center text-xs text-muted-foreground font-bold uppercase italic', placeholderExpr = null, triggerIcon = null, triggerIconClass = 'mr-3 h-5 w-5 text-primary', triggerIconWrapClass = 'flex items-center' %}
 {% set placeholderJs = placeholderExpr ?? placeholder|json_encode %}
 {% set selectedJs = '((' ~ options ~ ') || []).find(o => String(o.value) === String(value))' %}
 <div x-data="uiSelect" x-modelable="value" x-model="{{ model }}" class="contents"{% if onChange %} x-on:ui-change.stop="$nextTick(() => (value => { {{ onChange }} })($event.detail))"{% endif %}>
-    {% if required %}
-    {# Radix renders a visually-hidden native <select required> so the browser validates the form #}
-    <select required aria-hidden="true" tabindex="-1" x-model="value" @focus="$refs.trigger.focus()"
-            style="position: absolute; border: 0; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; word-wrap: normal;">
-        <option value=""></option>
-        <template x-for="opt in (({{ options }}) || [])" :key="String(opt.value)"><option :value="String(opt.value)" x-text="opt.label"></option></template>
-    </select>
-    {% endif %}
     <button type="button" x-ref="trigger" role="combobox" :aria-expanded="open" :data-state="open ? 'open' : 'closed'"
             :disabled="{{ disabled }}" @click="toggle()" @keydown="triggerKey($event)"
             :data-placeholder="(({{ options }}) || []).some(o => String(o.value) === String(value)) ? null : ''"
             class="{{ ('flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 ' ~ triggerClass)|tailwind_merge }}">
         {% set valueSpan %}<span style="pointer-events: none;"><span x-text="({{ selectedJs }} || {}).label ?? ({{ placeholderJs }})"></span><template x-if="({{ selectedJs }} || {}).suffix"><span x-bind:class="{{ selectedJs }}.suffixClass" x-text="' ' + {{ selectedJs }}.suffix"></span></template></span>{% endset %}
         {% if triggerIcon %}
-            <div class="flex items-center">{{ ux_icon('lucide:' ~ triggerIcon, {class: triggerIconClass}) }}{{ valueSpan }}</div>
+            <div class="{{ triggerIconWrapClass }}">{{ ux_icon('lucide:' ~ triggerIcon, {class: triggerIconClass}) }}{{ valueSpan }}</div>
         {% else %}
             {{ valueSpan }}
         {% endif %}
         {{ ux_icon('lucide:chevron-down', {class: 'h-4 w-4 opacity-50', 'aria-hidden': 'true'}) }}
     </button>
+    {# Inside a form Radix renders a visually-hidden native <select> after the trigger (so the browser validates `required`) #}
+    <template x-if="inForm">
+        <select{{ required ? ' required' }} aria-hidden="true" tabindex="-1" x-model="value" @focus="$refs.trigger.focus()"
+                style="position: absolute; border: 0; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; word-wrap: normal;">
+            <option value=""></option>
+            <template x-for="opt in (({{ options }}) || [])" :key="String(opt.value)"><option :value="String(opt.value)" x-text="opt.label"></option></template>
+        </select>
+    </template>
     <template x-teleport="body">
         <div x-show="open" @click="close(false)" class="fixed inset-0 z-50" style="pointer-events: auto;"></div>
     </template>

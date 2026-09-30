@@ -23,6 +23,22 @@ export default function registerUi(Alpine) {
         side: 'bottom',
         pos: { top: 0, left: 0, width: 0, maxHeight: 384 },
         highlighted: -1,
+        inForm: false,
+
+        init() {
+            // Radix adds a hidden native <select> after the trigger when the Select sits inside a form.
+            this.inForm = !!this.$root.closest('form');
+            // In React the trigger is a direct child of the parent, so space-y/space-x margins land on it (and in a
+            // form the native <select> follows, so it never counts as the last child). Our wrapper is display: contents,
+            // which drops its margins: copy them to the trigger.
+            const wrapper = this.$root;
+            const probe = this.inForm ? document.createElement('div') : null;
+            if (probe) wrapper.after(probe);
+            const cs = getComputedStyle(wrapper);
+            if (parseFloat(cs.marginBlockEnd)) this.$refs.trigger.style.marginBlockEnd = cs.marginBlockEnd;
+            if (parseFloat(cs.marginInlineEnd)) this.$refs.trigger.style.marginInlineEnd = cs.marginInlineEnd;
+            probe?.remove();
+        },
 
         toggle() { this.open ? this.close() : this.show(); },
         show() {

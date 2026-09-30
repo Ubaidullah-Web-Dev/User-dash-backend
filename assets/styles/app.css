@@ -215,11 +215,13 @@ turbo-frame[busy] .frame-content { display: none; }
 
 /* Alpine keeps <template> tags (x-if / x-for) in the DOM. Tailwind v4's space and divide utilities
    use :not(:last-child), so an element followed only by <template>s would wrongly get the spacing
-   that React never rendered. Treat "last child apart from trailing templates" as the last child.
+   that React never rendered. Treat "last child apart from trailing templates / [data-ghost] wrappers" (wrappers of closed modals,
+   which React would not render at all) as the last child.
    Zero specificity (:where) inside the utilities layer, so explicit margin/border classes still win. */
 @layer utilities {
-    :where([class*="space-y-"] > :not(template):not(:has(~ :not(template)))) { margin-block-end: 0; }
-    :where([class*="space-x-"] > :not(template):not(:has(~ :not(template)))) { margin-inline-end: 0; }
-    :where([class*="divide-y"] > :not(template):not(:has(~ :not(template)))) { border-bottom-width: 0; }
-    :where([class*="divide-x"] > :not(template):not(:has(~ :not(template)))) { border-inline-end-width: 0; }
+    :where([class*="space-y-"] > :not(template, [data-ghost]):not(:has(~ :not(template, [data-ghost])))) { margin-block-end: 0; }
+    :where([class*="space-x-"] > :not(template, [data-ghost]):not(:has(~ :not(template, [data-ghost])))) { margin-inline-end: 0; }
+    :where([class*="divide-y"] > :not(template, [data-ghost]):not(:has(~ :not(template, [data-ghost])))) { border-bottom-width: 0; }
+    :where([class*="divide-x"] > :not(template, [data-ghost]):not(:has(~ :not(template, [data-ghost])))) { border-inline-end-width: 0; }
 }
+
