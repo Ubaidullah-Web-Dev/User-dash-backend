@@ -118,14 +118,18 @@ step "Cleaning up"
 rm -rf var/tailwind var/log bin/phpunit
 mkdir -p var/log
 
+VENV="$BACKEND/var/deploy/.venv"   # Python tools for the two steps below
+if [ ! -x "$VENV/bin/python" ]; then
+    python3 -m venv "$VENV" && "$VENV/bin/pip" install --quiet pypdf pillow
+fi
+
+step "Fixing images whose format doesn't match their extension (the host locks those)"
+"$VENV/bin/python" "$BACKEND/deploy/infinityfree/fix_images.py" public
+
 step "Shrinking files over the host's 10MB upload limit"
 LIMIT=$((10 * 1024 * 1024 - 256 * 1024))
 while IFS= read -r -d '' big; do
     if [[ $big != *.pdf ]]; then continue; fi
-    VENV="$BACKEND/var/deploy/.venv"
-    if [ ! -x "$VENV/bin/python" ]; then
-        python3 -m venv "$VENV" && "$VENV/bin/pip" install --quiet pypdf pillow
-    fi
     before=$(du -h "$big" | cut -f1)
     "$VENV/bin/python" "$BACKEND/deploy/infinityfree/shrink_pdf.py" "$big" "$big.tmp" 2>/dev/null && mv "$big.tmp" "$big"
     echo "  ${big#./}: $before -> $(du -h "$big" | cut -f1)"

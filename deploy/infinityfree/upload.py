@@ -15,7 +15,9 @@ import ftplib
 import os
 import posixpath
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BACKEND = os.path.dirname(os.path.dirname(HERE))
@@ -123,6 +125,7 @@ def main():
     parser.add_argument('--remote-root', default='/htdocs')
     parser.add_argument('--delete', action='store_true')
     parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--workers', type=int, default=6, help='parallel FTP connections (default 6)')
     args = parser.parse_args()
 
     env = read_env(args.env)
@@ -144,27 +147,59 @@ def main():
             full = os.path.join(dirpath, name)
             local_files.append(os.path.relpath(full, args.site).replace(os.sep, '/'))
 
-    total, sent, skipped = len(local_files), 0, 0
-    started = time.time()
-    for i, rel in enumerate(local_files, 1):
+    # Phase 0: read the existing remote folders in parallel (one round trip each, slow on free hosting).
+    local = threading.local()
+    needed_dirs = sorted({posixpath.dirname(posixpath.join(root, rel)) for rel in local_files})
+
+    def fetch_listing(path):
+        if not hasattr(local, 'remote'):
+            local.remote = Remote(*remote.args)
+        local.remote.listing = remote.listing  # shared cache (dict writes are atomic)
+        local.remote.list_dir(path)
+
+    with ThreadPoolExecutor(max_workers=args.workers) as pool:
+        list(pool.map(fetch_listing, needed_dirs))
+
+    # Phase 1 (one connection): create missing folders and work out which files need sending.
+    to_send, skipped = [], 0
+    for rel in local_files:
         full = os.path.join(args.site, rel)
         rdir, name = posixpath.split(posixpath.join(root, rel))
-        size = os.path.getsize(full)
         if not args.dry_run:
             parts = posixpath.relpath(rdir, root).split('/')
             for depth in range(1, len(parts) + 1):
                 if parts[0] != '.':
                     remote.mkdir(posixpath.join(root, *parts[:depth]))
         existing = remote.list_dir(rdir) or {}
-        if name in existing and existing[name][1] == size and not rel.startswith(ALWAYS_SEND):
+        if name in existing and existing[name][1] == os.path.getsize(full) and not rel.startswith(ALWAYS_SEND):
             skipped += 1
-            continue
-        if not args.dry_run:
-            remote.upload(full, posixpath.join(rdir, name))
-        sent += 1
-        if sent % 50 == 0 or i == total:
-            rate = sent / max(time.time() - started, 1)
-            print(f'  {i}/{total} checked, {sent} uploaded ({rate:.1f} files/s) - {rel}')
+        else:
+            to_send.append(rel)
+    print(f'{len(to_send)} files to upload, {skipped} already up to date. Using {args.workers} connections.')
+
+    # Phase 2: upload over several connections in parallel (each FTP command waits on a round trip).
+    lock = threading.Lock()
+    progress = {'sent': 0}
+    started = time.time()
+
+    def send(rel):
+        if args.dry_run:
+            return
+        if not hasattr(local, 'remote'):
+            local.remote = Remote(*remote.args)
+        local.remote.upload(os.path.join(args.site, rel), posixpath.join(root, rel))
+        with lock:
+            progress['sent'] += 1
+            done = progress['sent']
+        if done % 100 == 0 or done == len(to_send):
+            rate = done / max(time.time() - started, 1)
+            left = (len(to_send) - done) / max(rate, 0.01)
+            print(f'  {done}/{len(to_send)} uploaded ({rate:.1f} files/s, ~{left / 60:.0f} min left) - {rel}', flush=True)
+
+    with ThreadPoolExecutor(max_workers=args.workers) as pool:
+        for future in [pool.submit(send, rel) for rel in to_send]:
+            future.result()
+    sent = len(to_send)
 
     deleted = 0
     if args.delete:

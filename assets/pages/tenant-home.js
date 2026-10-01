@@ -80,6 +80,9 @@ Alpine.data('tenantHome', () => ({
     prevHero() { this.heroImageIndex = (this.heroImageIndex - 1 + this.heroImages.length) % this.heroImages.length; },
 
     heroFallback(e, i) {
+        // Swap in the fallback only once: if the fallback fails too, React kept re-setting it (endless requests).
+        if (e.target.dataset.fallback) return;
+        e.target.dataset.fallback = '1';
         const customFallbacks = [
             'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=1200',
             'https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80&w=1200',
@@ -89,6 +92,8 @@ Alpine.data('tenantHome', () => ({
     },
 
     teamFallback(e, i) {
+        if (e.target.dataset.fallback) return;
+        e.target.dataset.fallback = '1';
         const fallbacks = [
             'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=1000',
             'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800',
