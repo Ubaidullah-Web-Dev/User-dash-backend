@@ -29,6 +29,7 @@ Edit `deploy/infinityfree/prod.env`. It's git-ignored, so your passwords never g
 | `MAILER_DSN` | leave empty to reuse the Gmail SMTP setting from your local `.env` |
 | `APP_SECRET`, `JWT_PASSPHRASE` | leave empty; generated on the first build and saved here |
 | `FTP_HOST` / `FTP_USER` / `FTP_PASSWORD` | client area → **FTP Details** (host is usually `ftpupload.net`) |
+| `FTP_ROOT` | website directory from the hosting panel; this project uses `/apps.alphasoft360.com/htdocs` |
 
 Write values without quotes. Passwords may contain any character.
 
@@ -59,6 +60,10 @@ To import a dump made elsewhere, e.g. with MySQL 8's `mysqldump`, first convert 
 
 ## 5. Upload the files
 
+Use the domain’s website directory, not its parent folder. For `apps.alphasoft360.com`,
+set `FTP_ROOT=/apps.alphasoft360.com/htdocs` in `prod.env`. The uploader uses `/htdocs` only
+when `FTP_ROOT` is absent; `--remote-root` overrides the setting for a one-off upload.
+
 Use either option.
 
 **Option A, upload script (recommended).** It's resumable: if the connection drops, run it again and it skips
@@ -72,7 +77,7 @@ python3 deploy/infinityfree/upload.py --delete
 It never touches `var/log`, `var/sessions` or `public/uploads`. The first upload is about 10,000 files and can take
 15–60 minutes on InfinityFree's FTP. Later uploads only send what changed.
 
-**Option B, FileZilla.** Connect with your FTP details, open `htdocs/` on the server, delete the default files
+**Option B, FileZilla.** Connect with your FTP details, open the configured website directory (for this project, `apps.alphasoft360.com/htdocs/`) on the server, delete the default files
 in it, and upload everything **inside** `var/deploy/infinityfree/htdocs/`, including the hidden `.htaccess` and
 `.env.local.php` (in FileZilla: Server → Force showing hidden files).
 

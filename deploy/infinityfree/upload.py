@@ -122,7 +122,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', default=os.path.join(HERE, 'prod.env'))
     parser.add_argument('--site', default=os.path.join(BACKEND, 'var', 'deploy', 'infinityfree', 'htdocs'))
-    parser.add_argument('--remote-root', default='/htdocs')
+    parser.add_argument('--remote-root', help='remote website folder (overrides FTP_ROOT in prod.env)')
     parser.add_argument('--delete', action='store_true')
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--workers', type=int, default=6, help='parallel FTP connections (default 6)')
@@ -136,7 +136,9 @@ def main():
         sys.exit(f'No build found in {args.site}. Run deploy/infinityfree/build.sh first.')
 
     remote = Remote(env['FTP_HOST'], int(env.get('FTP_PORT') or 21), env['FTP_USER'], env['FTP_PASSWORD'])
-    root = args.remote_root.rstrip('/')
+    root = (args.remote_root or env.get('FTP_ROOT') or '/htdocs').rstrip('/')
+    if not root.startswith('/') or root == '' or '..' in root.split('/'):
+        sys.exit('Remote root must be an absolute website folder, e.g. /apps.example.com/htdocs.')
     if remote.list_dir(root) is None:
         sys.exit(f'Remote folder {root} not found. Check the FTP account (it should contain htdocs/).')
 
