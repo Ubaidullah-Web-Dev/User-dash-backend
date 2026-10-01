@@ -30,4 +30,5 @@
 
 ###> deploy ###
 /deploy/infinityfree/prod.env
+/deploy/infinityfree/__pycache__/
 ###< deploy ###

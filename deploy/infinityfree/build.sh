@@ -60,7 +60,7 @@ step "Copying project to $SITE"
 rm -rf "$OUT"; mkdir -p "$SITE"
 rsync -a "$BACKEND/" "$SITE/" \
     --exclude '/.git' --exclude '/vendor' --exclude '/var' --exclude '/tests' --exclude '/deploy' \
-    --exclude '/public/assets' --exclude '/public/bundles' \
+    --exclude '/public/assets' --exclude '/public/bundles' --exclude '/public/pdfs' \
     --exclude '/.env' --exclude '/.env.*' --exclude '/php.ini' --exclude '/phpunit*' --exclude '/.phpunit*' \
     --exclude '/config/jwt/*.pem' --exclude '/*.sql' --exclude '/*.json.bak' --exclude '/login_response.json' \
     --exclude '/check_stock.php' --exclude '/fix_balances.php' --exclude '/insert_companies.php' \
@@ -96,6 +96,7 @@ step "Installing production dependencies (composer install --no-dev)"
 composer install --no-dev --optimize-autoloader --no-interaction --no-progress --no-scripts --quiet
 # Trim files no request ever loads (the host limits the number of files).
 find vendor -mindepth 3 -maxdepth 3 -type d \( -name tests -o -name Tests -o -name docs -o -name doc -o -name .github \) -prune -exec rm -rf {} +
+php vendor/symfony/intl/Resources/bin/compress >/dev/null   # gzip the 54MB of locale data (read back via zlib)
 find vendor -type f \( -iname '*.md' -o -iname 'phpunit.xml*' -o -iname 'phpstan*.neon*' -o -iname '.gitattributes' -o -iname '.gitignore' -o -iname 'CHANGELOG*' -o -iname 'UPGRADE*' \) -delete
 
 step "Generating JWT keys"
@@ -116,6 +117,23 @@ php bin/console cache:warmup --quiet
 step "Cleaning up"
 rm -rf var/tailwind var/log bin/phpunit
 mkdir -p var/log
+
+step "Shrinking files over the host's 10MB upload limit"
+LIMIT=$((10 * 1024 * 1024 - 256 * 1024))
+while IFS= read -r -d '' big; do
+    if [[ $big != *.pdf ]]; then continue; fi
+    VENV="$BACKEND/var/deploy/.venv"
+    if [ ! -x "$VENV/bin/python" ]; then
+        python3 -m venv "$VENV" && "$VENV/bin/pip" install --quiet pypdf pillow
+    fi
+    before=$(du -h "$big" | cut -f1)
+    "$VENV/bin/python" "$BACKEND/deploy/infinityfree/shrink_pdf.py" "$big" "$big.tmp" 2>/dev/null && mv "$big.tmp" "$big"
+    echo "  ${big#./}: $before -> $(du -h "$big" | cut -f1)"
+done < <(find . -type f -size +"${LIMIT}c" -print0)
+TOO_BIG=$(find . -type f -size +"${LIMIT}c")
+if [ -n "$TOO_BIG" ]; then
+    echo "These files are still over the 10MB upload limit:" >&2; echo "$TOO_BIG" >&2; exit 1
+fi
 FILES=$(find . -type f | wc -l)
 SIZE=$(du -sh . | cut -f1)
 
@@ -126,12 +144,12 @@ if [ "$DUMP_DB" = 1 ]; then
         $p = parse_url($argv[1]);
         foreach (["DUMP_HOST" => $p["host"] ?? "127.0.0.1", "DUMP_PORT" => $p["port"] ?? 3306,
                   "DUMP_USER" => urldecode($p["user"] ?? ""), "DUMP_PASS" => urldecode($p["pass"] ?? ""),
-                  "DUMP_DB" => ltrim($p["path"] ?? "", "/")] as $k => $v) echo $k, "=", escapeshellarg((string) $v), "\n";
+                  "DUMP_NAME" => ltrim($p["path"] ?? "", "/")] as $k => $v) echo $k, "=", escapeshellarg((string) $v), "\n";
     ' "$DSN")"
     DUMP_BIN=$(command -v mariadb-dump || command -v mysqldump)
     MYSQL_PWD="$DUMP_PASS" "$DUMP_BIN" -h "$DUMP_HOST" -P "$DUMP_PORT" -u "$DUMP_USER" \
         --single-transaction --skip-lock-tables --skip-add-locks --no-tablespaces --skip-triggers \
-        --default-character-set=utf8mb4 "$DUMP_DB" \
+        --default-character-set=utf8mb4 "$DUMP_NAME" \
     | sed -E \
         -e '/^\/\*M?!999999\\- enable the sandbox mode \*\//d' \
         -e 's/utf8mb4_uca1400_[a-z0-9_]+/utf8mb4_unicode_ci/g' \
