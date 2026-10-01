@@ -193,11 +193,6 @@ def main():
     for rel in local_files:
         full = os.path.join(args.site, rel)
         rdir, name = posixpath.split(posixpath.join(root, rel))
-        if not args.dry_run:
-            parts = posixpath.relpath(rdir, root).split('/')
-            for depth in range(1, len(parts) + 1):
-                if parts[0] != '.':
-                    remote.mkdir(posixpath.join(root, *parts[:depth]))
         existing = remote.list_dir(rdir) or {}
         if name in existing and existing[name][1] == os.path.getsize(full) and not rel.startswith(ALWAYS_SEND):
             skipped += 1
