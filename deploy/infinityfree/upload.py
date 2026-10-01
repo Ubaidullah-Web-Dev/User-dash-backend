@@ -135,10 +135,10 @@ def main():
     if not os.path.isfile(os.path.join(args.site, '.env.local.php')):
         sys.exit(f'No build found in {args.site}. Run deploy/infinityfree/build.sh first.')
 
-    remote = Remote(env['FTP_HOST'], int(env.get('FTP_PORT') or 21), env['FTP_USER'], env['FTP_PASSWORD'])
     root = (args.remote_root or env.get('FTP_ROOT') or '/htdocs').rstrip('/')
     if not root.startswith('/') or root == '' or '..' in root.split('/'):
         sys.exit('Remote root must be an absolute website folder, e.g. /apps.example.com/htdocs.')
+    remote = Remote(env['FTP_HOST'], int(env.get('FTP_PORT') or 21), env['FTP_USER'], env['FTP_PASSWORD'])
     if remote.list_dir(root) is None:
         sys.exit(f'Remote folder {root} not found. Check the FTP account (it should contain htdocs/).')
 
@@ -162,7 +162,33 @@ def main():
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         list(pool.map(fetch_listing, needed_dirs))
 
-    # Phase 1 (one connection): create missing folders and work out which files need sending.
+    # Create parent directories before their children, with independent folders in parallel.
+    # A fresh custom-domain deployment otherwise spends most of its time on serial MKD calls.
+    if not args.dry_run:
+        all_dirs = set(needed_dirs)
+        for path in needed_dirs:
+            parent = posixpath.dirname(path)
+            while parent != root and parent.startswith(root + '/'):
+                all_dirs.add(parent)
+                parent = posixpath.dirname(parent)
+        levels = {}
+        for path in all_dirs - {root}:
+            depth = posixpath.relpath(path, root).count('/')
+            levels.setdefault(depth, []).append(path)
+
+        def ensure_dir(path):
+            if not hasattr(local, 'remote'):
+                local.remote = Remote(*remote.args)
+            local.remote.listing = remote.listing
+            local.remote.mkdir(path)
+
+        print(f'Preparing {len(all_dirs)} website folders.', flush=True)
+        with ThreadPoolExecutor(max_workers=args.workers) as pool:
+            for depth in sorted(levels):
+                list(pool.map(ensure_dir, sorted(levels[depth])))
+                print(f'  folder depth {depth + 1} ready', flush=True)
+
+    # Phase 1: work out which files need sending.
     to_send, skipped = [], 0
     for rel in local_files:
         full = os.path.join(args.site, rel)
