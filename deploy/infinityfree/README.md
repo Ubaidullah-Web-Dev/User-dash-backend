@@ -54,6 +54,9 @@ It should report 19 tables. Your local logins, including `admin@gmail.com`, now 
 
 Importing again later **replaces all live data** with your local data. Only do that on purpose.
 
+To import a dump made elsewhere, e.g. with MySQL 8's `mysqldump`, first convert collations the host may not know:
+`sed -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g' -e 's/utf8mb4_uca1400_[a-z0-9_]*/utf8mb4_unicode_ci/g' in.sql > out.sql`
+
 ## 5. Upload the files
 
 Use either option.
