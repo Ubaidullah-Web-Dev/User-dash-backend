@@ -14,6 +14,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use App\Service\TenantContext;
+use App\Service\FinancialCalculatorService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -307,38 +308,28 @@ class LabInvoiceController extends AbstractController
     }
 
     #[Route('/summary', name: 'admin_lab_invoice_summary', methods: ['GET'])]
-    public function summaryReport(Request $request, EntityManagerInterface $em, TenantContext $tenantContext): Response
-    {
-        $type = $request->query->get('type', 'daily');
-        $dateStr = $request->query->get('date', date('Y-m-d'));
-        $year = (int) $request->query->get('year', date('Y'));
-        $month = (int) $request->query->get('month', date('n'));
+    public function summaryReport(
+        Request $request,
+        EntityManagerInterface $em,
+        TenantContext $tenantContext,
+        FinancialCalculatorService $financialCalculator
+    ): Response {
+        $range = $financialCalculator->resolveDateRange(
+            $request->query->get('type', ($request->query->has('startDate') || $request->query->has('endDate')) ? 'custom' : 'daily'),
+            $request->query->get('date', date('Y-m-d')),
+            $request->query->has('year') ? (int) $request->query->get('year') : null,
+            $request->query->has('month') ? (int) $request->query->get('month') : null,
+            $request->query->get('startDate'),
+            $request->query->get('endDate')
+        );
 
-        $startDate = new \DateTime();
-        $endDate = new \DateTime();
-
-        if ($type === 'daily') {
-            $startDate = new \DateTime($dateStr . ' 00:00:00');
-            $endDate = (clone $startDate)->setTime(23, 59, 59);
-            $periodLabel = $startDate->format('d M Y');
-        } elseif ($type === 'monthly') {
-            $startDate = new \DateTime(sprintf('%d-%d-01 00:00:00', $year, $month));
-            $endDate = (clone $startDate)->modify('last day of this month')->setTime(23, 59, 59);
-            $periodLabel = $startDate->format('F Y');
-        } elseif ($type === 'yearly') {
-            $startDate = new \DateTime(sprintf('%d-01-01 00:00:00', $year));
-            $endDate = new \DateTime(sprintf('%d-12-31 23:59:59', $year));
-            $periodLabel = (string) $year;
-        } else {
-            $startStr = $request->query->get('startDate');
-            $endStr = $request->query->get('endDate');
-            $startDate = new \DateTime($startStr ? $startStr . ' 00:00:00' : 'today 00:00:00');
-            $endDate = new \DateTime($endStr ? $endStr . ' 23:59:59' : 'today 23:59:59');
-            $periodLabel = $startDate->format('d M Y') . ' to ' . $endDate->format('d M Y');
-        }
+        $startDate = $range['startDate'];
+        $endDate = $range['endDate'];
+        $periodLabel = $range['periodLabel'];
+        $type = $range['type'];
 
         $orderData = $em->getRepository(Order::class)->createQueryBuilder('o')
-            ->select('SUM(o.total) as total, COUNT(o.id) as customerCount')
+            ->select('SUM(o.total) as total, COUNT(o.id) as customerCount, SUM(COALESCE(o.discountAmount, 0)) as totalDiscount, SUM(COALESCE(o.amountTendered, 0)) as posCashPaid')
             ->where('o.createdAt BETWEEN :start AND :end')
             ->andWhere('o.company = :company')
             ->setParameter('start', $startDate)
@@ -349,6 +340,9 @@ class LabInvoiceController extends AbstractController
 
         $revenue = round((float) ($orderData['total'] ?? 0));
         $customerCount = (int) ($orderData['customerCount'] ?? 0);
+        $totalDiscount = round((float) ($orderData['totalDiscount'] ?? 0));
+        $grossSubtotal = $revenue + $totalDiscount;
+        $posCashPaid = round((float) ($orderData['posCashPaid'] ?? 0));
 
         $totalPending = round((float) $em->getRepository(Order::class)->createQueryBuilder('o')
             ->select('SUM(CASE WHEN o.changeDue < 0 THEN ABS(o.changeDue) ELSE 0 END)')
@@ -370,7 +364,7 @@ class LabInvoiceController extends AbstractController
             ->getQuery()
             ->getSingleScalarResult());
 
-        $receivedPayments = $revenue - $totalPending; 
+        $receivedPayments = $financialCalculator->calculateReceivedPayments($revenue, $totalPending);
 
         $vendorOrders = $em->getRepository(VendorOrder::class)->createQueryBuilder('vo')
             ->where('vo.status = :status')
@@ -416,19 +410,25 @@ class LabInvoiceController extends AbstractController
             ->getSingleScalarResult();
         $stockRemoved = (int) ($stockRemoved ?? 0);
 
-        $cogs = (float) $em->getRepository(OrderItem::class)->createQueryBuilder('oi')
+        $orderItems = $em->getRepository(OrderItem::class)->createQueryBuilder('oi')
             ->join('oi.order', 'o')
-            ->join('oi.product', 'p')
-            ->select('SUM(oi.quantity * COALESCE(p.purchasePrice, 0))')
+            ->leftJoin('oi.product', 'p')
+            ->addSelect('p')
             ->where('o.createdAt BETWEEN :start AND :end')
             ->andWhere('o.company = :company')
             ->setParameter('start', $startDate)
             ->setParameter('end', $endDate)
             ->setParameter('company', $tenantContext->getCurrentCompanyId())
             ->getQuery()
-            ->getSingleScalarResult();
+            ->getResult();
 
-        $salesProfit = $revenue - $cogs;
+        $cogs = $financialCalculator->calculateTotalCogs($orderItems);
+        $salesProfit = $financialCalculator->calculateSalesProfit($revenue, $cogs);
+        $profitMargin = $revenue > 0 ? ($salesProfit / $revenue) * 100 : 0;
+        $totalOperatingExpenses = $expenses + $labExpenses;
+        $totalCashInflow = $posCashPaid + $recoveries;
+        $netCashFlow = $totalCashInflow - $totalOperatingExpenses;
+        $netIncome = $financialCalculator->calculateNetIncome($receivedPayments, $totalOperatingExpenses);
 
         $html = $this->renderView('invoice/summary_report.html.twig', [
             'showHeader' => $request->query->getBoolean('showHeader', true),
@@ -436,10 +436,19 @@ class LabInvoiceController extends AbstractController
             'periodLabel' => $periodLabel,
             'reportType' => ucfirst($type),
             'revenue' => $revenue,
+            'grossSubtotal' => $grossSubtotal,
+            'totalDiscount' => $totalDiscount,
+            'cogs' => round($cogs),
+            'salesProfit' => round($salesProfit),
+            'profitMargin' => round($profitMargin, 1),
+            'posCashPaid' => $posCashPaid,
+            'recoveries' => $recoveries,
+            'totalCashInflow' => $totalCashInflow,
             'expenses' => $expenses,
             'labExpenses' => $labExpenses,
-            'netIncome' => $receivedPayments - ($expenses + $labExpenses),
-            'salesProfit' => round($salesProfit),
+            'totalOperatingExpenses' => $totalOperatingExpenses,
+            'netCashFlow' => round($netCashFlow),
+            'netIncome' => round($netIncome),
             'stockAdded' => $stockAdded,
             'stockRemoved' => $stockRemoved,
             'customerCount' => $customerCount,
