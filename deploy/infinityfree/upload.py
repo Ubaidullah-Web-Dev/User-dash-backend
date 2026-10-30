@@ -115,7 +115,14 @@ class Remote:
         self.call(run, local, remote)
 
     def delete(self, path, is_dir):
-        self.call(lambda ftp, p: ftp.rmd(p) if is_dir else ftp.delete(p), path)
+        def run(ftp, p):
+            try:
+                ftp.rmd(p) if is_dir else ftp.delete(p)
+            except ftplib.error_perm as exc:
+                if is_dir and '550' in str(exc):
+                    return
+                raise
+        self.call(run, path)
 
 
 def main():
@@ -125,7 +132,7 @@ def main():
     parser.add_argument('--remote-root', help='remote website folder (overrides FTP_ROOT in prod.env)')
     parser.add_argument('--delete', action='store_true')
     parser.add_argument('--dry-run', action='store_true')
-    parser.add_argument('--workers', type=int, default=6, help='parallel FTP connections (default 6)')
+    parser.add_argument('--workers', type=int, default=3, help='parallel FTP connections (default 3 to respect host 7-conn limit)')
     args = parser.parse_args()
 
     env = read_env(args.env)

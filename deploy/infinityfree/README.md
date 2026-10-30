@@ -99,6 +99,8 @@ python3 deploy/infinityfree/upload.py --delete
 | Problem | Fix |
 |---|---|
 | "500 Internal Server Error" | Download `htdocs/var/log/prod-<date>.log` over FTP; the error is at the bottom. |
+| "421 Too many connections" | InfinityFree limits accounts to 7 FTP connections. Use `--workers 3` (default). |
+| Templates or invoices don't reflect updates | In `APP_ENV=prod`, Symfony caches Twig PHP classes in `var/cache/prod/twig/`. Clear that folder over FTP or redeploy with `--delete`. |
 | Database connection error | Re-check the `DB_*` values (host is `sqlXXX.infinityfree.com`, not `localhost`), rebuild, re-upload. |
 | Page shows "Index of /" or the InfinityFree placeholder | `.htaccess` wasn't uploaded, or `index2.html` is still there. |
 | Password-reset emails don't arrive | Free hosting may block outgoing SMTP. Check `var/log/` and test from the site's "Forgot password". |
